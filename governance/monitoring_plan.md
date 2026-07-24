@@ -48,3 +48,10 @@ temporal-order reversals, side mismatches, geometry mismatches, registration and
 failure propagation, ambiguous match rate, new/resolved label counts, small-denominator cases,
 indeterminate rate, checksum failures, and failed longitudinal quality gates. These remain synthetic
 engineering signals and are not clinical progression or response metrics.
+
+Milestone 11 API monitoring should cover readiness failures, request validation failures,
+model/checkpoint integrity failures, quality-gate blocks, abstention or degraded responses, request
+latency, error rates, and filesystem/path security violations. API monitoring must not log sensitive
+payload values, raw arrays, image contents, model weights, credentials, direct identifiers, or
+unredacted local paths. These remain local research engineering signals and are not clinical safety,
+diagnostic performance, or deployment-approval metrics.

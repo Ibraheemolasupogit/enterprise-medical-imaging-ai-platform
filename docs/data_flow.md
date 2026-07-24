@@ -66,3 +66,10 @@ metadata, propagates upstream registration/localisation/segmentation/classificat
 measurements, matches, change labels, quality findings, summaries, Markdown reports, and
 deterministic NumPy review arrays. These artefacts are ignored by Git and are not clinical
 progression, response, or RECIST outputs.
+
+Milestone 11 adds local API outputs under `ml/experiments/api/` when `persist_output` is enabled.
+The API consumes explicit `.npy` inputs from configured local roots or bounded JSON arrays, invokes
+existing segmentation, classification, or longitudinal code paths, and returns bounded JSON
+summaries. Read-only review endpoints validate evidence checksums before returning public summaries.
+The API does not expose absolute local paths, raw images, masks, probability maps, model weights,
+credentials, DICOM files, PACS data, or cloud resources.

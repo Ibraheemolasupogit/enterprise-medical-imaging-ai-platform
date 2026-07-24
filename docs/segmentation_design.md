@@ -79,3 +79,8 @@ provenance and risk context, not as diagnostic evidence.
 Milestone 10 longitudinal analysis consumes lesion masks and segmentation quality statuses as
 upstream evidence. Failed segmentation can force `indeterminate` labels, and synthetic segmentation
 metrics must not be converted into clinical progression or response claims.
+
+Milestone 11 exposes segmentation inference through `POST /v1/segmentation/predict` for local
+research use only. The API requires a configured checkpoint, enforces local input-root controls,
+returns bounded probability and mask summaries, and can optionally persist a predicted mask under an
+ignored local output directory. The endpoint must not be used as a diagnostic segmentation service.

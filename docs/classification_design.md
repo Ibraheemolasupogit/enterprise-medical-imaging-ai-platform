@@ -101,3 +101,8 @@ AUPRC, recall, Brier score, calibration diagnostics, and threshold behavior do n
 clinical performance. ROI selection, localisation errors, segmentation errors, class imbalance,
 miscalibration, threshold choices, and abstention policy can all affect downstream research
 workflows and require human engineering review.
+
+Milestone 11 exposes classification inference through `POST /v1/classification/predict` for local
+research use only. The API requires checkpoint, calibration, and threshold-policy artefacts, returns
+probabilities, checksums, engineering labels, and abstention state, and does not return weights or
+training data. The endpoint is not benign-versus-malignant classification and is not diagnostic.

@@ -1,4 +1,4 @@
-.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality-check-dicom verify-dicom-quality preprocess-dicom validate-preprocessed-volume verify-preprocessing register-synthetic-pair validate-registration verify-registration generate-localisation-fixtures localise-synthetic-regions validate-localisation verify-localisation prepare-segmentation-data train-segmentation evaluate-segmentation verify-segmentation prepare-classification-data train-classification evaluate-classification verify-classification analyse-synthetic-longitudinal validate-longitudinal verify-longitudinal quality clean
+.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality-check-dicom verify-dicom-quality preprocess-dicom validate-preprocessed-volume verify-preprocessing register-synthetic-pair validate-registration verify-registration generate-localisation-fixtures localise-synthetic-regions validate-localisation verify-localisation prepare-segmentation-data train-segmentation evaluate-segmentation verify-segmentation prepare-classification-data train-classification evaluate-classification verify-classification analyse-synthetic-longitudinal validate-longitudinal verify-longitudinal validate-api test-api verify-api serve-api quality clean
 
 PYTHON ?= python3
 SYNTHETIC_DATA_DIR ?= data/synthetic/generated
@@ -20,6 +20,7 @@ CLASSIFICATION_EXPERIMENT_DIR ?= ml/experiments/classification
 CLASSIFICATION_INFERENCE_DIR ?= ml/experiments/classification-inference
 CLASSIFICATION_SYNTHETIC_CASES ?= 12
 LONGITUDINAL_EXPERIMENT_DIR ?= ml/experiments/longitudinal
+API_CONFIG ?= config/api.yaml
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -157,6 +158,18 @@ validate-longitudinal:
 	git check-ignore -q $(LONGITUDINAL_EXPERIMENT_DIR)/longitudinal-synthetic-case-0001-left-m10-longitudinal-v1/analysis_manifest.json
 
 verify-longitudinal: analyse-synthetic-longitudinal validate-longitudinal
+
+validate-api:
+	$(PYTHON) -m medical_imaging_platform validate-api-config --config $(API_CONFIG)
+
+test-api:
+	$(PYTHON) -m pytest tests/test_api.py --no-cov
+
+verify-api: test-api
+	git check-ignore -q ml/experiments/api
+
+serve-api:
+	$(PYTHON) -m medical_imaging_platform serve-api --config $(API_CONFIG)
 
 quality: format-check lint type-check validate-config validate-docs test security
 

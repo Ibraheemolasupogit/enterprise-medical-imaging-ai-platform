@@ -4,10 +4,10 @@
 
 Enterprise Medical Imaging AI Platform is a planned production-oriented medical-imaging AI platform for abdominal CT research workflows. The long-term goal is to demonstrate how DICOM ingestion, de-identification, quality control, image standardisation, longitudinal registration, adrenal-region localisation, lesion analysis, governed review, MLOps, cloud architecture, and clinical AI assurance fit together as one engineered system.
 
-Milestones 1-10 establish repository foundations, synthetic data, DICOM ingestion, quality control,
+Milestones 1-11 establish repository foundations, synthetic data, DICOM ingestion, quality control,
 preprocessing, registration, localisation, synthetic segmentation, and binary synthetic
 lesion-presence classification with calibration, and governed synthetic longitudinal lesion-change
-analysis. APIs, dashboards, cloud deployment, containers, monitoring, advanced classification, and
+analysis, plus a governed local FastAPI research interface. Dashboards, cloud deployment, containers, monitoring, advanced classification, and
 clinical deployment are **Planned - not yet implemented**.
 
 ## Clinical And Engineering Problem
@@ -124,11 +124,20 @@ Complete in Milestone 10:
 - Upstream registration, segmentation, localisation, classification, calibration, and abstention propagation.
 - Longitudinal quality gates, evidence exports, review arrays, CLI commands, and Make targets.
 
+Complete in Milestone 11:
+
+- Local governed FastAPI application factory and typed API configuration.
+- Health, version, and readiness endpoints with deterministic quality findings.
+- Research-only segmentation, classification, and longitudinal API routes backed by existing local pipelines.
+- Read-only review evidence endpoints for governed segmentation, classification, and longitudinal outputs.
+- Request IDs, request-size limits, safe filesystem root controls, symlink blocking, NumPy `allow_pickle=False`, sanitized errors, and security headers.
+- API CLI commands, Make targets, tests, and API design/contract documentation.
+
 Planned - not yet implemented:
 
 - Deformable registration, learned localisation beyond the baseline, advanced segmentation,
   benign-versus-malignant or clinical classification, and RECIST or treatment-response assessment.
-- FastAPI, Streamlit, MLflow, Docker, Kubernetes, Terraform, and AWS integrations.
+- Streamlit dashboard, MLflow, Docker, Kubernetes, Terraform, and AWS integrations.
 - Any diagnostic or clinical decision support behavior.
 
 ## Architecture
@@ -150,11 +159,13 @@ Milestone 1 uses a deliberately small Python 3.12 stack:
   thresholding baseline.
 - NumPy and SciPy are used for the Milestone 10 synthetic longitudinal measurement and component
   matching baseline.
+- FastAPI and Uvicorn are used for the Milestone 11 local governed research API.
+- `httpx` is used for API test-client support.
 
 Planned - not yet implemented:
 
 - nibabel and OpenCV imaging workflows.
-- MLflow, FastAPI, Streamlit, Docker, Kubernetes, and AWS.
+- MLflow, Streamlit, Docker, Kubernetes, and AWS.
 
 ## Local Setup
 
@@ -291,6 +302,22 @@ medical-imaging-platform analyse-longitudinal-pair --previous-mask <prev.npy> --
 Longitudinal labels are synthetic engineering labels only. They are not RECIST, disease progression,
 treatment response, diagnosis, or clinical decision support.
 
+API commands:
+
+```bash
+make validate-api
+make test-api
+make verify-api
+medical-imaging-platform validate-api-config
+medical-imaging-platform inspect-api-readiness
+medical-imaging-platform serve-api
+```
+
+The API is local-first and research-only. It accepts explicit `.npy` arrays or compact JSON arrays
+from configured local roots, returns bounded summaries rather than image volumes, and exposes
+read-only evidence review. It does not implement authentication, a dashboard, PACS/DICOMweb
+connectivity, databases, queues, cloud deployment, or clinical decision support.
+
 ## Data Safety
 
 Only synthetic data or publicly available de-identified data may be used. Do not commit real patient data, model weights derived from restricted patient data, credentials, cloud account identifiers, DICOM studies with identifying metadata, or screenshots containing protected health information.
@@ -311,7 +338,7 @@ This repository is not an approved medical device, is not validated for NHS depl
 8. Synthetic segmentation baseline. Complete for small MONAI 3D U-Net on synthetic masks only.
 9. Classification and calibration. Complete for binary synthetic lesion-presence classification only.
 10. Longitudinal analysis. Complete for governed synthetic engineering labels only.
-11. API and review dashboard.
+11. API foundation. Complete for governed local FastAPI service only; review dashboard remains planned.
 12. MLOps platform.
 13. Docker and Kubernetes.
 14. AWS deployment blueprint.
@@ -324,7 +351,7 @@ The project was informed by research review of earlier CT alignment and adrenal 
 
 ## Limitations
 
-The current repository does not serve predictions, perform clinical diagnosis, implement RECIST, or
+The current repository serves local research API summaries only. It does not perform clinical diagnosis, implement RECIST, provide a review dashboard, or
 deploy infrastructure. Current modelling and analysis are limited to synthetic segmentation, binary
 synthetic lesion-presence classification, and synthetic longitudinal engineering labels. See
 [docs/limitations.md](docs/limitations.md) and [governance/limitations.md](governance/limitations.md).

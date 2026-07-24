@@ -93,3 +93,9 @@ Generated outputs are ignored by Git under `ml/experiments/longitudinal/<analysi
 
 Review arrays are deterministic NumPy artefacts only. There is no GUI, dashboard, notebook, or
 clinical viewer in this milestone.
+
+Milestone 11 exposes longitudinal analysis through `POST /v1/longitudinal/analyse` and read-only
+evidence review through `GET /v1/review/longitudinal/{analysis_id}`. The API preserves upstream
+quality propagation, returns engineering summaries, validates evidence checksums before review, and
+keeps local absolute paths out of public review responses. It remains a research demonstrator, not a
+clinical comparison or treatment-response service.

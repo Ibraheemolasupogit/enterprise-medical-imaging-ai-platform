@@ -8,6 +8,7 @@ from typing import Any, ClassVar
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
+from medical_imaging_platform.api.models import APIConfig
 from medical_imaging_platform.classification.models import ClassificationConfig
 from medical_imaging_platform.ingestion.models import DicomIngestionConfig
 from medical_imaging_platform.localisation.models import LocalisationConfig
@@ -59,6 +60,7 @@ class RepositoryConfigSet(BaseModel):
     configs: dict[str, PlatformConfig]
     required_files: ClassVar[tuple[str, ...]] = (
         "platform.yaml",
+        "api.yaml",
         "data.yaml",
         "preprocessing.yaml",
         "registration.yaml",
@@ -206,3 +208,15 @@ def load_longitudinal_config(path: Path) -> LongitudinalConfig:
         return LongitudinalConfig.model_validate(settings["longitudinal"])
     except ValidationError as exc:
         raise ConfigError(f"Invalid longitudinal configuration in {path}: {exc}") from exc
+
+
+def load_api_config(path: Path) -> APIConfig:
+    """Load typed Milestone 11 API settings from api.yaml."""
+    data = load_yaml_file(path)
+    settings = data.get("settings")
+    if not isinstance(settings, dict) or "api" not in settings:
+        raise ConfigError(f"Missing settings.api in {path}")
+    try:
+        return APIConfig.model_validate(settings["api"])
+    except ValidationError as exc:
+        raise ConfigError(f"Invalid API configuration in {path}: {exc}") from exc

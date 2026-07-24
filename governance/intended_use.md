@@ -7,3 +7,7 @@ It is intended to demonstrate software engineering patterns for future workflows
 It must not be used for clinical diagnosis or patient-management decisions.
 
 Milestone 3 DICOM functions are intended for local synthetic fixtures and already de-identified public-data engineering workflows only.
+
+Milestone 11 API functions are intended for local research engineering evaluation of synthetic or
+publicly available de-identified artefacts only. They are not intended for internet-facing
+deployment, clinical workflow integration, diagnosis, triage, or patient-management decisions.

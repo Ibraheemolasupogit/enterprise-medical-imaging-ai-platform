@@ -9,6 +9,8 @@ REQUIRED_MARKDOWN_FILES = (
     Path("NOTICE.md"),
     Path("CONTRIBUTING.md"),
     Path("SECURITY.md"),
+    Path("docs/api_design.md"),
+    Path("docs/api_contracts.md"),
     Path("docs/architecture.md"),
     Path("docs/clinical_workflow.md"),
     Path("docs/classification_design.md"),

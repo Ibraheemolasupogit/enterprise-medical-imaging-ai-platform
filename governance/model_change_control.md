@@ -14,3 +14,8 @@ Future model changes must record:
 - Deployment status.
 
 Candidate models must not be treated as approved merely because training completed.
+
+Milestone 11 API configuration records local checkpoint, calibration, and threshold-policy paths and
+readiness checksums. Changing any model artefact served by the API requires corresponding evidence
+review, checksum traceability, quality-gate review, and explicit documentation. API readiness is not
+model approval.

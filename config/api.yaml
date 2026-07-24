@@ -1,0 +1,45 @@
+config_name: api
+milestone: 11
+status: foundation
+purpose: Local governed FastAPI research interface for existing synthetic evidence and inference.
+owner: platform-engineering
+settings:
+  api:
+    policy_version: "m11-api-v1"
+    service_name: "enterprise-medical-imaging-ai-platform-api"
+    service_version: "0.1.0"
+    environment: local
+    host: "127.0.0.1"
+    port: 8000
+    log_level: INFO
+    allowed_input_roots:
+      - data
+      - ml/datasets
+      - ml/experiments
+    allowed_evidence_roots:
+      - ml/experiments
+    maximum_request_bytes: 1048576
+    maximum_array_bytes: 1048576
+    maximum_batch_size: 1
+    request_timeout_seconds: 30
+    enable_docs: true
+    enable_openapi: true
+    require_model_checksums: true
+    require_quality_pass: true
+    allow_degraded_review: true
+    allow_external_bind: false
+    allow_threshold_override: false
+    segmentation_checkpoint: null
+    classification_checkpoint: null
+    classification_calibration: null
+    classification_threshold_policy: null
+    longitudinal_config: config/longitudinal.yaml
+    output_directory: ml/experiments/api
+safeguards:
+  - API defaults to loopback and local filesystem roots only.
+  - API outputs are engineering review evidence only and not clinical advice.
+  - Checkpoints and evidence are validated before readiness.
+future_capabilities:
+  - Authentication and authorisation in a later milestone.
+  - Human review dashboard in a later milestone.
+  - MLOps deployment controls in later milestones.

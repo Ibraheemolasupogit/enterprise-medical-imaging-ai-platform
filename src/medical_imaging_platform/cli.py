@@ -44,6 +44,7 @@ from medical_imaging_platform.synthetic.generator import load_synthetic_config
 from medical_imaging_platform.synthetic.io import generate_dataset, validate_dataset
 from medical_imaging_platform.utils.config import (
     ConfigError,
+    load_api_config,
     load_classification_config,
     load_dicom_ingestion_config,
     load_localisation_config,
@@ -411,6 +412,28 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_classification_parser.add_argument("experiment_dir")
     validate_classification_parser.add_argument("--json", action="store_true")
+
+    api_config_parser = subparsers.add_parser(
+        "validate-api-config",
+        help="Validate API configuration.",
+    )
+    api_config_parser.add_argument("--config", default="config/api.yaml")
+    api_config_parser.add_argument("--json", action="store_true")
+
+    api_ready_parser = subparsers.add_parser(
+        "inspect-api-readiness",
+        help="Inspect API readiness checks without starting a server.",
+    )
+    api_ready_parser.add_argument("--config", default="config/api.yaml")
+    api_ready_parser.add_argument("--json", action="store_true")
+
+    serve_api_parser = subparsers.add_parser(
+        "serve-api",
+        help="Serve the local governed research API with Uvicorn.",
+    )
+    serve_api_parser.add_argument("--config", default="config/api.yaml")
+    serve_api_parser.add_argument("--host", default=None)
+    serve_api_parser.add_argument("--port", type=int, default=None)
 
     longitudinal_parser = subparsers.add_parser(
         "analyse-longitudinal-pair",
@@ -1200,6 +1223,61 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(classification_metadata, indent=2, sort_keys=True))
         else:
             print(f"Wrote classification inference outputs to {args.output_dir}.")
+        return 0
+
+    if args.command == "validate-api-config":
+        try:
+            api_config = load_api_config(Path(args.config))
+        except ConfigError as exc:
+            print(f"API configuration validation failed: {exc}")
+            return 1
+        payload = api_config.model_dump(mode="json")
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(f"Validated API configuration {api_config.policy_version}.")
+        return 0
+
+    if args.command == "inspect-api-readiness":
+        from medical_imaging_platform.api.routes.health import readiness_findings
+
+        try:
+            api_config = load_api_config(Path(args.config))
+            api_findings = readiness_findings(api_config)
+        except ConfigError as exc:
+            print(f"API readiness inspection failed: {exc}")
+            return 1
+        payload = {
+            "status": "ready" if all(item["passed"] for item in api_findings) else "not_ready",
+            "quality_findings": api_findings,
+        }
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(f"API readiness status={payload['status']}.")
+        return 0 if payload["status"] == "ready" else 3
+
+    if args.command == "serve-api":
+        try:
+            api_config = load_api_config(Path(args.config))
+            host = args.host or api_config.host
+            port = args.port or api_config.port
+            if host == "0.0.0.0" and not api_config.allow_external_bind:  # nosec B104
+                print("API serve rejected: 0.0.0.0 requires allow_external_bind=true.")
+                return 3
+        except ConfigError as exc:
+            print(f"API serve failed: {exc}")
+            return 1
+        import uvicorn
+
+        print(f"Starting API {api_config.policy_version} on {host}:{port}.")
+        uvicorn.run(
+            "medical_imaging_platform.api.app:create_app",
+            factory=True,
+            host=host,
+            port=port,
+            reload=False,
+        )
         return 0
 
     if args.command == "analyse-longitudinal-pair":

@@ -30,3 +30,8 @@ downstream research use. Reviewers must treat `new`, `increased`, `stable`, `red
 and `indeterminate` as synthetic engineering labels only. They are not progression, treatment
 response, RECIST, diagnosis, or clinical decision support. Ambiguous matches, failed upstream
 quality, spacing concerns, small denominators, and classification abstention must not be bypassed.
+
+Milestone 11 API responses require the same human engineering review as the underlying artefacts.
+API consumers must treat summaries, probabilities, masks, change labels, checksums, and readiness
+findings as technical evidence only. The API must not be presented as autonomous review, triage,
+diagnosis, or patient-management support.

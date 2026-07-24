@@ -50,3 +50,8 @@ Milestone 10 longitudinal analysis uses synthetic masks, deterministic component
 spacing-aware engineering measurements only. Synthetic change labels cannot support progression,
 treatment-response, RECIST, diagnostic, triage, or patient-management claims. Measurement and
 matching outputs require human engineering review and upstream quality review.
+
+Milestone 11 API routes provide local governed research access to existing synthetic segmentation,
+classification, longitudinal, and review evidence workflows. API responses are bounded engineering
+summaries only. Readiness checks, checksums, successful requests, and sanitized errors do not imply
+clinical validation, cybersecurity approval, deployment approval, or medical-device compliance.
