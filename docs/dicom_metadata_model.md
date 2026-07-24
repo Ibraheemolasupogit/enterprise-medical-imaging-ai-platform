@@ -23,3 +23,5 @@ Included fields:
 - Private-tag count.
 
 Direct identifier values such as patient name, patient ID, accession number, institution, address, and physician/operator names are not exposed in normal metadata output.
+
+Milestone 4 quality reports reuse this safe metadata model and must not include direct patient identifiers.

@@ -4,6 +4,8 @@ Milestone 2 can generate synthetic NumPy arrays for engineering fixtures. It doe
 
 Milestone 3 can generate synthetic DICOM fixtures and ingest local DICOM files for header discovery, metadata extraction, structural validation, and metadata de-identification. It does not connect to PACS, DICOMweb, cloud services, or NHS systems.
 
+Milestone 4 adds technical quality-control reports under `data/dicom/quality/`. These reports are generated artefacts and remain ignored by Git.
+
 Planned - not yet implemented data zones:
 
 - Raw external source area outside Git.

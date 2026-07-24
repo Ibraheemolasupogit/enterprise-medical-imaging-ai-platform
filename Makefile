@@ -1,10 +1,11 @@
-.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality clean
+.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality-check-dicom verify-dicom-quality quality clean
 
 PYTHON ?= python3
 SYNTHETIC_DATA_DIR ?= data/synthetic/generated
 DICOM_FIXTURE_DIR ?= data/dicom/fixtures
 DICOM_DEID_DIR ?= data/dicom/deidentified
 DICOM_AUDIT_PATH ?= data/dicom/audit/audit.json
+DICOM_QUALITY_DIR ?= data/dicom/quality
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -53,6 +54,12 @@ validate-dicom-fixtures:
 verify-dicom-ingestion: generate-dicom-fixtures discover-dicom validate-dicom-fixtures
 	$(PYTHON) -m medical_imaging_platform deidentify-dicom $(DICOM_FIXTURE_DIR) --output-dir $(DICOM_DEID_DIR) --audit-path $(DICOM_AUDIT_PATH) --overwrite
 	$(PYTHON) -m medical_imaging_platform validate-dicom $(DICOM_DEID_DIR) --require-pixel-data
+
+quality-check-dicom:
+	$(PYTHON) -m medical_imaging_platform quality-report-dicom $(DICOM_DEID_DIR) --output-dir $(DICOM_QUALITY_DIR) --full-pixel-validation --overwrite
+
+verify-dicom-quality: verify-dicom-ingestion quality-check-dicom
+	$(PYTHON) -m medical_imaging_platform quality-check-dicom $(DICOM_DEID_DIR) --full-pixel-validation
 
 quality: format-check lint type-check validate-config validate-docs test security
 

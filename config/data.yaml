@@ -76,6 +76,40 @@ settings:
       overwrite: false
       burned_in_annotation_error_values:
         - "YES"
+  dicom_quality_control:
+    policy_version: dicom-qc-policy-v0.4.0
+    output_dir: data/dicom/quality
+    accepted_modalities:
+      - CT
+    body_region_allowlist:
+      - ABDOMEN
+      - ABD
+      - ABDOMINAL
+    require_body_part_examined: true
+    pixel_spacing_tolerance: 0.001
+    slice_thickness_tolerance: 0.001
+    orientation_tolerance: 0.0001
+    slice_gap_tolerance: 0.01
+    minimum_slice_count: 2
+    maximum_slice_count: 1000
+    maximum_corrupt_file_ratio: 0.0
+    burned_in_annotation_policy: reject_yes_warn_missing
+    private_tag_policy: warn_before_deidentification_error_after
+    supported_transfer_syntaxes:
+      - "1.2.840.10008.1.2.1"
+    pixel_value_bounds:
+      - -4096
+      - 4096
+    scoring_weights:
+      INFO: 0
+      WARNING: 5
+      ERROR: 25
+      CRITICAL: 100
+    status_thresholds:
+      pass_minimum: 95
+      fail_below: 70
+    critical_rule_ids:
+      - DICOM-QC-PHI-001
 safeguards:
   - Do not commit DICOM studies, NIfTI volumes, credentials, or restricted labels.
   - Dataset provenance must be documented before use.

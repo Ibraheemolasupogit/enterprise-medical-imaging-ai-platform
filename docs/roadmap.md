@@ -3,7 +3,7 @@
 1. Repository foundation. Complete.
 2. Synthetic and public-data foundation. Complete for synthetic-data foundation and public-data selection criteria only; no public data is downloaded.
 3. DICOM ingestion and governance. Complete for local synthetic fixtures, metadata extraction, structural validation, and metadata de-identification only.
-4. Imaging quality control.
+4. Imaging quality control. Complete for technical DICOM engineering checks only.
 5. Preprocessing.
 6. Registration.
 7. Baseline localisation and segmentation.

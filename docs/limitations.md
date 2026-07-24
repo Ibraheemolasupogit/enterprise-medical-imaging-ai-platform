@@ -13,5 +13,7 @@ Current Milestone 1 limitations:
 - Synthetic lesion shapes do not represent the diversity of real pathology.
 - Synthetic data cannot support clinical-performance claims.
 - Milestone 3 does not establish regulatory compliance or full DICOM confidentiality-profile compliance.
+- Milestone 4 quality scores are engineering indicators only and do not establish diagnostic adequacy.
+- Missing slices are inferred only when spacing evidence is reliable; metadata may be incomplete or inaccurate.
 
 The platform is a portfolio and research demonstrator, not an approved medical device.

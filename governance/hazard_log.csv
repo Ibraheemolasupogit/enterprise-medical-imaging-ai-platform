@@ -18,3 +18,10 @@ HZ-016,Mixed study or series ingestion,Input directory contains multiple incompa
 HZ-017,Unsupported transfer syntax,Compressed or unsupported DICOM encoding,Unreadable pixel data or validation failure,Medium,Transfer-syntax validation finding,Low,imaging-engineering,Open
 HZ-018,Accidental source overwrite,Output path points to source file,Data loss,High,In-place overwrite refusal and explicit output directory,Low,platform-engineering,Open
 HZ-019,Sensitive identifier leakage through logs or audits,Removed values written to outputs,Privacy breach,High,Audit records include tag names and hashes only,Medium,data-governance,Open
+HZ-020,False assurance from passing quality score,Engineering score mistaken for clinical quality,Unsafe reliance on non-clinical output,High,Documentation states score is not diagnostic adequacy,Medium,clinical-ai-governance,Open
+HZ-021,Incorrect missing-slice inference,Irregular metadata interpreted too strongly,Incorrect downstream completeness assumption,Medium,Reports include inference limitations,Medium,imaging-engineering,Open
+HZ-022,Unrecognised body-region metadata,Vendor-specific or missing body part terms,Incorrect inclusion or warning fatigue,Medium,Configurable allowlist and warning findings,Low,imaging-engineering,Open
+HZ-023,Decoding errors,Unsupported or corrupt pixel encoding,Quality checks miss pixel issue,High,Pixel decode findings and transfer syntax reporting,Medium,imaging-engineering,Open
+HZ-024,Constant or corrupt images accepted,Technical pixel issue not escalated,Invalid downstream analysis,High,Pixel integrity checks and score deductions,Medium,imaging-engineering,Open
+HZ-025,Burned-in PHI not declared in metadata,BurnedInAnnotation absent or inaccurate,Privacy breach,High,Warnings state metadata cannot guarantee absence of pixel PHI,High,data-governance,Open
+HZ-026,Critical findings not stopping downstream processing,Pipeline ignores rejected status,Unsafe continuation,High,Critical rules force REJECTED status and CLI exit code 3,Medium,platform-engineering,Open

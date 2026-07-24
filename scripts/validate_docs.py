@@ -17,6 +17,7 @@ REQUIRED_MARKDOWN_FILES = (
     Path("docs/dicom_ingestion_design.md"),
     Path("docs/dicom_metadata_model.md"),
     Path("docs/dataset_selection_criteria.md"),
+    Path("docs/imaging_quality_control.md"),
     Path("docs/roadmap.md"),
     Path("docs/security.md"),
     Path("docs/synthetic_data_design.md"),

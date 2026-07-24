@@ -9,6 +9,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from medical_imaging_platform.ingestion.models import DicomIngestionConfig
+from medical_imaging_platform.quality_control.models import QualityControlConfig
 from medical_imaging_platform.utils.exceptions import MedicalImagingPlatformError
 
 
@@ -114,3 +115,15 @@ def load_dicom_ingestion_config(path: Path) -> DicomIngestionConfig:
         return DicomIngestionConfig.model_validate(settings["dicom_ingestion"])
     except ValidationError as exc:
         raise ConfigError(f"Invalid DICOM ingestion configuration in {path}: {exc}") from exc
+
+
+def load_quality_control_config(path: Path) -> QualityControlConfig:
+    """Load typed Milestone 4 quality-control settings from data.yaml."""
+    data = load_yaml_file(path)
+    settings = data.get("settings")
+    if not isinstance(settings, dict) or "dicom_quality_control" not in settings:
+        raise ConfigError(f"Missing settings.dicom_quality_control in {path}")
+    try:
+        return QualityControlConfig.model_validate(settings["dicom_quality_control"])
+    except ValidationError as exc:
+        raise ConfigError(f"Invalid DICOM quality-control configuration in {path}: {exc}") from exc

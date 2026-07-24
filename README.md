@@ -58,6 +58,14 @@ Complete in Milestone 3:
 - Basic structural validation findings.
 - Metadata de-identification with private-tag removal, UID remapping, and audit records.
 
+Complete in Milestone 4:
+
+- Technical DICOM quality-control rule catalogue.
+- Slice completeness and duplicate-slice checks.
+- Metadata consistency checks.
+- Pixel-array integrity checks for local fixtures and de-identified data.
+- Transparent quality scoring and deterministic JSON/Markdown reports.
+
 Planned - not yet implemented:
 
 - Medical image preprocessing.
@@ -136,9 +144,12 @@ make generate-dicom-fixtures
 make discover-dicom
 make validate-dicom-fixtures
 make verify-dicom-ingestion
+make verify-dicom-quality
 ```
 
 Generated DICOM fixtures, de-identified outputs, and audit artefacts are ignored by Git.
+
+Quality reports are engineering data-quality artefacts only; they do not indicate diagnostic adequacy.
 
 ## Data Safety
 
@@ -153,7 +164,7 @@ This repository is not an approved medical device, is not validated for NHS depl
 1. Repository foundation.
 2. Synthetic and public-data foundation. Complete for synthetic-data foundation and public-data selection criteria only; no public data is downloaded.
 3. DICOM ingestion and governance. Complete for local synthetic fixtures and metadata de-identification only.
-4. Imaging quality control.
+4. Imaging quality control. Complete for technical DICOM engineering checks only.
 5. Preprocessing.
 6. Registration.
 7. Baseline localisation and segmentation.

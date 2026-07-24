@@ -11,6 +11,7 @@ Implemented:
 - Deterministic slice ordering strategy.
 - Basic structural validation findings.
 - Synthetic DICOM CT fixture generation for tests and local validation.
+- Technical DICOM quality-control orchestration in Milestone 4.
 
 Not implemented:
 
@@ -19,5 +20,7 @@ Not implemented:
 - Hounsfield-unit conversion.
 - Resampling, preprocessing, registration, localisation, segmentation, or classification.
 - Clinical-quality DICOM validation or regulatory compliance.
+
+Milestone 4 quality control remains an engineering check. It is not a clinical image-quality assessment.
 
 Source data must remain outside Git. Generated fixtures and de-identified outputs under `data/dicom/` are ignored.

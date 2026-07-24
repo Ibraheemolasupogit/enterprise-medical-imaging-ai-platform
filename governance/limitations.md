@@ -15,3 +15,5 @@ Only synthetic or publicly available de-identified data may be used. Malignancy-
 Milestone 2 synthetic volumes are engineering fixtures, not clinically realistic CT scans. They cannot support clinical-performance claims.
 
 Milestone 3 DICOM de-identification is metadata-focused and does not establish full confidentiality-profile compliance. Burned-in pixel identifiers require manual review or future pixel-redaction capability.
+
+Milestone 4 quality control is not clinical image-quality assessment. Passing technical checks does not mean a scan is diagnostically adequate.

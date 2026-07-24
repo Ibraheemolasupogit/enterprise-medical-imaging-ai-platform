@@ -14,11 +14,13 @@ from medical_imaging_platform.ingestion.fixtures import generate_dicom_fixture_s
 from medical_imaging_platform.ingestion.loader import load_dicom
 from medical_imaging_platform.ingestion.metadata import extract_metadata
 from medical_imaging_platform.ingestion.validation import validate_series
+from medical_imaging_platform.quality_control.pipeline import run_quality_control
 from medical_imaging_platform.synthetic.generator import load_synthetic_config
 from medical_imaging_platform.synthetic.io import generate_dataset, validate_dataset
 from medical_imaging_platform.utils.config import (
     ConfigError,
     load_dicom_ingestion_config,
+    load_quality_control_config,
     validate_repository_configs,
 )
 from medical_imaging_platform.utils.exceptions import MedicalImagingPlatformError
@@ -124,6 +126,26 @@ def build_parser() -> argparse.ArgumentParser:
     deid_parser.add_argument("--output-dir", default=None)
     deid_parser.add_argument("--audit-path", default=None)
     deid_parser.add_argument("--overwrite", action="store_true")
+
+    qc_parser = subparsers.add_parser("quality-check-dicom", help="Run DICOM quality control.")
+    qc_parser.add_argument("input_dir")
+    qc_parser.add_argument("--config", default="config/data.yaml")
+    qc_parser.add_argument("--output-dir", default=None)
+    qc_parser.add_argument("--full-pixel-validation", action="store_true")
+    qc_parser.add_argument("--json", action="store_true")
+    qc_parser.add_argument("--fail-on-warning", action="store_true")
+    qc_parser.add_argument("--overwrite", action="store_true")
+
+    report_parser = subparsers.add_parser(
+        "quality-report-dicom",
+        help="Run DICOM quality control and write reports.",
+    )
+    report_parser.add_argument("input_dir")
+    report_parser.add_argument("--config", default="config/data.yaml")
+    report_parser.add_argument("--output-dir", default=None)
+    report_parser.add_argument("--full-pixel-validation", action="store_true")
+    report_parser.add_argument("--fail-on-warning", action="store_true")
+    report_parser.add_argument("--overwrite", action="store_true")
 
     return parser
 
@@ -311,6 +333,45 @@ def main(argv: list[str] | None = None) -> int:
             f"De-identified {audit.file_count} files into {output_dir}; "
             f"audit written to {audit_path}."
         )
+        return 0
+
+    if args.command in {"quality-check-dicom", "quality-report-dicom"}:
+        try:
+            dicom_config = load_dicom_ingestion_config(Path(args.config))
+            qc_config = load_quality_control_config(Path(args.config))
+            output_dir = (
+                Path(args.output_dir) if args.output_dir is not None else qc_config.output_dir
+            )
+            should_write = args.command == "quality-report-dicom" or args.output_dir is not None
+            reports = run_quality_control(
+                Path(args.input_dir),
+                output_dir=output_dir if should_write else None,
+                qc_config=qc_config,
+                max_files=dicom_config.max_files,
+                max_file_size_bytes=dicom_config.max_file_size_bytes,
+                full_pixel_validation=args.full_pixel_validation,
+                overwrite=args.overwrite,
+            )
+        except (MedicalImagingPlatformError, FileExistsError) as exc:
+            print(f"DICOM quality control failed: {exc}")
+            return 1
+        if getattr(args, "json", False):
+            print(
+                json.dumps(
+                    [report.model_dump(mode="json") for report in reports], indent=2, sort_keys=True
+                )
+            )
+        else:
+            statuses = ", ".join(report.status for report in reports)
+            print(f"DICOM quality control completed for {len(reports)} series: {statuses}.")
+        if any(report.status == "REJECTED" for report in reports):
+            return 3
+        if any(report.status == "FAIL" for report in reports):
+            return 2
+        if args.fail_on_warning and any(
+            report.status == "PASS_WITH_WARNINGS" for report in reports
+        ):
+            return 2
         return 0
 
     parser.error(f"Unsupported command: {args.command}")
