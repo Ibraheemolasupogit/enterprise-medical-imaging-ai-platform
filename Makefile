@@ -1,4 +1,4 @@
-.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality-check-dicom verify-dicom-quality preprocess-dicom validate-preprocessed-volume verify-preprocessing register-synthetic-pair validate-registration verify-registration generate-localisation-fixtures localise-synthetic-regions validate-localisation verify-localisation quality clean
+.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality-check-dicom verify-dicom-quality preprocess-dicom validate-preprocessed-volume verify-preprocessing register-synthetic-pair validate-registration verify-registration generate-localisation-fixtures localise-synthetic-regions validate-localisation verify-localisation prepare-segmentation-data train-segmentation evaluate-segmentation verify-segmentation quality clean
 
 PYTHON ?= python3
 SYNTHETIC_DATA_DIR ?= data/synthetic/generated
@@ -11,6 +11,10 @@ REGISTRATION_FIXTURE_DIR ?= data/processed/registration-fixtures
 REGISTRATION_DIR ?= data/processed/registration
 LOCALISATION_FIXTURE_DIR ?= data/processed/localisation-fixtures
 LOCALISATION_DIR ?= data/processed/localisation
+SEGMENTATION_DATASET_DIR ?= ml/datasets/segmentation
+SEGMENTATION_EXPERIMENT_DIR ?= ml/experiments/segmentation
+SEGMENTATION_INFERENCE_DIR ?= ml/experiments/segmentation-inference
+SEGMENTATION_ENV ?= MPLCONFIGDIR=/tmp/medical-imaging-platform-mplconfig
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -99,7 +103,21 @@ validate-localisation:
 verify-localisation: localise-synthetic-regions validate-localisation
 	$(PYTHON) -m medical_imaging_platform inspect-localisation $$(find $(LOCALISATION_DIR) -mindepth 1 -maxdepth 1 -type d | sort | head -n 1)
 
+prepare-segmentation-data: generate-synthetic-data
+	$(SEGMENTATION_ENV) $(PYTHON) -m medical_imaging_platform prepare-segmentation-data --synthetic-dataset-dir $(SYNTHETIC_DATA_DIR) --output-dir $(SEGMENTATION_DATASET_DIR) --overwrite
+
+train-segmentation: prepare-segmentation-data
+	$(SEGMENTATION_ENV) $(PYTHON) -m medical_imaging_platform train-segmentation $$(find $(SEGMENTATION_DATASET_DIR) -mindepth 1 -maxdepth 1 -type d | sort | head -n 1) --output-dir $(SEGMENTATION_EXPERIMENT_DIR) --overwrite
+
+evaluate-segmentation:
+	$(SEGMENTATION_ENV) $(PYTHON) -m medical_imaging_platform validate-segmentation-experiment $$(find $(SEGMENTATION_EXPERIMENT_DIR) -mindepth 1 -maxdepth 1 -type d | sort | head -n 1)
+	$(SEGMENTATION_ENV) $(PYTHON) -m medical_imaging_platform inspect-segmentation-experiment $$(find $(SEGMENTATION_EXPERIMENT_DIR) -mindepth 1 -maxdepth 1 -type d | sort | head -n 1)
+
+verify-segmentation: train-segmentation evaluate-segmentation
+	$(SEGMENTATION_ENV) $(PYTHON) -m medical_imaging_platform segment-volume $$(find $(SEGMENTATION_DATASET_DIR) -path "*/synthetic-case-0001-current/image.npy" | sort | head -n 1) --checkpoint $$(find $(SEGMENTATION_EXPERIMENT_DIR) -mindepth 2 -maxdepth 2 -name best_model.pt | sort | head -n 1) --output-dir $(SEGMENTATION_INFERENCE_DIR)/positive --overwrite
+	$(SEGMENTATION_ENV) $(PYTHON) -m medical_imaging_platform segment-volume $$(find $(SEGMENTATION_DATASET_DIR) -path "*/synthetic-case-0004-previous/image.npy" | sort | head -n 1) --checkpoint $$(find $(SEGMENTATION_EXPERIMENT_DIR) -mindepth 2 -maxdepth 2 -name best_model.pt | sort | head -n 1) --output-dir $(SEGMENTATION_INFERENCE_DIR)/negative --overwrite
+
 quality: format-check lint type-check validate-config validate-docs test security
 
 clean:
-	rm -rf .coverage coverage.xml .mypy_cache .pytest_cache .ruff_cache src/medical_imaging_platform/__pycache__ src/medical_imaging_platform/deidentification/__pycache__ src/medical_imaging_platform/ingestion/__pycache__ src/medical_imaging_platform/localisation/__pycache__ src/medical_imaging_platform/preprocessing/__pycache__ src/medical_imaging_platform/quality_control/__pycache__ src/medical_imaging_platform/registration/__pycache__ src/medical_imaging_platform/synthetic/__pycache__ src/medical_imaging_platform/utils/__pycache__ tests/__pycache__
+	rm -rf .coverage coverage.xml .mypy_cache .pytest_cache .ruff_cache src/medical_imaging_platform/__pycache__ src/medical_imaging_platform/deidentification/__pycache__ src/medical_imaging_platform/ingestion/__pycache__ src/medical_imaging_platform/localisation/__pycache__ src/medical_imaging_platform/preprocessing/__pycache__ src/medical_imaging_platform/quality_control/__pycache__ src/medical_imaging_platform/registration/__pycache__ src/medical_imaging_platform/segmentation/__pycache__ src/medical_imaging_platform/synthetic/__pycache__ src/medical_imaging_platform/utils/__pycache__ tests/__pycache__

@@ -12,3 +12,8 @@ Milestone 7 localisation reports and overlay arrays require human engineering re
 downstream research use. Reviewers must treat atlas centres, confidence heuristics, and synthetic
 metrics as technical signals only; they do not prove adrenal localisation accuracy or diagnostic
 suitability.
+
+Milestone 8 segmentation reports, checkpoints, and inference masks require human engineering review
+before any downstream research use. Reviewers must treat synthetic Dice, recall, thresholded masks,
+and post-processing outputs as technical evidence only; empty predictions, false negatives, false
+positives, and failed quality gates must not be ignored.

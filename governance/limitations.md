@@ -34,3 +34,8 @@ Milestone 7 localisation is a deterministic atlas/geometry baseline for configur
 adrenal-region placeholders. It uses synthetic engineering masks only when optional ground truth is
 provided. It does not implement learned localisation, organ segmentation, lesion detection,
 classification, anatomical correctness validation, or diagnostic visualisation.
+
+Milestone 8 segmentation is a small PyTorch/MONAI baseline trained only on synthetic engineering
+lesion masks. Synthetic Dice, recall, volume error, and surface metrics cannot support clinical
+claims. No public-data training, radiologist validation, lesion classification, diagnosis, or
+medical-device compliance is implemented.

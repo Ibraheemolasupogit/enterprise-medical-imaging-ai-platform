@@ -13,6 +13,7 @@ from medical_imaging_platform.localisation.models import LocalisationConfig
 from medical_imaging_platform.preprocessing.models import PreprocessingConfig
 from medical_imaging_platform.quality_control.models import QualityControlConfig
 from medical_imaging_platform.registration.models import RegistrationConfig
+from medical_imaging_platform.segmentation.models import SegmentationConfig
 from medical_imaging_platform.utils.exceptions import MedicalImagingPlatformError
 
 
@@ -166,3 +167,15 @@ def load_localisation_config(path: Path) -> LocalisationConfig:
         return LocalisationConfig.model_validate(settings["localisation"])
     except ValidationError as exc:
         raise ConfigError(f"Invalid localisation configuration in {path}: {exc}") from exc
+
+
+def load_segmentation_config(path: Path) -> SegmentationConfig:
+    """Load typed Milestone 8 segmentation settings from segmentation.yaml."""
+    data = load_yaml_file(path)
+    settings = data.get("settings")
+    if not isinstance(settings, dict) or "segmentation" not in settings:
+        raise ConfigError(f"Missing settings.segmentation in {path}")
+    try:
+        return SegmentationConfig.model_validate(settings["segmentation"])
+    except ValidationError as exc:
+        raise ConfigError(f"Invalid segmentation configuration in {path}: {exc}") from exc

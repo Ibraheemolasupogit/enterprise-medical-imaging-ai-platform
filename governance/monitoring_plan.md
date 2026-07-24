@@ -30,3 +30,8 @@ left/right swap findings, centre-distance failures on synthetic labels, target-c
 bounding-box IoU failures, padding fraction, upstream override propagation, missing ground-truth
 rates, and checksum failures. These remain engineering signals and are not clinical localisation
 performance metrics.
+
+Milestone 8 segmentation reports introduce future monitoring candidates: dataset leakage findings,
+training loss finiteness, validation Dice, test recall, false-positive voxel burden, relative volume
+error, checkpoint checksum failures, inference empty-mask warnings, and failed model-quality gates.
+These remain synthetic engineering signals and are not clinical segmentation performance metrics.

@@ -26,6 +26,13 @@ preprocessed or registered volume, preserves upstream provenance, and writes sep
 arrays, overlay arrays, JSON metadata, checksums, optional synthetic-label metrics, and a Markdown
 report. These outputs are ignored by Git and are atlas-baseline engineering artefacts only.
 
+Milestone 8 adds synthetic segmentation datasets under `ml/datasets/segmentation/`, segmentation
+experiments under `ml/experiments/segmentation/`, and inference smoke-test outputs under
+`ml/experiments/segmentation-inference/`. Segmentation consumes synthetic volumes and lesion masks,
+preserves subject-level split metadata and checksums, trains a CPU-compatible MONAI U-Net, and writes
+state-dict checkpoints plus structured experiment evidence. These artefacts are ignored by Git and
+are not clinical model outputs.
+
 Planned - not yet implemented data zones:
 
 - Raw external source area outside Git.
@@ -40,3 +47,5 @@ No credentials, patient information, DICOM studies, NIfTI volumes, model weights
 
 Generated DICOM fixtures, de-identified outputs, audit artefacts under `data/dicom/`, preprocessed
 volumes, registration outputs, and localisation outputs under `data/processed/` are ignored by Git.
+Generated segmentation datasets, checkpoints, and inference artefacts under `ml/datasets/` and
+`ml/experiments/` are ignored by Git.

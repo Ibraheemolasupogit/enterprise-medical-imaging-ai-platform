@@ -59,3 +59,7 @@ bounding-box marks. They are not diagnostic visualisations.
 The atlas baseline does not learn image features, infer patient anatomy, handle unusual protocols, or
 prove localisation accuracy on real CT. It exists to establish interfaces, provenance, validation,
 quality gates, and deterministic reports before PyTorch/MONAI modelling milestones.
+
+Milestone 8 segmentation may eventually consume localisation-derived ROIs. Localisation failures,
+left/right reversals, or excessive padding must be treated as upstream blockers because they can
+propagate directly into segmentation samples.

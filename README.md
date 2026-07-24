@@ -4,7 +4,10 @@
 
 Enterprise Medical Imaging AI Platform is a planned production-oriented medical-imaging AI platform for abdominal CT research workflows. The long-term goal is to demonstrate how DICOM ingestion, de-identification, quality control, image standardisation, longitudinal registration, adrenal-region localisation, lesion analysis, governed review, MLOps, cloud architecture, and clinical AI assurance fit together as one engineered system.
 
-Milestone 1 establishes only the repository foundation. Medical-imaging pipelines, models, APIs, dashboards, cloud deployment, containers, and monitoring are **Planned - not yet implemented**.
+Milestones 1-8 establish repository foundations, synthetic data, DICOM ingestion, quality control,
+preprocessing, registration, localisation, and a synthetic segmentation baseline. APIs, dashboards,
+cloud deployment, containers, monitoring, classification, calibration, and clinical deployment are
+**Planned - not yet implemented**.
 
 ## Clinical And Engineering Problem
 
@@ -92,9 +95,18 @@ Complete in Milestone 7:
 - Optional synthetic-label metrics for centre distance, target coverage, IoU, and swap detection.
 - Localisation quality gates, reports, CLI commands, and validation.
 
+Complete in Milestone 8:
+
+- Synthetic segmentation dataset preparation from existing synthetic manifests and splits.
+- CPU-compatible PyTorch/MONAI 3D U-Net baseline.
+- Training, validation, best/last checkpoint export, and deterministic experiment evidence.
+- Segmentation inference with sigmoid probability maps, thresholding, and post-processing.
+- Dice, IoU, precision, recall, specificity, volume-error, and surface-distance metrics.
+- Segmentation model-quality gates, CLI commands, Make targets, and model card.
+
 Planned - not yet implemented:
 
-- Deformable registration, learned localisation, segmentation, and classification.
+- Deformable registration, learned localisation beyond the baseline, advanced segmentation, and classification.
 - FastAPI, Streamlit, MLflow, Docker, Kubernetes, Terraform, and AWS integrations.
 - Any diagnostic or clinical decision support behavior.
 
@@ -112,10 +124,11 @@ Milestone 1 uses a deliberately small Python 3.12 stack:
 - Standard-library `argparse` and `logging` for CLI and logs.
 - `pytest`, `ruff`, `mypy`, `bandit`, and coverage tooling for quality.
 
+- PyTorch and MONAI are used for the Milestone 8 synthetic segmentation baseline.
+
 Planned - not yet implemented:
 
-- PyTorch and MONAI modelling.
-- SimpleITK, nibabel, and OpenCV imaging workflows.
+- nibabel and OpenCV imaging workflows.
 - MLflow, FastAPI, Streamlit, Docker, Kubernetes, and AWS.
 
 ## Local Setup
@@ -214,6 +227,19 @@ medical-imaging-platform localise-adrenal-regions <preprocessed-or-registered-di
 Localisation is an atlas/geometry baseline only. Synthetic adrenal-region masks are engineering
 placeholders, not clinical annotations, and localisation outputs must not be used diagnostically.
 
+Segmentation commands:
+
+```bash
+make prepare-segmentation-data
+make train-segmentation
+make evaluate-segmentation
+make verify-segmentation
+medical-imaging-platform train-segmentation ml/datasets/segmentation/<dataset_id>
+```
+
+Segmentation uses synthetic engineering lesion masks only. Generated checkpoints under
+`ml/experiments/` are ignored by Git and must not be interpreted as clinical-performance evidence.
+
 ## Data Safety
 
 Only synthetic data or publicly available de-identified data may be used. Do not commit real patient data, model weights derived from restricted patient data, credentials, cloud account identifiers, DICOM studies with identifying metadata, or screenshots containing protected health information.
@@ -231,7 +257,7 @@ This repository is not an approved medical device, is not validated for NHS depl
 5. Preprocessing. Complete for deterministic NumPy CT preprocessing foundation only.
 6. Registration. Complete for SimpleITK centre-of-mass, rigid, and affine baselines only.
 7. Baseline localisation. Complete for atlas-style adrenal-region placeholder localisation only; no segmentation.
-8. Advanced models.
+8. Synthetic segmentation baseline. Complete for small MONAI 3D U-Net on synthetic masks only.
 9. Classification and calibration.
 10. Longitudinal analysis.
 11. API and review dashboard.

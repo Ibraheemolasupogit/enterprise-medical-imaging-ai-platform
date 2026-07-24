@@ -49,6 +49,7 @@ from medical_imaging_platform.utils.config import (
     load_preprocessing_config,
     load_quality_control_config,
     load_registration_config,
+    load_segmentation_config,
     validate_repository_configs,
 )
 from medical_imaging_platform.utils.exceptions import MedicalImagingPlatformError
@@ -291,6 +292,64 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_localisation_parser.add_argument("output_dir")
     validate_localisation_parser.add_argument("--json", action="store_true")
+
+    prepare_segmentation_parser = subparsers.add_parser(
+        "prepare-segmentation-data",
+        help="Prepare synthetic segmentation samples from generated synthetic data.",
+    )
+    prepare_segmentation_parser.add_argument(
+        "--synthetic-dataset-dir", default="data/synthetic/generated"
+    )
+    prepare_segmentation_parser.add_argument("--config", default="config/segmentation.yaml")
+    prepare_segmentation_parser.add_argument("--output-dir", default=None)
+    prepare_segmentation_parser.add_argument("--overwrite", action="store_true")
+    prepare_segmentation_parser.add_argument("--json", action="store_true")
+
+    train_segmentation_parser = subparsers.add_parser(
+        "train-segmentation",
+        help="Train the small MONAI 3D U-Net synthetic segmentation baseline.",
+    )
+    train_segmentation_parser.add_argument("dataset_dir")
+    train_segmentation_parser.add_argument("--config", default="config/segmentation.yaml")
+    train_segmentation_parser.add_argument("--output-dir", default=None)
+    train_segmentation_parser.add_argument("--seed", type=int, default=None)
+    train_segmentation_parser.add_argument("--epochs", type=int, default=None)
+    train_segmentation_parser.add_argument("--device", default=None)
+    train_segmentation_parser.add_argument("--overwrite", action="store_true")
+    train_segmentation_parser.add_argument("--json", action="store_true")
+
+    evaluate_segmentation_parser = subparsers.add_parser(
+        "evaluate-segmentation",
+        help="Validate and inspect a segmentation experiment.",
+    )
+    evaluate_segmentation_parser.add_argument("experiment_dir")
+    evaluate_segmentation_parser.add_argument("--json", action="store_true")
+
+    segment_volume_parser = subparsers.add_parser(
+        "segment-volume",
+        help="Run segmentation inference for one prepared ROI volume.",
+    )
+    segment_volume_parser.add_argument("input_volume")
+    segment_volume_parser.add_argument("--checkpoint", required=True)
+    segment_volume_parser.add_argument("--config", default="config/segmentation.yaml")
+    segment_volume_parser.add_argument("--output-dir", required=True)
+    segment_volume_parser.add_argument("--threshold", type=float, default=None)
+    segment_volume_parser.add_argument("--overwrite", action="store_true")
+    segment_volume_parser.add_argument("--json", action="store_true")
+
+    inspect_segmentation_parser = subparsers.add_parser(
+        "inspect-segmentation-experiment",
+        help="Inspect a segmentation experiment directory.",
+    )
+    inspect_segmentation_parser.add_argument("experiment_dir")
+    inspect_segmentation_parser.add_argument("--json", action="store_true")
+
+    validate_segmentation_parser = subparsers.add_parser(
+        "validate-segmentation-experiment",
+        help="Validate a segmentation experiment directory.",
+    )
+    validate_segmentation_parser.add_argument("experiment_dir")
+    validate_segmentation_parser.add_argument("--json", action="store_true")
 
     return parser
 
@@ -769,6 +828,139 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(localisation_result.model_dump(mode="json"), indent=2, sort_keys=True))
         else:
             print(f"Validated localisation {localisation_result.localisation_run_id}.")
+        return 0
+
+    if args.command == "prepare-segmentation-data":
+        from medical_imaging_platform.segmentation.dataset import (
+            SegmentationDataError,
+            prepare_segmentation_dataset,
+        )
+
+        try:
+            segmentation_config = load_segmentation_config(Path(args.config))
+            output_root = (
+                Path(args.output_dir)
+                if args.output_dir is not None
+                else segmentation_config.dataset_output_directory
+            )
+            segmentation_manifest = prepare_segmentation_dataset(
+                Path(args.synthetic_dataset_dir),
+                output_root=output_root,
+                config=segmentation_config,
+                overwrite=args.overwrite,
+            )
+        except (
+            ConfigError,
+            SegmentationDataError,
+            MedicalImagingPlatformError,
+            FileExistsError,
+        ) as exc:
+            print(f"Segmentation dataset preparation failed: {exc}")
+            return 1
+        if args.json:
+            print(
+                json.dumps(segmentation_manifest.model_dump(mode="json"), indent=2, sort_keys=True)
+            )
+        else:
+            print(
+                f"Prepared segmentation dataset {segmentation_manifest.dataset_id} "
+                f"with {len(segmentation_manifest.samples)} samples."
+            )
+        return 0
+
+    if args.command == "train-segmentation":
+        from medical_imaging_platform.segmentation.export import SegmentationOutputError
+        from medical_imaging_platform.segmentation.trainer import train_segmentation_experiment
+
+        try:
+            segmentation_config = load_segmentation_config(Path(args.config))
+            output_root = (
+                Path(args.output_dir)
+                if args.output_dir is not None
+                else segmentation_config.output_directory
+            )
+            segmentation_payload = train_segmentation_experiment(
+                Path(args.dataset_dir),
+                output_root=output_root,
+                config=segmentation_config,
+                seed=args.seed,
+                epochs=args.epochs,
+                device_name=args.device,
+                overwrite=args.overwrite,
+            )
+        except SegmentationOutputError as exc:
+            print(f"Segmentation experiment output validation failed: {exc}")
+            return 4
+        except ValueError as exc:
+            print(f"Segmentation experiment rejected: {exc}")
+            return 3
+        except (ConfigError, MedicalImagingPlatformError, FileExistsError) as exc:
+            print(f"Segmentation training failed: {exc}")
+            return 1
+        if args.json:
+            print(json.dumps(segmentation_payload, indent=2, sort_keys=True))
+        else:
+            print(
+                f"Trained segmentation experiment {segmentation_payload['experiment_id']} "
+                f"status={segmentation_payload['status']}."
+            )
+        if segmentation_payload["status"] == "REJECTED":
+            return 3
+        if segmentation_payload["status"] == "FAIL":
+            return 2
+        return 0
+
+    if args.command in {
+        "evaluate-segmentation",
+        "inspect-segmentation-experiment",
+        "validate-segmentation-experiment",
+    }:
+        from medical_imaging_platform.segmentation.export import (
+            SegmentationOutputError,
+            inspect_segmentation_experiment,
+            validate_segmentation_experiment,
+        )
+
+        try:
+            if args.command == "validate-segmentation-experiment":
+                segmentation_summary = validate_segmentation_experiment(Path(args.experiment_dir))
+            else:
+                segmentation_summary = inspect_segmentation_experiment(Path(args.experiment_dir))
+        except SegmentationOutputError as exc:
+            print(f"Segmentation experiment validation failed: {exc}")
+            return 4
+        if args.json:
+            print(json.dumps(segmentation_summary, indent=2, sort_keys=True))
+        else:
+            print(
+                f"Segmentation experiment {segmentation_summary['experiment_id']} "
+                f"status={segmentation_summary['status']}."
+            )
+        return 0
+
+    if args.command == "segment-volume":
+        from medical_imaging_platform.segmentation.inference import segment_volume
+
+        try:
+            segmentation_config = load_segmentation_config(Path(args.config))
+            segmentation_metadata = segment_volume(
+                Path(args.input_volume),
+                checkpoint_path=Path(args.checkpoint),
+                output_dir=Path(args.output_dir),
+                config=segmentation_config,
+                threshold=args.threshold,
+                overwrite=args.overwrite,
+            )
+        except ValueError as exc:
+            print(f"Segmentation inference rejected: {exc}")
+            return 3
+        except (ConfigError, MedicalImagingPlatformError, FileExistsError) as exc:
+            print(f"Segmentation inference failed: {exc}")
+            return 1
+        if args.json:
+            print(json.dumps(segmentation_metadata, indent=2, sort_keys=True))
+        else:
+            print(f"Wrote segmentation inference outputs to {args.output_dir}.")
         return 0
 
     parser.error(f"Unsupported command: {args.command}")
