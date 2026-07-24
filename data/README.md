@@ -16,3 +16,7 @@ Milestone 3 generated DICOM fixtures, de-identified outputs, and audit artefacts
 Milestone 5 generated preprocessed NumPy volumes, metadata, and reports live under
 `data/processed/` and are ignored by Git. These artefacts are for engineering validation only and
 must be regenerated from synthetic or publicly available de-identified inputs.
+
+Milestone 6 generated registration fixtures and outputs also live under `data/processed/` and are
+ignored by Git. They include transforms, registered NumPy arrays, metrics, reports, and review arrays
+for engineering validation only.

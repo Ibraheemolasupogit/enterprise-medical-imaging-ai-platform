@@ -3,3 +3,7 @@
 Human review is mandatory for any future output.
 
 Future interfaces must present model and quality information as technical review aids, not as final clinical determinations. Reviewers must be able to reject, correct, or mark outputs as indeterminate.
+
+Milestone 6 registration reports and review arrays require human engineering review before any
+downstream research use. Reviewers must treat optimiser convergence and metric improvement as
+technical signals only; they do not prove anatomical correctness or diagnostic suitability.

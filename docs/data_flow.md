@@ -13,13 +13,20 @@ spacing as `[z_mm, y_mm, x_mm]`, applies configured intensity and engineering cr
 and writes `volume.npy`, `metadata.json`, and `preprocessing_report.md`. These derived artefacts
 remain ignored by Git.
 
+Milestone 6 adds registration outputs under `data/processed/registration/` and synthetic
+registration bridge fixtures under `data/processed/registration-fixtures/`. Registration consumes
+validated preprocessing directories with explicit fixed and moving roles, transforms the moving
+volume into fixed-volume space, and writes registered NumPy volumes, transform JSON, metrics JSON,
+metadata, Markdown reports, and lightweight review arrays. These artefacts remain ignored by Git and
+are not clinical images or diagnostic overlays.
+
 Planned - not yet implemented data zones:
 
 - Raw external source area outside Git.
 - Interim processing area outside Git.
 - Dataset manifests for synthetic or publicly available de-identified data.
 - Audit records for de-identification and provenance.
-- Future NIfTI, registration, model, and review artefact zones outside Git.
+- Future NIfTI, deformable registration, model, and clinical review artefact zones outside Git.
 
 No credentials, patient information, DICOM studies, NIfTI volumes, model weights, or restricted labels should be committed.
 

@@ -75,9 +75,18 @@ Complete in Milestone 5:
 - Deterministic engineering crop and padding operations with transform provenance.
 - Preprocessing metadata, checksums, Markdown reports, CLI commands, and validation.
 
+Complete in Milestone 6:
+
+- Explicit fixed/moving preprocessed-volume registration workflow.
+- SimpleITK centre-of-mass, rigid, and rigid-then-affine registration baselines.
+- NumPy/SimpleITK geometry conversion between `[z, y, x]` and `[x, y, z]` conventions.
+- Registered moving-volume export, transform JSON, metrics JSON, review arrays, and reports.
+- Registration quality gates for input validity, transform plausibility, metrics, and padding.
+- Synthetic registration fixture bridge for clean-checkout verification.
+
 Planned - not yet implemented:
 
-- Registration, localisation, segmentation, and classification.
+- Deformable registration, localisation, segmentation, and classification.
 - FastAPI, Streamlit, MLflow, Docker, Kubernetes, Terraform, and AWS integrations.
 - Any diagnostic or clinical decision support behavior.
 
@@ -172,6 +181,18 @@ Generated preprocessed NumPy volumes and reports are ignored by Git. They are te
 research engineering only and do not perform registration, localisation, segmentation,
 classification, NIfTI conversion, or spatial resampling.
 
+Registration commands:
+
+```bash
+make register-synthetic-pair
+make validate-registration
+make verify-registration
+medical-imaging-platform register-volumes --fixed <fixed-preprocessed-dir> --moving <moving-preprocessed-dir>
+```
+
+Registration is technical alignment for research evaluation only. Optimiser convergence and metric
+improvement do not prove anatomical correctness or clinical suitability.
+
 ## Data Safety
 
 Only synthetic data or publicly available de-identified data may be used. Do not commit real patient data, model weights derived from restricted patient data, credentials, cloud account identifiers, DICOM studies with identifying metadata, or screenshots containing protected health information.
@@ -187,7 +208,7 @@ This repository is not an approved medical device, is not validated for NHS depl
 3. DICOM ingestion and governance. Complete for local synthetic fixtures and metadata de-identification only.
 4. Imaging quality control. Complete for technical DICOM engineering checks only.
 5. Preprocessing. Complete for deterministic NumPy CT preprocessing foundation only.
-6. Registration.
+6. Registration. Complete for SimpleITK centre-of-mass, rigid, and affine baselines only.
 7. Baseline localisation and segmentation.
 8. Advanced models.
 9. Classification and calibration.

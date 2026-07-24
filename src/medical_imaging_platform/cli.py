@@ -26,6 +26,13 @@ from medical_imaging_platform.preprocessing.export import (
 )
 from medical_imaging_platform.preprocessing.pipeline import preprocess_dicom_series
 from medical_imaging_platform.quality_control.pipeline import run_quality_control
+from medical_imaging_platform.registration.export import (
+    RegistrationOutputError,
+    inspect_registration_output,
+    validate_registration_output,
+)
+from medical_imaging_platform.registration.fixtures import generate_registration_fixture_pair
+from medical_imaging_platform.registration.pipeline import register_preprocessed_volumes
 from medical_imaging_platform.synthetic.generator import load_synthetic_config
 from medical_imaging_platform.synthetic.io import generate_dataset, validate_dataset
 from medical_imaging_platform.utils.config import (
@@ -33,6 +40,7 @@ from medical_imaging_platform.utils.config import (
     load_dicom_ingestion_config,
     load_preprocessing_config,
     load_quality_control_config,
+    load_registration_config,
     validate_repository_configs,
 )
 from medical_imaging_platform.utils.exceptions import MedicalImagingPlatformError
@@ -193,6 +201,48 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_volume_parser.add_argument("output_dir")
     validate_volume_parser.add_argument("--json", action="store_true")
+
+    registration_fixture_parser = subparsers.add_parser(
+        "generate-registration-fixtures",
+        help="Generate synthetic preprocessing-compatible registration fixture pair.",
+    )
+    registration_fixture_parser.add_argument(
+        "--output-dir", default="data/processed/registration-fixtures"
+    )
+    registration_fixture_parser.add_argument("--overwrite", action="store_true")
+
+    register_parser = subparsers.add_parser(
+        "register-volumes",
+        help="Register an explicit moving preprocessed volume into fixed-volume space.",
+    )
+    register_parser.add_argument("--fixed", required=True)
+    register_parser.add_argument("--moving", required=True)
+    register_parser.add_argument("--output-dir", default=None)
+    register_parser.add_argument("--config", default="config/registration.yaml")
+    register_parser.add_argument(
+        "--mode",
+        choices=["centre_of_mass", "rigid", "rigid_then_affine"],
+        default=None,
+    )
+    register_parser.add_argument("--fixed-temporal-label", default=None)
+    register_parser.add_argument("--moving-temporal-label", default=None)
+    register_parser.add_argument("--overwrite", action="store_true")
+    register_parser.add_argument("--json", action="store_true")
+    register_parser.add_argument("--fail-on-warning", action="store_true")
+
+    inspect_registration_parser = subparsers.add_parser(
+        "inspect-registration",
+        help="Inspect a registration output directory.",
+    )
+    inspect_registration_parser.add_argument("output_dir")
+    inspect_registration_parser.add_argument("--json", action="store_true")
+
+    validate_registration_parser = subparsers.add_parser(
+        "validate-registration",
+        help="Validate a registration output directory.",
+    )
+    validate_registration_parser.add_argument("output_dir")
+    validate_registration_parser.add_argument("--json", action="store_true")
 
     return parser
 
@@ -500,6 +550,87 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(validation_result.model_dump(mode="json"), indent=2, sort_keys=True))
         else:
             print(f"Validated preprocessed volume {validation_result.run_id}.")
+        return 0
+
+    if args.command == "generate-registration-fixtures":
+        try:
+            fixed_dir, moving_dir = generate_registration_fixture_pair(
+                Path(args.output_dir), overwrite=args.overwrite
+            )
+        except Exception as exc:
+            print(f"Registration fixture generation failed: {exc}")
+            return 1
+        print(f"Generated registration fixtures fixed={fixed_dir} moving={moving_dir}.")
+        return 0
+
+    if args.command == "register-volumes":
+        try:
+            registration_config = load_registration_config(Path(args.config))
+            output_root = (
+                Path(args.output_dir)
+                if args.output_dir is not None
+                else registration_config.output_directory
+            )
+            registration_result = register_preprocessed_volumes(
+                Path(args.fixed),
+                Path(args.moving),
+                output_root=output_root,
+                config=registration_config,
+                mode=args.mode,
+                fixed_temporal_label=args.fixed_temporal_label,
+                moving_temporal_label=args.moving_temporal_label,
+                overwrite=args.overwrite,
+            )
+        except RegistrationOutputError as exc:
+            print(f"Registration output validation failed: {exc}")
+            return 4
+        except ValueError as exc:
+            print(f"Registration rejected: {exc}")
+            return 3
+        except (ConfigError, MedicalImagingPlatformError, FileExistsError) as exc:
+            print(f"Registration failed: {exc}")
+            return 1
+        if args.json:
+            print(json.dumps(registration_result.model_dump(mode="json"), indent=2, sort_keys=True))
+        else:
+            print(
+                f"Registered moving volume into fixed space at "
+                f"{registration_result.output_paths.output_dir}; "
+                f"status={registration_result.status}."
+            )
+        if registration_result.status == "REJECTED":
+            return 3
+        if registration_result.status == "FAIL":
+            return 2
+        if args.fail_on_warning and registration_result.status == "PASS_WITH_WARNINGS":
+            return 2
+        return 0
+
+    if args.command == "inspect-registration":
+        try:
+            summary = inspect_registration_output(Path(args.output_dir))
+        except RegistrationOutputError as exc:
+            print(f"Registration inspection failed: {exc}")
+            return 4
+        if args.json:
+            print(json.dumps(summary, indent=2, sort_keys=True))
+        else:
+            print(
+                f"Registration {summary['registration_run_id']} "
+                f"status={summary['status']} shape={summary['shape']}."
+            )
+        return 0
+
+    if args.command == "validate-registration":
+        try:
+            registration_result = validate_registration_output(Path(args.output_dir))
+        except RegistrationOutputError as exc:
+            print(f"Registration validation failed: {exc}")
+            return 4
+        if args.json:
+            print(json.dumps(registration_result.model_dump(mode="json"), indent=2, sort_keys=True))
+        else:
+            print(f"Validated registration {registration_result.registration_run_id}.")
         return 0
 
     parser.error(f"Unsupported command: {args.command}")

@@ -1,8 +1,8 @@
 # Architecture
 
-Milestones 1-5 provide repository foundation, synthetic fixtures, local DICOM ingestion,
+Milestones 1-6 provide repository foundation, synthetic fixtures, local DICOM ingestion,
 metadata-focused de-identification, technical DICOM quality control, and deterministic CT
-preprocessing to NumPy volumes.
+preprocessing to NumPy volumes, plus SimpleITK registration baselines.
 
 Implemented foundation components:
 
@@ -13,12 +13,14 @@ Implemented foundation components:
 - Technical DICOM quality-control reports.
 - CT-like preprocessing with `[z, y, x]` NumPy assembly, geometry provenance, intensity transforms,
   engineering crop/pad transforms, checksums, and validation.
+- Longitudinal registration foundation with explicit fixed/moving roles, centre-of-mass, rigid, and
+  affine baselines, transform export, metrics, quality gates, and review arrays.
 
 Planned - not yet implemented:
 
 - DICOM-to-NIfTI conversion.
 - Spatial resampling and full anatomical reorientation.
-- Longitudinal registration.
+- Deformable or anatomy-constrained longitudinal registration.
 - Adrenal ROI localisation.
 - Lesion segmentation and classification.
 - Longitudinal change measurement.

@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from medical_imaging_platform.ingestion.models import DicomIngestionConfig
 from medical_imaging_platform.preprocessing.models import PreprocessingConfig
 from medical_imaging_platform.quality_control.models import QualityControlConfig
+from medical_imaging_platform.registration.models import RegistrationConfig
 from medical_imaging_platform.utils.exceptions import MedicalImagingPlatformError
 
 
@@ -140,3 +141,15 @@ def load_preprocessing_config(path: Path) -> PreprocessingConfig:
         return PreprocessingConfig.model_validate(settings["preprocessing"])
     except ValidationError as exc:
         raise ConfigError(f"Invalid preprocessing configuration in {path}: {exc}") from exc
+
+
+def load_registration_config(path: Path) -> RegistrationConfig:
+    """Load typed Milestone 6 registration settings from registration.yaml."""
+    data = load_yaml_file(path)
+    settings = data.get("settings")
+    if not isinstance(settings, dict) or "registration" not in settings:
+        raise ConfigError(f"Missing settings.registration in {path}")
+    try:
+        return RegistrationConfig.model_validate(settings["registration"])
+    except ValidationError as exc:
+        raise ConfigError(f"Invalid registration configuration in {path}: {exc}") from exc

@@ -44,6 +44,10 @@ for later registration and NIfTI policy work.
 
 Milestone 5 does not anatomically reorient volumes and does not resample.
 
+Milestone 6 registration consumes this geometry metadata and performs SimpleITK resampling only when
+applying an explicit registration transform. That registration resampling is distinct from general
+preprocessing resampling, which remains deferred.
+
 ## Intensity And Crop Policy
 
 Configured profiles include `none`, `abdominal_soft_tissue`, `wide_ct`, and

@@ -1,16 +1,52 @@
 config_name: registration
-milestone: 1
-status: planned_not_implemented
-purpose: Placeholder structure for future longitudinal registration settings.
+milestone: 6
+status: foundation
+purpose: Reproducible longitudinal CT registration baseline for preprocessed volumes.
 owner: imaging-engineering
 settings:
-  baseline_registration: rigid_then_affine_planned
-  quality_gate_policy: planned
-  failure_handling: planned
+  registration:
+    policy_version: ct-registration-policy-v0.6.0
+    default_mode: rigid
+    initialisation_method: centre_of_mass
+    allow_constant_volume: false
+    foreground_threshold: 0.01
+    metric: mattes_mutual_information
+    metric_bins: 32
+    metric_sampling_strategy: none
+    metric_sampling_percentage: 1.0
+    random_seed: 20260724
+    optimiser: gradient_descent
+    learning_rate: 0.5
+    minimum_step: 0.0001
+    maximum_iterations: 25
+    convergence_window_size: 5
+    shrink_factors:
+      - 2
+      - 1
+    smoothing_sigmas:
+      - 1.0
+      - 0.0
+    interpolator: linear
+    default_pixel_value: 0.0
+    maximum_translation_mm: 50.0
+    maximum_rotation_degrees: 25.0
+    affine_scale_bounds:
+      - 0.85
+      - 1.2
+    maximum_shear: 0.2
+    minimum_metric_improvement: -0.000001
+    maximum_padding_fraction: 0.99
+    quality_status_policy:
+      rejected: invalid input or non-finite transform
+      fail: implausible transform or metric degradation
+      warning: propagated preprocessing override or temporal-label omission
+    output_directory: data/processed/registration
+    overwrite: false
 safeguards:
-  - No registration algorithm exists in Milestone 1.
-  - Future registration must flag poor alignment rather than silently proceeding.
+  - Fixed and moving roles must be explicit and are never inferred from filenames.
+  - Registration outputs are research engineering artefacts and not clinical alignment evidence.
+  - No deformable, deep-learning, segmentation, localisation, or classification behavior exists.
 future_capabilities:
-  - Rigid registration.
-  - Affine registration.
-  - Registration quality metrics and overlays.
+  - Deformable registration after explicit governance review.
+  - Anatomy-constrained quality checks after localisation milestones.
+  - Human-review registration visualisation after dashboard milestones.

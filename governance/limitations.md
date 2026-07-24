@@ -23,3 +23,9 @@ DICOM series into a NumPy volume, records geometry, applies technical intensity 
 crop or pad by configured non-anatomical rules. It does not perform diagnostic CT standardisation,
 NIfTI conversion, spatial resampling, anatomical reorientation, registration, adrenal localisation,
 segmentation, classification, or clinical inference.
+
+Milestone 6 registration is technical alignment for research engineering evaluation only. It uses
+centre-of-mass, rigid, and affine baselines on preprocessed volumes. Optimiser convergence, improved
+similarity metrics, and synthetic translation recovery do not prove anatomical correctness. No
+deformable, anatomy-constrained, radiologist-validated, diagnostic, or medical-device registration
+is implemented.
