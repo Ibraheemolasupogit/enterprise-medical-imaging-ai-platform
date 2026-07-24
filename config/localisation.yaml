@@ -1,16 +1,39 @@
 config_name: localisation
-milestone: 1
-status: planned_not_implemented
-purpose: Placeholder structure for future adrenal ROI localisation settings.
+milestone: 7
+status: foundation
+purpose: Baseline atlas-style adrenal-region placeholder localisation for synthetic engineering data.
 owner: machine-learning
 settings:
-  roi_strategy: planned
-  left_right_adrenal_handling: planned
-  anatomical_scope: abdominal_ct_research
+  localisation:
+    policy_version: "m7-localisation-v1"
+    default_mode: atlas
+    axis_order: "z,y,x"
+    left_relative_centre: [0.5, 0.375, 0.3125]
+    right_relative_centre: [0.5, 0.375, 0.6875]
+    left_physical_offset_mm: [0.0, 0.0, 0.0]
+    right_physical_offset_mm: [0.0, 0.0, 0.0]
+    roi_size_voxels: [10, 10, 10]
+    roi_size_mm: null
+    padding_value: 0.0
+    maximum_padding_fraction: 0.25
+    maximum_centre_distance_mm: 4.0
+    minimum_target_coverage: 0.95
+    minimum_box_iou: 0.08
+    left_right_minimum_separation_mm: 8.0
+    confidence_weights:
+      padding_fraction: 1.0
+    quality_status_policy:
+      invalid_geometry: REJECTED
+      empty_roi: FAILED
+      left_right_swap: FAILED
+      missing_ground_truth: NOT_EVALUATED
+    output_directory: data/processed/localisation
+    overwrite: false
 safeguards:
-  - No anatomical localisation model exists in Milestone 1.
-  - ROI methods must document dataset and protocol limitations.
+  - Localisation is a deterministic atlas/geometry baseline, not a learned model.
+  - Synthetic masks are engineering placeholders and are not clinical adrenal annotations.
+  - Outputs are for research engineering review only and must not be used diagnostically.
 future_capabilities:
-  - Atlas baseline.
-  - Bounding-box ROI extraction.
-  - Trainable adrenal localisation.
+  - MONAI/PyTorch trainable adrenal-region localisation.
+  - Public de-identified dataset adapters.
+  - Human review workflows for downstream model development.

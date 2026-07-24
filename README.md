@@ -84,9 +84,17 @@ Complete in Milestone 6:
 - Registration quality gates for input validity, transform plausibility, metrics, and padding.
 - Synthetic registration fixture bridge for clean-checkout verification.
 
+Complete in Milestone 7:
+
+- Deterministic atlas-style adrenal-region placeholder localisation.
+- Synthetic localisation fixtures with separate left/right binary engineering masks.
+- Separate left and right ROI extraction, padding metadata, overlay arrays, and checksums.
+- Optional synthetic-label metrics for centre distance, target coverage, IoU, and swap detection.
+- Localisation quality gates, reports, CLI commands, and validation.
+
 Planned - not yet implemented:
 
-- Deformable registration, localisation, segmentation, and classification.
+- Deformable registration, learned localisation, segmentation, and classification.
 - FastAPI, Streamlit, MLflow, Docker, Kubernetes, Terraform, and AWS integrations.
 - Any diagnostic or clinical decision support behavior.
 
@@ -193,6 +201,19 @@ medical-imaging-platform register-volumes --fixed <fixed-preprocessed-dir> --mov
 Registration is technical alignment for research evaluation only. Optimiser convergence and metric
 improvement do not prove anatomical correctness or clinical suitability.
 
+Localisation commands:
+
+```bash
+make generate-localisation-fixtures
+make localise-synthetic-regions
+make validate-localisation
+make verify-localisation
+medical-imaging-platform localise-adrenal-regions <preprocessed-or-registered-dir>
+```
+
+Localisation is an atlas/geometry baseline only. Synthetic adrenal-region masks are engineering
+placeholders, not clinical annotations, and localisation outputs must not be used diagnostically.
+
 ## Data Safety
 
 Only synthetic data or publicly available de-identified data may be used. Do not commit real patient data, model weights derived from restricted patient data, credentials, cloud account identifiers, DICOM studies with identifying metadata, or screenshots containing protected health information.
@@ -209,7 +230,7 @@ This repository is not an approved medical device, is not validated for NHS depl
 4. Imaging quality control. Complete for technical DICOM engineering checks only.
 5. Preprocessing. Complete for deterministic NumPy CT preprocessing foundation only.
 6. Registration. Complete for SimpleITK centre-of-mass, rigid, and affine baselines only.
-7. Baseline localisation and segmentation.
+7. Baseline localisation. Complete for atlas-style adrenal-region placeholder localisation only; no segmentation.
 8. Advanced models.
 9. Classification and calibration.
 10. Longitudinal analysis.

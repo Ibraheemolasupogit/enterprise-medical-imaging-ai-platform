@@ -20,6 +20,12 @@ volume into fixed-volume space, and writes registered NumPy volumes, transform J
 metadata, Markdown reports, and lightweight review arrays. These artefacts remain ignored by Git and
 are not clinical images or diagnostic overlays.
 
+Milestone 7 adds localisation fixtures under `data/processed/localisation-fixtures/` and
+localisation outputs under `data/processed/localisation/`. Localisation consumes one explicit
+preprocessed or registered volume, preserves upstream provenance, and writes separate left/right ROI
+arrays, overlay arrays, JSON metadata, checksums, optional synthetic-label metrics, and a Markdown
+report. These outputs are ignored by Git and are atlas-baseline engineering artefacts only.
+
 Planned - not yet implemented data zones:
 
 - Raw external source area outside Git.
@@ -27,8 +33,10 @@ Planned - not yet implemented data zones:
 - Dataset manifests for synthetic or publicly available de-identified data.
 - Audit records for de-identification and provenance.
 - Future NIfTI, deformable registration, model, and clinical review artefact zones outside Git.
+- Future learned localisation, segmentation, classification, calibration, and review outputs outside
+  Git.
 
 No credentials, patient information, DICOM studies, NIfTI volumes, model weights, or restricted labels should be committed.
 
-Generated DICOM fixtures, de-identified outputs, audit artefacts under `data/dicom/`, and
-preprocessed volumes under `data/processed/` are ignored by Git.
+Generated DICOM fixtures, de-identified outputs, audit artefacts under `data/dicom/`, preprocessed
+volumes, registration outputs, and localisation outputs under `data/processed/` are ignored by Git.

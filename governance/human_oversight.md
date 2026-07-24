@@ -7,3 +7,8 @@ Future interfaces must present model and quality information as technical review
 Milestone 6 registration reports and review arrays require human engineering review before any
 downstream research use. Reviewers must treat optimiser convergence and metric improvement as
 technical signals only; they do not prove anatomical correctness or diagnostic suitability.
+
+Milestone 7 localisation reports and overlay arrays require human engineering review before any
+downstream research use. Reviewers must treat atlas centres, confidence heuristics, and synthetic
+metrics as technical signals only; they do not prove adrenal localisation accuracy or diagnostic
+suitability.

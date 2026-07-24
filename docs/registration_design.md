@@ -72,6 +72,10 @@ Visual review artefacts are lightweight NumPy arrays only. They are not clinical
 
 ## Explicit Non-Scope
 
+Milestone 6 registration outputs may be consumed by Milestone 7 localisation, but registration
+success remains a technical precondition rather than proof of anatomical alignment. Downstream
+localisation preserves registration status, geometry, and override provenance.
+
 Milestone 6 does not implement deformable registration, deep-learning registration, PyTorch, MONAI,
-adrenal localisation, lesion segmentation, classification, PACS/DICOMweb, notebooks, MLflow, API,
-dashboard, Docker, Kubernetes, Terraform, or AWS.
+lesion segmentation, classification, PACS/DICOMweb, notebooks, MLflow, API, dashboard, Docker,
+Kubernetes, Terraform, or AWS.

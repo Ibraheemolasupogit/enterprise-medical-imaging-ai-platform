@@ -1,4 +1,4 @@
-.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality-check-dicom verify-dicom-quality preprocess-dicom validate-preprocessed-volume verify-preprocessing register-synthetic-pair validate-registration verify-registration quality clean
+.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality-check-dicom verify-dicom-quality preprocess-dicom validate-preprocessed-volume verify-preprocessing register-synthetic-pair validate-registration verify-registration generate-localisation-fixtures localise-synthetic-regions validate-localisation verify-localisation quality clean
 
 PYTHON ?= python3
 SYNTHETIC_DATA_DIR ?= data/synthetic/generated
@@ -9,6 +9,8 @@ DICOM_QUALITY_DIR ?= data/dicom/quality
 PREPROCESSING_DIR ?= data/processed/preprocessing
 REGISTRATION_FIXTURE_DIR ?= data/processed/registration-fixtures
 REGISTRATION_DIR ?= data/processed/registration
+LOCALISATION_FIXTURE_DIR ?= data/processed/localisation-fixtures
+LOCALISATION_DIR ?= data/processed/localisation
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -85,7 +87,19 @@ validate-registration:
 verify-registration: register-synthetic-pair validate-registration
 	$(PYTHON) -m medical_imaging_platform inspect-registration $$(find $(REGISTRATION_DIR) -mindepth 1 -maxdepth 1 -type d | sort | head -n 1)
 
+generate-localisation-fixtures:
+	$(PYTHON) -m medical_imaging_platform generate-localisation-fixtures --output-dir $(LOCALISATION_FIXTURE_DIR) --overwrite
+
+localise-synthetic-regions: generate-localisation-fixtures
+	$(PYTHON) -m medical_imaging_platform localise-adrenal-regions $(LOCALISATION_FIXTURE_DIR) --left-mask $(LOCALISATION_FIXTURE_DIR)/left_adrenal_mask.npy --right-mask $(LOCALISATION_FIXTURE_DIR)/right_adrenal_mask.npy --output-dir $(LOCALISATION_DIR) --overwrite
+
+validate-localisation:
+	$(PYTHON) -m medical_imaging_platform validate-localisation $$(find $(LOCALISATION_DIR) -mindepth 1 -maxdepth 1 -type d | sort | head -n 1)
+
+verify-localisation: localise-synthetic-regions validate-localisation
+	$(PYTHON) -m medical_imaging_platform inspect-localisation $$(find $(LOCALISATION_DIR) -mindepth 1 -maxdepth 1 -type d | sort | head -n 1)
+
 quality: format-check lint type-check validate-config validate-docs test security
 
 clean:
-	rm -rf .coverage coverage.xml .mypy_cache .pytest_cache .ruff_cache src/medical_imaging_platform/__pycache__ src/medical_imaging_platform/deidentification/__pycache__ src/medical_imaging_platform/ingestion/__pycache__ src/medical_imaging_platform/preprocessing/__pycache__ src/medical_imaging_platform/quality_control/__pycache__ src/medical_imaging_platform/registration/__pycache__ src/medical_imaging_platform/synthetic/__pycache__ src/medical_imaging_platform/utils/__pycache__ tests/__pycache__
+	rm -rf .coverage coverage.xml .mypy_cache .pytest_cache .ruff_cache src/medical_imaging_platform/__pycache__ src/medical_imaging_platform/deidentification/__pycache__ src/medical_imaging_platform/ingestion/__pycache__ src/medical_imaging_platform/localisation/__pycache__ src/medical_imaging_platform/preprocessing/__pycache__ src/medical_imaging_platform/quality_control/__pycache__ src/medical_imaging_platform/registration/__pycache__ src/medical_imaging_platform/synthetic/__pycache__ src/medical_imaging_platform/utils/__pycache__ tests/__pycache__

@@ -9,6 +9,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from medical_imaging_platform.ingestion.models import DicomIngestionConfig
+from medical_imaging_platform.localisation.models import LocalisationConfig
 from medical_imaging_platform.preprocessing.models import PreprocessingConfig
 from medical_imaging_platform.quality_control.models import QualityControlConfig
 from medical_imaging_platform.registration.models import RegistrationConfig
@@ -153,3 +154,15 @@ def load_registration_config(path: Path) -> RegistrationConfig:
         return RegistrationConfig.model_validate(settings["registration"])
     except ValidationError as exc:
         raise ConfigError(f"Invalid registration configuration in {path}: {exc}") from exc
+
+
+def load_localisation_config(path: Path) -> LocalisationConfig:
+    """Load typed Milestone 7 localisation settings from localisation.yaml."""
+    data = load_yaml_file(path)
+    settings = data.get("settings")
+    if not isinstance(settings, dict) or "localisation" not in settings:
+        raise ConfigError(f"Missing settings.localisation in {path}")
+    try:
+        return LocalisationConfig.model_validate(settings["localisation"])
+    except ValidationError as exc:
+        raise ConfigError(f"Invalid localisation configuration in {path}: {exc}") from exc

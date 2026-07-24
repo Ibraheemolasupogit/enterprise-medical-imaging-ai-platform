@@ -14,6 +14,13 @@ from medical_imaging_platform.ingestion.fixtures import generate_dicom_fixture_s
 from medical_imaging_platform.ingestion.loader import load_dicom
 from medical_imaging_platform.ingestion.metadata import extract_metadata
 from medical_imaging_platform.ingestion.validation import validate_series
+from medical_imaging_platform.localisation.export import (
+    LocalisationOutputError,
+    inspect_localisation_output,
+    validate_localisation_output,
+)
+from medical_imaging_platform.localisation.fixtures import generate_localisation_fixture
+from medical_imaging_platform.localisation.pipeline import localise_adrenal_regions
 from medical_imaging_platform.preprocessing.errors import (
     PreprocessingError,
     PreprocessingOutputError,
@@ -38,6 +45,7 @@ from medical_imaging_platform.synthetic.io import generate_dataset, validate_dat
 from medical_imaging_platform.utils.config import (
     ConfigError,
     load_dicom_ingestion_config,
+    load_localisation_config,
     load_preprocessing_config,
     load_quality_control_config,
     load_registration_config,
@@ -243,6 +251,46 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_registration_parser.add_argument("output_dir")
     validate_registration_parser.add_argument("--json", action="store_true")
+
+    localisation_fixture_parser = subparsers.add_parser(
+        "generate-localisation-fixtures",
+        help="Generate synthetic preprocessing-compatible localisation fixtures.",
+    )
+    localisation_fixture_parser.add_argument(
+        "--output-dir", default="data/processed/localisation-fixtures"
+    )
+    localisation_fixture_parser.add_argument("--overwrite", action="store_true")
+    localisation_fixture_parser.add_argument("--seed", type=int, default=20260724)
+    localisation_fixture_parser.add_argument("--translation", nargs=3, type=int, default=(0, 0, 0))
+
+    localise_parser = subparsers.add_parser(
+        "localise-adrenal-regions",
+        help="Run deterministic baseline left/right adrenal-region placeholder localisation.",
+    )
+    localise_parser.add_argument("input_dir")
+    localise_parser.add_argument("--config", default="config/localisation.yaml")
+    localise_parser.add_argument("--mode", choices=["atlas"], default=None)
+    localise_parser.add_argument("--output-dir", default=None)
+    localise_parser.add_argument("--left-mask", default=None)
+    localise_parser.add_argument("--right-mask", default=None)
+    localise_parser.add_argument("--roi-size-voxels", nargs=3, type=int, default=None)
+    localise_parser.add_argument("--overwrite", action="store_true")
+    localise_parser.add_argument("--json", action="store_true")
+    localise_parser.add_argument("--fail-on-warning", action="store_true")
+
+    inspect_localisation_parser = subparsers.add_parser(
+        "inspect-localisation",
+        help="Inspect a localisation output directory.",
+    )
+    inspect_localisation_parser.add_argument("output_dir")
+    inspect_localisation_parser.add_argument("--json", action="store_true")
+
+    validate_localisation_parser = subparsers.add_parser(
+        "validate-localisation",
+        help="Validate a localisation output directory.",
+    )
+    validate_localisation_parser.add_argument("output_dir")
+    validate_localisation_parser.add_argument("--json", action="store_true")
 
     return parser
 
@@ -631,6 +679,96 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(registration_result.model_dump(mode="json"), indent=2, sort_keys=True))
         else:
             print(f"Validated registration {registration_result.registration_run_id}.")
+        return 0
+
+    if args.command == "generate-localisation-fixtures":
+        try:
+            fixture_dir = generate_localisation_fixture(
+                Path(args.output_dir),
+                translation=tuple(args.translation),
+                random_seed=args.seed,
+                overwrite=args.overwrite,
+            )
+        except Exception as exc:
+            print(f"Localisation fixture generation failed: {exc}")
+            return 1
+        print(f"Generated localisation fixture at {fixture_dir}.")
+        return 0
+
+    if args.command == "localise-adrenal-regions":
+        try:
+            localisation_config = load_localisation_config(Path(args.config))
+            if args.roi_size_voxels is not None:
+                localisation_config = localisation_config.model_copy(
+                    update={
+                        "roi_size_voxels": tuple(args.roi_size_voxels),
+                        "roi_size_mm": None,
+                    }
+                )
+            output_root = (
+                Path(args.output_dir)
+                if args.output_dir is not None
+                else localisation_config.output_directory
+            )
+            localisation_result = localise_adrenal_regions(
+                Path(args.input_dir),
+                output_root=output_root,
+                config=localisation_config,
+                mode=args.mode,
+                left_mask_path=Path(args.left_mask) if args.left_mask is not None else None,
+                right_mask_path=Path(args.right_mask) if args.right_mask is not None else None,
+                overwrite=args.overwrite,
+            )
+        except LocalisationOutputError as exc:
+            print(f"Localisation output validation failed: {exc}")
+            return 4
+        except ValueError as exc:
+            print(f"Localisation rejected: {exc}")
+            return 3
+        except (ConfigError, MedicalImagingPlatformError, FileExistsError) as exc:
+            print(f"Localisation failed: {exc}")
+            return 1
+        if args.json:
+            print(json.dumps(localisation_result.model_dump(mode="json"), indent=2, sort_keys=True))
+        else:
+            print(
+                f"Localised adrenal-region placeholders at "
+                f"{localisation_result.output_paths.output_dir}; "
+                f"status={localisation_result.overall_status}."
+            )
+        if localisation_result.overall_status == "REJECTED":
+            return 3
+        if localisation_result.overall_status == "FAILED":
+            return 2
+        if args.fail_on_warning and localisation_result.overall_status == "LOCALISED_WITH_WARNINGS":
+            return 2
+        return 0
+
+    if args.command == "inspect-localisation":
+        try:
+            summary = inspect_localisation_output(Path(args.output_dir))
+        except LocalisationOutputError as exc:
+            print(f"Localisation inspection failed: {exc}")
+            return 4
+        if args.json:
+            print(json.dumps(summary, indent=2, sort_keys=True))
+        else:
+            print(
+                f"Localisation {summary['localisation_run_id']} "
+                f"status={summary['status']} source={summary['source_run_id']}."
+            )
+        return 0
+
+    if args.command == "validate-localisation":
+        try:
+            localisation_result = validate_localisation_output(Path(args.output_dir))
+        except LocalisationOutputError as exc:
+            print(f"Localisation validation failed: {exc}")
+            return 4
+        if args.json:
+            print(json.dumps(localisation_result.model_dump(mode="json"), indent=2, sort_keys=True))
+        else:
+            print(f"Validated localisation {localisation_result.localisation_run_id}.")
         return 0
 
     parser.error(f"Unsupported command: {args.command}")

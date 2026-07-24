@@ -24,3 +24,9 @@ fixed/moving role reversal attempts, optimiser stop conditions, transform magnit
 and shear, metric degradation, centre-of-mass distance changes, padding-fraction failures, and output
 checksum failures. These remain engineering signals and are not clinical alignment performance
 metrics.
+
+Milestone 7 localisation reports introduce future monitoring candidates: localisation status,
+left/right swap findings, centre-distance failures on synthetic labels, target-coverage failures,
+bounding-box IoU failures, padding fraction, upstream override propagation, missing ground-truth
+rates, and checksum failures. These remain engineering signals and are not clinical localisation
+performance metrics.

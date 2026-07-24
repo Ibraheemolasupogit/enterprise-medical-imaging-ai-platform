@@ -29,3 +29,8 @@ centre-of-mass, rigid, and affine baselines on preprocessed volumes. Optimiser c
 similarity metrics, and synthetic translation recovery do not prove anatomical correctness. No
 deformable, anatomy-constrained, radiologist-validated, diagnostic, or medical-device registration
 is implemented.
+
+Milestone 7 localisation is a deterministic atlas/geometry baseline for configured left/right
+adrenal-region placeholders. It uses synthetic engineering masks only when optional ground truth is
+provided. It does not implement learned localisation, organ segmentation, lesion detection,
+classification, anatomical correctness validation, or diagnostic visualisation.
