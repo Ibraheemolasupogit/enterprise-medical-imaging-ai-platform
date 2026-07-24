@@ -25,3 +25,7 @@ Included fields:
 Direct identifier values such as patient name, patient ID, accession number, institution, address, and physician/operator names are not exposed in normal metadata output.
 
 Milestone 4 quality reports reuse this safe metadata model and must not include direct patient identifiers.
+
+Milestone 5 preprocessing also reuses this safe metadata model. It records only technical geometry,
+spacing, rescale, SOP UID ordering, transform provenance, output paths, and checksums. It must not
+copy direct identifier values into preprocessing metadata or reports.

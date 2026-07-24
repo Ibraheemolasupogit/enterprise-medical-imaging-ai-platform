@@ -12,3 +12,7 @@ Do not commit DICOM studies, NIfTI volumes, derived patient artefacts, credentia
 Milestone 2 generated synthetic arrays live under `data/synthetic/` and are ignored by Git except documentation.
 
 Milestone 3 generated DICOM fixtures, de-identified outputs, and audit artefacts live under `data/dicom/` and are ignored by Git except documentation.
+
+Milestone 5 generated preprocessed NumPy volumes, metadata, and reports live under
+`data/processed/` and are ignored by Git. These artefacts are for engineering validation only and
+must be regenerated from synthetic or publicly available de-identified inputs.

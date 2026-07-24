@@ -17,3 +17,9 @@ Future data workflows must address:
 Metadata de-identification cannot guarantee removal of burned-in pixel identifiers. Future pixel-level review or redaction is required before working with public DICOM data that may contain burned-in annotations.
 
 Milestone 4 quality control escalates burned-in annotation metadata but does not inspect pixels for PHI.
+
+Milestone 5 preprocessing writes derived NumPy volumes and reports under ignored processed-data
+directories. Preprocessing metadata must remain technical and must not include patient names, patient
+IDs, accessions, institutions, or other direct identifiers. It does not perform OCR, pixel PHI
+redaction, or confidentiality-profile certification; source data must already be synthetic or
+properly de-identified before use.

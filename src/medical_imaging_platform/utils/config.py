@@ -9,6 +9,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from medical_imaging_platform.ingestion.models import DicomIngestionConfig
+from medical_imaging_platform.preprocessing.models import PreprocessingConfig
 from medical_imaging_platform.quality_control.models import QualityControlConfig
 from medical_imaging_platform.utils.exceptions import MedicalImagingPlatformError
 
@@ -127,3 +128,15 @@ def load_quality_control_config(path: Path) -> QualityControlConfig:
         return QualityControlConfig.model_validate(settings["dicom_quality_control"])
     except ValidationError as exc:
         raise ConfigError(f"Invalid DICOM quality-control configuration in {path}: {exc}") from exc
+
+
+def load_preprocessing_config(path: Path) -> PreprocessingConfig:
+    """Load typed Milestone 5 preprocessing settings from preprocessing.yaml."""
+    data = load_yaml_file(path)
+    settings = data.get("settings")
+    if not isinstance(settings, dict) or "preprocessing" not in settings:
+        raise ConfigError(f"Missing settings.preprocessing in {path}")
+    try:
+        return PreprocessingConfig.model_validate(settings["preprocessing"])
+    except ValidationError as exc:
+        raise ConfigError(f"Invalid preprocessing configuration in {path}: {exc}") from exc

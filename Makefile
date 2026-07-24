@@ -1,4 +1,4 @@
-.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality-check-dicom verify-dicom-quality quality clean
+.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality-check-dicom verify-dicom-quality preprocess-dicom validate-preprocessed-volume verify-preprocessing quality clean
 
 PYTHON ?= python3
 SYNTHETIC_DATA_DIR ?= data/synthetic/generated
@@ -6,6 +6,7 @@ DICOM_FIXTURE_DIR ?= data/dicom/fixtures
 DICOM_DEID_DIR ?= data/dicom/deidentified
 DICOM_AUDIT_PATH ?= data/dicom/audit/audit.json
 DICOM_QUALITY_DIR ?= data/dicom/quality
+PREPROCESSING_DIR ?= data/processed/preprocessing
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -61,7 +62,16 @@ quality-check-dicom:
 verify-dicom-quality: verify-dicom-ingestion quality-check-dicom
 	$(PYTHON) -m medical_imaging_platform quality-check-dicom $(DICOM_DEID_DIR) --full-pixel-validation
 
+preprocess-dicom: verify-dicom-quality
+	$(PYTHON) -m medical_imaging_platform preprocess-dicom $(DICOM_DEID_DIR) --study-uid auto --series-uid auto --output-dir $(PREPROCESSING_DIR) --overwrite
+
+validate-preprocessed-volume:
+	$(PYTHON) -m medical_imaging_platform validate-preprocessed-volume $$(find $(PREPROCESSING_DIR) -mindepth 1 -maxdepth 1 -type d | sort | head -n 1)
+
+verify-preprocessing: preprocess-dicom validate-preprocessed-volume
+	$(PYTHON) -m medical_imaging_platform inspect-preprocessed-volume $$(find $(PREPROCESSING_DIR) -mindepth 1 -maxdepth 1 -type d | sort | head -n 1)
+
 quality: format-check lint type-check validate-config validate-docs test security
 
 clean:
-	rm -rf .coverage coverage.xml .mypy_cache .pytest_cache .ruff_cache src/medical_imaging_platform/__pycache__ src/medical_imaging_platform/deidentification/__pycache__ src/medical_imaging_platform/ingestion/__pycache__ src/medical_imaging_platform/synthetic/__pycache__ src/medical_imaging_platform/utils/__pycache__ tests/__pycache__
+	rm -rf .coverage coverage.xml .mypy_cache .pytest_cache .ruff_cache src/medical_imaging_platform/__pycache__ src/medical_imaging_platform/deidentification/__pycache__ src/medical_imaging_platform/ingestion/__pycache__ src/medical_imaging_platform/preprocessing/__pycache__ src/medical_imaging_platform/quality_control/__pycache__ src/medical_imaging_platform/synthetic/__pycache__ src/medical_imaging_platform/utils/__pycache__ tests/__pycache__

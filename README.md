@@ -66,9 +66,17 @@ Complete in Milestone 4:
 - Pixel-array integrity checks for local fixtures and de-identified data.
 - Transparent quality scoring and deterministic JSON/Markdown reports.
 
+Complete in Milestone 5:
+
+- DICOM-series-to-3D NumPy volume assembly for one selected synthetic/de-identified series.
+- Internal `[z, y, x]` axis convention with `[z_mm, y_mm, x_mm]` spacing metadata.
+- Per-slice rescale slope/intercept conversion to CT-like rescaled intensities.
+- Configurable intensity clipping/windowing and normalisation.
+- Deterministic engineering crop and padding operations with transform provenance.
+- Preprocessing metadata, checksums, Markdown reports, CLI commands, and validation.
+
 Planned - not yet implemented:
 
-- Medical image preprocessing.
 - Registration, localisation, segmentation, and classification.
 - FastAPI, Streamlit, MLflow, Docker, Kubernetes, Terraform, and AWS integrations.
 - Any diagnostic or clinical decision support behavior.
@@ -90,7 +98,7 @@ Milestone 1 uses a deliberately small Python 3.12 stack:
 Planned - not yet implemented:
 
 - PyTorch and MONAI modelling.
-- SimpleITK, pydicom, nibabel, and OpenCV imaging workflows.
+- SimpleITK, nibabel, and OpenCV imaging workflows.
 - MLflow, FastAPI, Streamlit, Docker, Kubernetes, and AWS.
 
 ## Local Setup
@@ -151,6 +159,19 @@ Generated DICOM fixtures, de-identified outputs, and audit artefacts are ignored
 
 Quality reports are engineering data-quality artefacts only; they do not indicate diagnostic adequacy.
 
+Preprocessing commands:
+
+```bash
+make preprocess-dicom
+make validate-preprocessed-volume
+make verify-preprocessing
+medical-imaging-platform inspect-preprocessed-volume data/processed/preprocessing/<run_id>
+```
+
+Generated preprocessed NumPy volumes and reports are ignored by Git. They are technical artefacts for
+research engineering only and do not perform registration, localisation, segmentation,
+classification, NIfTI conversion, or spatial resampling.
+
 ## Data Safety
 
 Only synthetic data or publicly available de-identified data may be used. Do not commit real patient data, model weights derived from restricted patient data, credentials, cloud account identifiers, DICOM studies with identifying metadata, or screenshots containing protected health information.
@@ -165,7 +186,7 @@ This repository is not an approved medical device, is not validated for NHS depl
 2. Synthetic and public-data foundation. Complete for synthetic-data foundation and public-data selection criteria only; no public data is downloaded.
 3. DICOM ingestion and governance. Complete for local synthetic fixtures and metadata de-identification only.
 4. Imaging quality control. Complete for technical DICOM engineering checks only.
-5. Preprocessing.
+5. Preprocessing. Complete for deterministic NumPy CT preprocessing foundation only.
 6. Registration.
 7. Baseline localisation and segmentation.
 8. Advanced models.
@@ -184,4 +205,4 @@ The project was informed by research review of earlier CT alignment and adrenal 
 
 ## Limitations
 
-The current repository foundation does not process medical images, train models, serve predictions, or deploy infrastructure. See [docs/limitations.md](docs/limitations.md) and [governance/limitations.md](governance/limitations.md).
+The current repository foundation does not train models, serve predictions, perform registration, or deploy infrastructure. See [docs/limitations.md](docs/limitations.md) and [governance/limitations.md](governance/limitations.md).

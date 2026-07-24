@@ -69,6 +69,23 @@ python_version = "3.12"
 strict = true
 packages = ["medical_imaging_platform"]
 
+[[tool.mypy.overrides]]
+module = [
+  "IPython",
+  "IPython.*",
+  "matplotlib_inline",
+  "matplotlib_inline.*",
+  "nbformat",
+  "nbformat.*",
+  "pandas",
+  "pandas.*",
+  "rich",
+  "rich.*",
+  "sqlalchemy",
+  "sqlalchemy.*"
+]
+follow_imports = "skip"
+
 [tool.pytest.ini_options]
 addopts = "--cov=medical_imaging_platform --cov-report=term-missing --cov-report=xml"
 testpaths = ["tests"]

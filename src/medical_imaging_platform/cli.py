@@ -14,12 +14,24 @@ from medical_imaging_platform.ingestion.fixtures import generate_dicom_fixture_s
 from medical_imaging_platform.ingestion.loader import load_dicom
 from medical_imaging_platform.ingestion.metadata import extract_metadata
 from medical_imaging_platform.ingestion.validation import validate_series
+from medical_imaging_platform.preprocessing.errors import (
+    PreprocessingError,
+    PreprocessingOutputError,
+    PreprocessingQualityError,
+    PreprocessingRejectedError,
+)
+from medical_imaging_platform.preprocessing.export import (
+    inspect_preprocessed_volume,
+    validate_preprocessed_volume,
+)
+from medical_imaging_platform.preprocessing.pipeline import preprocess_dicom_series
 from medical_imaging_platform.quality_control.pipeline import run_quality_control
 from medical_imaging_platform.synthetic.generator import load_synthetic_config
 from medical_imaging_platform.synthetic.io import generate_dataset, validate_dataset
 from medical_imaging_platform.utils.config import (
     ConfigError,
     load_dicom_ingestion_config,
+    load_preprocessing_config,
     load_quality_control_config,
     validate_repository_configs,
 )
@@ -146,6 +158,41 @@ def build_parser() -> argparse.ArgumentParser:
     report_parser.add_argument("--full-pixel-validation", action="store_true")
     report_parser.add_argument("--fail-on-warning", action="store_true")
     report_parser.add_argument("--overwrite", action="store_true")
+
+    preprocess_parser = subparsers.add_parser(
+        "preprocess-dicom",
+        help="Assemble and preprocess one selected DICOM series into a NumPy volume.",
+    )
+    preprocess_parser.add_argument("input_dir")
+    preprocess_parser.add_argument("--config", default="config/preprocessing.yaml")
+    preprocess_parser.add_argument("--data-config", default="config/data.yaml")
+    preprocess_parser.add_argument("--study-uid", default=None)
+    preprocess_parser.add_argument("--series-uid", default=None)
+    preprocess_parser.add_argument("--output-dir", default=None)
+    preprocess_parser.add_argument("--intensity-profile", default=None)
+    preprocess_parser.add_argument(
+        "--crop-mode",
+        choices=["none", "non_background", "centre", "fixed"],
+        default=None,
+    )
+    preprocess_parser.add_argument("--overwrite", action="store_true")
+    preprocess_parser.add_argument("--quality-override", action="store_true")
+    preprocess_parser.add_argument("--override-reason", default=None)
+    preprocess_parser.add_argument("--json", action="store_true")
+
+    inspect_volume_parser = subparsers.add_parser(
+        "inspect-preprocessed-volume",
+        help="Inspect an exported preprocessed NumPy volume directory.",
+    )
+    inspect_volume_parser.add_argument("output_dir")
+    inspect_volume_parser.add_argument("--json", action="store_true")
+
+    validate_volume_parser = subparsers.add_parser(
+        "validate-preprocessed-volume",
+        help="Validate an exported preprocessed NumPy volume directory.",
+    )
+    validate_volume_parser.add_argument("output_dir")
+    validate_volume_parser.add_argument("--json", action="store_true")
 
     return parser
 
@@ -372,6 +419,87 @@ def main(argv: list[str] | None = None) -> int:
             report.status == "PASS_WITH_WARNINGS" for report in reports
         ):
             return 2
+        return 0
+
+    if args.command == "preprocess-dicom":
+        try:
+            preprocessing_config = load_preprocessing_config(Path(args.config))
+            dicom_config = load_dicom_ingestion_config(Path(args.data_config))
+            qc_config = load_quality_control_config(Path(args.data_config))
+            output_root = (
+                Path(args.output_dir)
+                if args.output_dir is not None
+                else preprocessing_config.output_directory
+            )
+            preprocessing_result = preprocess_dicom_series(
+                Path(args.input_dir),
+                output_root=output_root,
+                preprocessing_config=preprocessing_config,
+                qc_config=qc_config,
+                dicom_max_files=dicom_config.max_files,
+                max_file_size_bytes=dicom_config.max_file_size_bytes,
+                study_uid=args.study_uid,
+                series_uid=args.series_uid,
+                intensity_profile=args.intensity_profile,
+                crop_mode=args.crop_mode,
+                overwrite=args.overwrite,
+                quality_override=args.quality_override,
+                override_reason=args.override_reason,
+            )
+        except PreprocessingQualityError as exc:
+            print(f"DICOM preprocessing blocked by quality control: {exc}")
+            return 2
+        except PreprocessingRejectedError as exc:
+            print(f"DICOM preprocessing rejected: {exc}")
+            return 3
+        except PreprocessingOutputError as exc:
+            print(f"DICOM preprocessing output validation failed: {exc}")
+            return 4
+        except (
+            ConfigError,
+            PreprocessingError,
+            MedicalImagingPlatformError,
+            FileExistsError,
+        ) as exc:
+            print(f"DICOM preprocessing failed: {exc}")
+            return 1
+        if args.json:
+            print(
+                json.dumps(preprocessing_result.model_dump(mode="json"), indent=2, sort_keys=True)
+            )
+        else:
+            print(
+                f"Preprocessed DICOM series into {preprocessing_result.output_paths.output_dir}; "
+                f"shape={preprocessing_result.volume_shape}, "
+                f"source_qc={preprocessing_result.source_quality_status}."
+            )
+        return 0
+
+    if args.command == "inspect-preprocessed-volume":
+        try:
+            summary = inspect_preprocessed_volume(Path(args.output_dir))
+        except PreprocessingOutputError as exc:
+            print(f"Preprocessed volume inspection failed: {exc}")
+            return 4
+        if args.json:
+            print(json.dumps(summary, indent=2, sort_keys=True))
+        else:
+            print(
+                f"Preprocessed volume {summary['run_id']} "
+                f"shape={summary['shape']} dtype={summary['dtype']}."
+            )
+        return 0
+
+    if args.command == "validate-preprocessed-volume":
+        try:
+            validation_result = validate_preprocessed_volume(Path(args.output_dir))
+        except PreprocessingOutputError as exc:
+            print(f"Preprocessed volume validation failed: {exc}")
+            return 4
+        if args.json:
+            print(json.dumps(validation_result.model_dump(mode="json"), indent=2, sort_keys=True))
+        else:
+            print(f"Validated preprocessed volume {validation_result.run_id}.")
         return 0
 
     parser.error(f"Unsupported command: {args.command}")

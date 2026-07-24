@@ -13,3 +13,8 @@ Future monitoring should cover:
 - Audit completeness.
 
 Milestone 4 quality reports introduce technical data-quality signals that may feed future monitoring, including corrupt-file rates, private-tag presence, burned-in annotation status, and quality-control failure rates.
+
+Milestone 5 preprocessing reports introduce additional future monitoring candidates: preprocessing
+success/failure rate, quality-override use, rejected/blocked series counts, spacing fallback rates,
+irregular spacing flags, clipping percentages, crop/padding frequency, checksum failures, and output
+validation failures. These are engineering signals only and not clinical performance metrics.

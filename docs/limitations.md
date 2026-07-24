@@ -1,12 +1,13 @@
 # Limitations
 
-Current Milestone 1 limitations:
+Current limitations:
 
-- Synthetic CT-like engineering fixtures exist, but no real medical images are loaded or processed.
+- Synthetic CT-like engineering fixtures exist, but real patient data must not be loaded.
 - DICOM ingestion is limited to local-file discovery, metadata extraction, synthetic fixtures, structural validation, and metadata de-identification.
 - No PACS, DICOMweb, NHS integration, or network DICOM workflow exists.
 - Metadata de-identification cannot guarantee removal of burned-in pixel identifiers.
-- No preprocessing, registration, localisation, segmentation, or classification exists.
+- Preprocessing is limited to deterministic NumPy assembly, technical rescale conversion, intensity transforms, engineering crop/pad operations, metadata, and validation.
+- No NIfTI export, spatial resampling, full anatomical reorientation, registration, localisation, segmentation, or classification exists.
 - No API, dashboard, MLflow, Docker, Kubernetes, Terraform, or AWS implementation exists.
 - No clinical validation has been performed.
 - Synthetic volumes are not clinically realistic CT scans.
@@ -14,6 +15,7 @@ Current Milestone 1 limitations:
 - Synthetic data cannot support clinical-performance claims.
 - Milestone 3 does not establish regulatory compliance or full DICOM confidentiality-profile compliance.
 - Milestone 4 quality scores are engineering indicators only and do not establish diagnostic adequacy.
+- Milestone 5 preprocessing reports are engineering provenance only and do not establish diagnostic image standardisation.
 - Missing slices are inferred only when spacing evidence is reliable; metadata may be incomplete or inaccurate.
 
 The platform is a portfolio and research demonstrator, not an approved medical device.

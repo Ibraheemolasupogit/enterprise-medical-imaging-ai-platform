@@ -1,16 +1,63 @@
 config_name: preprocessing
-milestone: 1
-status: planned_not_implemented
-purpose: Placeholder structure for future CT standardisation settings.
+milestone: 5
+status: foundation
+purpose: Deterministic CT preprocessing foundation for safe research DICOM fixtures.
 owner: imaging-engineering
 settings:
-  orientation_policy: documented_future_setting
-  spacing_policy: documented_future_setting
-  intensity_policy: documented_future_setting
+  preprocessing:
+    policy_version: ct-preprocessing-policy-v0.5.0
+    axis_order: zyx
+    require_quality_report: true
+    allow_quality_override: true
+    pixel_dtype: float32
+    missing_rescale_slope_default: 1.0
+    missing_rescale_intercept_default: 0.0
+    intensity_profiles:
+      none:
+        lower: null
+        upper: null
+      abdominal_soft_tissue:
+        lower: -160.0
+        upper: 240.0
+      wide_ct:
+        lower: -1024.0
+        upper: 3071.0
+      adrenal_engineering:
+        lower: -200.0
+        upper: 300.0
+    default_intensity_profile: abdominal_soft_tissue
+    normalisation_mode: minmax
+    crop_mode: none
+    centre_crop_shape:
+      - 4
+      - 8
+      - 8
+    fixed_crop_bounds:
+      z:
+        - 0
+        - 4
+      y:
+        - 0
+        - 8
+      x:
+        - 0
+        - 8
+    minimum_output_shape:
+      - 4
+      - 8
+      - 8
+    padding_value: 0.0
+    output_format: npy
+    output_directory: data/processed/preprocessing
+    overwrite: false
+    background_threshold: 0.0
+    spacing_irregularity_tolerance_mm: 0.01
 safeguards:
-  - No DICOM-to-NIfTI or image processing behavior exists in Milestone 1.
-  - Future preprocessing parameters must be reproducible and configuration-driven.
+  - Only synthetic or publicly available de-identified DICOM data may be processed.
+  - Source DICOM quality control must run before preprocessing and rejected series must stop.
+  - Processing exports NumPy arrays and metadata only; no NIfTI conversion or resampling is performed.
+  - Cropping is deterministic engineering logic, not adrenal localisation or anatomy inference.
 future_capabilities:
-  - DICOM-to-NIfTI conversion.
-  - Canonical orientation.
-  - Voxel resampling and intensity normalisation.
+  - NIfTI export after explicit geometry policy review.
+  - Spatial resampling after registration/localisation milestones define requirements.
+  - MONAI transforms once model-training milestones begin.

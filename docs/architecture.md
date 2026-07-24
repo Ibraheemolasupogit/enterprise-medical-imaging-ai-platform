@@ -1,14 +1,23 @@
 # Architecture
 
-Milestone 1 provides only repository foundation, configuration validation, logging, documentation, governance files, tests, and CI.
+Milestones 1-5 provide repository foundation, synthetic fixtures, local DICOM ingestion,
+metadata-focused de-identification, technical DICOM quality control, and deterministic CT
+preprocessing to NumPy volumes.
+
+Implemented foundation components:
+
+- Configuration validation, logging, documentation, governance files, tests, and CI.
+- Synthetic CT-like engineering fixture generation.
+- Local DICOM fixture generation, discovery, safe metadata extraction, ordering, validation, and
+  metadata de-identification.
+- Technical DICOM quality-control reports.
+- CT-like preprocessing with `[z, y, x]` NumPy assembly, geometry provenance, intensity transforms,
+  engineering crop/pad transforms, checksums, and validation.
 
 Planned - not yet implemented:
 
-- DICOM ingestion gateway.
-- De-identification and metadata validation.
-- Imaging quality-control engine.
 - DICOM-to-NIfTI conversion.
-- Preprocessing and standardisation.
+- Spatial resampling and full anatomical reorientation.
 - Longitudinal registration.
 - Adrenal ROI localisation.
 - Lesion segmentation and classification.

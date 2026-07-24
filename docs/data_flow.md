@@ -6,14 +6,22 @@ Milestone 3 can generate synthetic DICOM fixtures and ingest local DICOM files f
 
 Milestone 4 adds technical quality-control reports under `data/dicom/quality/`. These reports are generated artefacts and remain ignored by Git.
 
+Milestone 5 adds deterministic CT preprocessing outputs under `data/processed/preprocessing/`.
+Preprocessing consumes one explicitly selected synthetic or de-identified DICOM series, records the
+source quality-control report ID/status, assembles an internal `[z, y, x]` NumPy volume, records
+spacing as `[z_mm, y_mm, x_mm]`, applies configured intensity and engineering crop/pad transforms,
+and writes `volume.npy`, `metadata.json`, and `preprocessing_report.md`. These derived artefacts
+remain ignored by Git.
+
 Planned - not yet implemented data zones:
 
 - Raw external source area outside Git.
 - Interim processing area outside Git.
-- Processed derived data area outside Git.
 - Dataset manifests for synthetic or publicly available de-identified data.
 - Audit records for de-identification and provenance.
+- Future NIfTI, registration, model, and review artefact zones outside Git.
 
 No credentials, patient information, DICOM studies, NIfTI volumes, model weights, or restricted labels should be committed.
 
-Generated DICOM fixtures, de-identified outputs, and audit artefacts under `data/dicom/` are ignored by Git.
+Generated DICOM fixtures, de-identified outputs, audit artefacts under `data/dicom/`, and
+preprocessed volumes under `data/processed/` are ignored by Git.

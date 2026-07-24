@@ -18,6 +18,10 @@ Implemented checks include:
 
 The quality score is an engineering data-quality indicator only. A passing score does not mean a scan is diagnostically adequate.
 
+Milestone 5 preprocessing consumes this quality status before volume assembly. `REJECTED` series and
+critical findings stop preprocessing. Blocking `FAIL` status requires an explicit engineering
+override and is recorded in preprocessing metadata.
+
 Limitations:
 
 - No clinical image-quality assessment.
