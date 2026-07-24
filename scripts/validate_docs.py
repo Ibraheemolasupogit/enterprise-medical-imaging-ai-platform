@@ -18,7 +18,10 @@ REQUIRED_MARKDOWN_FILES = (
     Path("docs/dicom_metadata_model.md"),
     Path("docs/dataset_selection_criteria.md"),
     Path("docs/imaging_quality_control.md"),
+    Path("docs/localisation_design.md"),
     Path("docs/roadmap.md"),
+    Path("docs/registration_design.md"),
+    Path("docs/segmentation_design.md"),
     Path("docs/security.md"),
     Path("docs/synthetic_data_design.md"),
     Path("docs/attribution.md"),
@@ -32,6 +35,7 @@ REQUIRED_MARKDOWN_FILES = (
     Path("governance/monitoring_plan.md"),
     Path("governance/limitations.md"),
     Path("ml/dataset_cards/synthetic_ct_dataset.md"),
+    Path("ml/model_cards/segmentation_baseline.md"),
 )
 
 DISCLAIMER = (

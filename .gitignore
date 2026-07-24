@@ -34,6 +34,8 @@ data/dicom/*
 !data/dicom/README.md
 outputs/
 reports/generated/
+ml/datasets/
+ml/experiments/
 *.dcm
 *.nii
 *.nii.gz
