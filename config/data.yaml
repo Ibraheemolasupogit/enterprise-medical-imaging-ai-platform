@@ -42,6 +42,40 @@ settings:
       validation: 0.25
       test: 0.25
     generator_version: synthetic-generator-v0.2.0
+  dicom_ingestion:
+    input_dir: data/dicom/input
+    output_dir: data/dicom/deidentified
+    audit_output_dir: data/dicom/audit
+    fixture_output_dir: data/dicom/fixtures
+    max_file_size_bytes: 10485760
+    max_files: 200
+    accepted_modality: CT
+    required_metadata:
+      - StudyInstanceUID
+      - SeriesInstanceUID
+      - SOPInstanceUID
+      - Modality
+      - Rows
+      - Columns
+      - PixelSpacing
+      - ImageOrientationPatient
+      - ImagePositionPatient
+      - InstanceNumber
+    ordering_fallback_policy:
+      - image_position_patient
+      - slice_location
+      - instance_number
+      - filename
+    private_tag_policy:
+      default_action: remove
+      allowlist: []
+    deidentification:
+      policy_version: research-fixture-policy-v0.3.0
+      uid_root: "1.2.826.0.1.3680043.10.54321"
+      patient_id_prefix: RSP
+      overwrite: false
+      burned_in_annotation_error_values:
+        - "YES"
 safeguards:
   - Do not commit DICOM studies, NIfTI volumes, credentials, or restricted labels.
   - Dataset provenance must be documented before use.

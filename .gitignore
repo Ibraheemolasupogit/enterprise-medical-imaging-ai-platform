@@ -30,6 +30,8 @@ data/interim/
 data/processed/
 data/synthetic/*
 !data/synthetic/README.md
+data/dicom/*
+!data/dicom/README.md
 outputs/
 reports/generated/
 *.dcm

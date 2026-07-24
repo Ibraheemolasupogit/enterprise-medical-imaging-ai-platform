@@ -8,6 +8,7 @@ from typing import Any, ClassVar
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
+from medical_imaging_platform.ingestion.models import DicomIngestionConfig
 from medical_imaging_platform.utils.exceptions import MedicalImagingPlatformError
 
 
@@ -101,3 +102,15 @@ def validate_repository_configs(config_dir: Path) -> RepositoryConfigSet:
         configs[filename] = load_config(config_dir / filename)
 
     return RepositoryConfigSet(configs=configs)
+
+
+def load_dicom_ingestion_config(path: Path) -> DicomIngestionConfig:
+    """Load typed Milestone 3 DICOM ingestion settings from data.yaml."""
+    data = load_yaml_file(path)
+    settings = data.get("settings")
+    if not isinstance(settings, dict) or "dicom_ingestion" not in settings:
+        raise ConfigError(f"Missing settings.dicom_ingestion in {path}")
+    try:
+        return DicomIngestionConfig.model_validate(settings["dicom_ingestion"])
+    except ValidationError as exc:
+        raise ConfigError(f"Invalid DICOM ingestion configuration in {path}: {exc}") from exc

@@ -3,12 +3,24 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 from medical_imaging_platform import __version__
+from medical_imaging_platform.deidentification.deidentifier import deidentify_series
+from medical_imaging_platform.deidentification.policy import default_policy
+from medical_imaging_platform.ingestion.discovery import discover_dicom_series
+from medical_imaging_platform.ingestion.fixtures import generate_dicom_fixture_series
+from medical_imaging_platform.ingestion.loader import load_dicom
+from medical_imaging_platform.ingestion.metadata import extract_metadata
+from medical_imaging_platform.ingestion.validation import validate_series
 from medical_imaging_platform.synthetic.generator import load_synthetic_config
 from medical_imaging_platform.synthetic.io import generate_dataset, validate_dataset
-from medical_imaging_platform.utils.config import ConfigError, validate_repository_configs
+from medical_imaging_platform.utils.config import (
+    ConfigError,
+    load_dicom_ingestion_config,
+    validate_repository_configs,
+)
 from medical_imaging_platform.utils.exceptions import MedicalImagingPlatformError
 
 
@@ -75,6 +87,44 @@ def build_parser() -> argparse.ArgumentParser:
     )
     summary_parser.add_argument("dataset_dir", help="Synthetic dataset directory to summarise.")
 
+    fixture_parser = subparsers.add_parser(
+        "generate-dicom-fixtures",
+        help="Generate deterministic safe DICOM CT fixtures.",
+    )
+    fixture_parser.add_argument("--config", default="config/data.yaml")
+    fixture_parser.add_argument("--output-dir", default=None)
+    fixture_parser.add_argument("--slice-count", type=int, default=4)
+    fixture_parser.add_argument("--malformed", default=None)
+    fixture_parser.add_argument("--overwrite", action="store_true")
+
+    discover_parser = subparsers.add_parser("discover-dicom", help="Discover DICOM series.")
+    discover_parser.add_argument("input_dir")
+    discover_parser.add_argument("--config", default="config/data.yaml")
+    discover_parser.add_argument("--json", action="store_true")
+
+    inspect_parser = subparsers.add_parser("inspect-dicom", help="Inspect one DICOM file safely.")
+    inspect_parser.add_argument("file_path")
+    inspect_parser.add_argument("--config", default="config/data.yaml")
+    inspect_parser.add_argument("--include-pixels", action="store_true")
+    inspect_parser.add_argument("--json", action="store_true")
+
+    validate_dicom_parser = subparsers.add_parser(
+        "validate-dicom", help="Validate one DICOM series directory."
+    )
+    validate_dicom_parser.add_argument("input_dir")
+    validate_dicom_parser.add_argument("--config", default="config/data.yaml")
+    validate_dicom_parser.add_argument("--require-pixel-data", action="store_true")
+    validate_dicom_parser.add_argument("--json", action="store_true")
+
+    deid_parser = subparsers.add_parser(
+        "deidentify-dicom", help="De-identify one DICOM series directory."
+    )
+    deid_parser.add_argument("input_dir")
+    deid_parser.add_argument("--config", default="config/data.yaml")
+    deid_parser.add_argument("--output-dir", default=None)
+    deid_parser.add_argument("--audit-path", default=None)
+    deid_parser.add_argument("--overwrite", action="store_true")
+
     return parser
 
 
@@ -133,6 +183,134 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Dataset summary failed: {exc}")
             return 1
         print(manifest.summary)
+        return 0
+
+    if args.command == "generate-dicom-fixtures":
+        try:
+            dicom_config = load_dicom_ingestion_config(Path(args.config))
+            output_dir = (
+                Path(args.output_dir)
+                if args.output_dir is not None
+                else dicom_config.fixture_output_dir
+            )
+            paths = generate_dicom_fixture_series(
+                output_dir,
+                slice_count=args.slice_count,
+                malformed=args.malformed,
+                overwrite=args.overwrite,
+            )
+        except Exception as exc:
+            print(f"DICOM fixture generation failed: {exc}")
+            return 1
+        print(f"Generated {len(paths)} DICOM fixture files at {output_dir}.")
+        return 0
+
+    if args.command == "discover-dicom":
+        try:
+            dicom_config = load_dicom_ingestion_config(Path(args.config))
+            result = discover_dicom_series(
+                Path(args.input_dir),
+                max_files=dicom_config.max_files,
+                max_file_size_bytes=dicom_config.max_file_size_bytes,
+            )
+        except MedicalImagingPlatformError as exc:
+            print(f"DICOM discovery failed: {exc}")
+            return 1
+        if args.json:
+            print(json.dumps(result.model_dump(mode="json"), indent=2, sort_keys=True))
+        else:
+            print(
+                f"Discovered {len(result.series)} DICOM series; "
+                f"skipped {len(result.skipped_files)} files."
+            )
+        return 0
+
+    if args.command == "inspect-dicom":
+        try:
+            dicom_config = load_dicom_ingestion_config(Path(args.config))
+            dataset = load_dicom(
+                Path(args.file_path),
+                header_only=not args.include_pixels,
+                max_file_size_bytes=dicom_config.max_file_size_bytes,
+            )
+            metadata = extract_metadata(dataset, Path(args.file_path))
+        except MedicalImagingPlatformError as exc:
+            print(f"DICOM inspection failed: {exc}")
+            return 1
+        if args.json:
+            print(json.dumps(metadata.model_dump(mode="json"), indent=2, sort_keys=True))
+        else:
+            print(f"DICOM {metadata.sop_instance_uid} modality={metadata.modality}")
+        return 0
+
+    if args.command == "validate-dicom":
+        try:
+            dicom_config = load_dicom_ingestion_config(Path(args.config))
+            result = discover_dicom_series(
+                Path(args.input_dir),
+                max_files=dicom_config.max_files,
+                max_file_size_bytes=dicom_config.max_file_size_bytes,
+            )
+            file_paths = [Path(path) for series in result.series for path in series.files]
+            findings = validate_series(
+                file_paths,
+                accepted_modality=dicom_config.accepted_modality,
+                max_file_size_bytes=dicom_config.max_file_size_bytes,
+                require_pixel_data=args.require_pixel_data,
+            )
+        except MedicalImagingPlatformError as exc:
+            print(f"DICOM validation failed: {exc}")
+            return 1
+        if args.json:
+            print(
+                json.dumps(
+                    [finding.model_dump(mode="json") for finding in findings],
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+        else:
+            print(f"DICOM validation produced {len(findings)} findings.")
+        return 1 if any(finding.severity == "ERROR" for finding in findings) else 0
+
+    if args.command == "deidentify-dicom":
+        try:
+            dicom_config = load_dicom_ingestion_config(Path(args.config))
+            result = discover_dicom_series(
+                Path(args.input_dir),
+                max_files=dicom_config.max_files,
+                max_file_size_bytes=dicom_config.max_file_size_bytes,
+            )
+            file_paths = [Path(path) for series in result.series for path in series.files]
+            deid_settings = dicom_config.deidentification
+            policy = default_policy(
+                policy_version=str(deid_settings["policy_version"]),
+                uid_root=str(deid_settings["uid_root"]),
+                patient_id_prefix=str(deid_settings["patient_id_prefix"]),
+            )
+            output_dir = (
+                Path(args.output_dir) if args.output_dir is not None else dicom_config.output_dir
+            )
+            audit_path = (
+                Path(args.audit_path)
+                if args.audit_path is not None
+                else dicom_config.audit_output_dir / "audit.json"
+            )
+            audit = deidentify_series(
+                file_paths,
+                output_dir=output_dir,
+                audit_path=audit_path,
+                policy=policy,
+                overwrite=args.overwrite,
+                max_file_size_bytes=dicom_config.max_file_size_bytes,
+            )
+        except MedicalImagingPlatformError as exc:
+            print(f"DICOM de-identification failed: {exc}")
+            return 1
+        print(
+            f"De-identified {audit.file_count} files into {output_dir}; "
+            f"audit written to {audit_path}."
+        )
         return 0
 
     parser.error(f"Unsupported command: {args.command}")

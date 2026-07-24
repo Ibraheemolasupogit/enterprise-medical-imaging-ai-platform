@@ -49,9 +49,17 @@ Complete in Milestone 2:
 - Dataset validation and subject-level split validation.
 - Synthetic-data governance documentation.
 
+Complete in Milestone 3:
+
+- Synthetic DICOM CT fixture generation for tests and local engineering validation.
+- Recursive local DICOM series discovery and grouping.
+- Safe technical metadata extraction.
+- Deterministic slice ordering.
+- Basic structural validation findings.
+- Metadata de-identification with private-tag removal, UID remapping, and audit records.
+
 Planned - not yet implemented:
 
-- DICOM ingestion and de-identification.
 - Medical image preprocessing.
 - Registration, localisation, segmentation, and classification.
 - FastAPI, Streamlit, MLflow, Docker, Kubernetes, Terraform, and AWS integrations.
@@ -121,6 +129,17 @@ medical-imaging-platform summarise-dataset data/synthetic/generated
 
 Generated synthetic arrays are ignored by Git. They are engineering fixtures only and are not clinically realistic CT scans.
 
+DICOM fixture commands:
+
+```bash
+make generate-dicom-fixtures
+make discover-dicom
+make validate-dicom-fixtures
+make verify-dicom-ingestion
+```
+
+Generated DICOM fixtures, de-identified outputs, and audit artefacts are ignored by Git.
+
 ## Data Safety
 
 Only synthetic data or publicly available de-identified data may be used. Do not commit real patient data, model weights derived from restricted patient data, credentials, cloud account identifiers, DICOM studies with identifying metadata, or screenshots containing protected health information.
@@ -133,7 +152,7 @@ This repository is not an approved medical device, is not validated for NHS depl
 
 1. Repository foundation.
 2. Synthetic and public-data foundation. Complete for synthetic-data foundation and public-data selection criteria only; no public data is downloaded.
-3. DICOM ingestion and governance.
+3. DICOM ingestion and governance. Complete for local synthetic fixtures and metadata de-identification only.
 4. Imaging quality control.
 5. Preprocessing.
 6. Registration.

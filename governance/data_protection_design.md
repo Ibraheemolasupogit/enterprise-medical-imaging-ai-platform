@@ -2,7 +2,7 @@
 
 Only synthetic or publicly available de-identified data may be used.
 
-Milestone 2 uses locally generated synthetic arrays only. It does not download public data or process real DICOM/NIfTI studies.
+Milestone 3 supports locally generated synthetic DICOM fixtures and metadata-focused de-identification for synthetic or already de-identified public data. It does not download public data, connect to PACS/DICOMweb, or process real patient data.
 
 Future data workflows must address:
 
@@ -14,4 +14,4 @@ Future data workflows must address:
 - Audit logging.
 - Prevention of patient data entering Git.
 
-Milestone 2 does not implement de-identification or DICOM ingestion.
+Metadata de-identification cannot guarantee removal of burned-in pixel identifiers. Future pixel-level review or redaction is required before working with public DICOM data that may contain burned-in annotations.

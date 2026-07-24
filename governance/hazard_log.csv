@@ -9,3 +9,12 @@ HZ-007,Burned-in identifying information,Identifiers present in pixel data,Priva
 HZ-008,Automation bias,Reviewer over-trusts model output,Incorrect clinical interpretation,High,Research-only disclaimer and mandatory human review,Medium,clinical-ai-governance,Open
 HZ-009,Missing model-version audit data,Incomplete provenance capture,Untraceable prediction,Medium,Future audit logging and model registry,Low,mlops,Open
 HZ-010,Patient leakage between training and evaluation splits,Improper split policy,Inflated performance estimates,High,Future patient-level split validation,Medium,machine-learning,Open
+HZ-011,Incomplete identifier removal,Metadata policy misses identifying tags,Privacy breach,High,Direct identifier policy and audit records,Medium,data-governance,Open
+HZ-012,Burned-in PHI,Identifiers embedded in pixel data,Privacy breach,High,BurnedInAnnotation reporting and manual review warning,High,data-governance,Open
+HZ-013,Incorrect UID remapping,Inconsistent remap across series,Broken study relationships or traceability loss,Medium,Run-local UID map and output validation,Low,imaging-engineering,Open
+HZ-014,Corrupt DICOM files,Invalid or unreadable files,Pipeline failure or skipped input,Medium,Structured skipped-file reporting,Low,imaging-engineering,Open
+HZ-015,Incorrect slice ordering,Missing or ambiguous ordering metadata,Incorrect downstream volume construction,High,Ordering strategy reporting and validation findings,Medium,imaging-engineering,Open
+HZ-016,Mixed study or series ingestion,Input directory contains multiple incompatible groups,Invalid validation or de-identification assumptions,High,Study and series grouping validation,Medium,imaging-engineering,Open
+HZ-017,Unsupported transfer syntax,Compressed or unsupported DICOM encoding,Unreadable pixel data or validation failure,Medium,Transfer-syntax validation finding,Low,imaging-engineering,Open
+HZ-018,Accidental source overwrite,Output path points to source file,Data loss,High,In-place overwrite refusal and explicit output directory,Low,platform-engineering,Open
+HZ-019,Sensitive identifier leakage through logs or audits,Removed values written to outputs,Privacy breach,High,Audit records include tag names and hashes only,Medium,data-governance,Open
