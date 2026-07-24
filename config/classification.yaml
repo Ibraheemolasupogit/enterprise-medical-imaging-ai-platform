@@ -1,16 +1,44 @@
 config_name: classification
-milestone: 1
-status: planned_not_implemented
-purpose: Placeholder structure for future lesion classification settings.
+milestone: 9
+status: foundation
+purpose: Synthetic binary lesion-presence classification engineering baseline.
 owner: machine-learning
 settings:
-  supported_labels: planned_research_labels_only
-  malignancy_benignity_scope: out_of_scope_without_suitable_public_labels
-  calibration_policy: planned
+  classification:
+    policy_version: "m9-classification-v1"
+    random_seed: 20260724
+    device: cpu
+    input_shape: [16, 16, 16]
+    batch_size: 4
+    num_workers: 0
+    epochs: 3
+    learning_rate: 0.001
+    weight_decay: 0.0
+    optimizer: adam
+    channels: [4, 8, 16]
+    dropout: 0.1
+    positive_class_weight: null
+    early_stopping_patience: 2
+    calibration_method: platt
+    threshold_method: fixed
+    fixed_threshold: 0.5
+    minimum_sensitivity: 0.0
+    maximum_false_positives: 32768
+    abstention_lower: 0.45
+    abstention_upper: 0.55
+    minimum_validation_auroc: 0.0
+    minimum_validation_auprc: 0.0
+    minimum_validation_recall: 0.0
+    maximum_false_negatives: 32768
+    maximum_brier_score: 1.0
+    dataset_output_directory: ml/datasets/classification
+    output_directory: ml/experiments/classification
+    overwrite: false
 safeguards:
-  - No classifier exists in Milestone 1.
-  - Malignancy-versus-benignity classification is out of scope unless dataset support is proven.
+  - Labels are synthetic lesion-presence labels only.
+  - This is not benign-versus-malignant classification.
+  - Synthetic classification metrics do not demonstrate clinical performance.
 future_capabilities:
-  - 2.5D benchmark classifier.
-  - 3D classifier.
-  - Calibration and abstention policy.
+  - Public de-identified dataset adapters with documented label semantics.
+  - Calibration and abstention review workflows.
+  - Longitudinal change-aware research classifiers.

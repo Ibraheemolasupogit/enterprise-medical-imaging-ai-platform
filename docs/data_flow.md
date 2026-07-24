@@ -33,6 +33,14 @@ preserves subject-level split metadata and checksums, trains a CPU-compatible MO
 state-dict checkpoints plus structured experiment evidence. These artefacts are ignored by Git and
 are not clinical model outputs.
 
+Milestone 9 adds synthetic classification datasets under `ml/datasets/classification/`,
+classification experiments under `ml/experiments/classification/`, and inference smoke-test outputs
+under `ml/experiments/classification-inference/`. Classification consumes synthetic adrenal-side
+ROI-like crops and synthetic lesion-presence labels, preserves subject-level split metadata and
+checksums, trains a CPU-compatible PyTorch 3D CNN, fits calibration and threshold policy on
+validation data only, and writes state-dict checkpoints plus structured experiment evidence. These
+artefacts are ignored by Git and are not clinical model outputs.
+
 Planned - not yet implemented data zones:
 
 - Raw external source area outside Git.
@@ -40,7 +48,7 @@ Planned - not yet implemented data zones:
 - Dataset manifests for synthetic or publicly available de-identified data.
 - Audit records for de-identification and provenance.
 - Future NIfTI, deformable registration, model, and clinical review artefact zones outside Git.
-- Future learned localisation, segmentation, classification, calibration, and review outputs outside
+- Future learned localisation, advanced segmentation, clinical classification, calibration, and review outputs outside
   Git.
 
 No credentials, patient information, DICOM studies, NIfTI volumes, model weights, or restricted labels should be committed.
@@ -48,4 +56,6 @@ No credentials, patient information, DICOM studies, NIfTI volumes, model weights
 Generated DICOM fixtures, de-identified outputs, audit artefacts under `data/dicom/`, preprocessed
 volumes, registration outputs, and localisation outputs under `data/processed/` are ignored by Git.
 Generated segmentation datasets, checkpoints, and inference artefacts under `ml/datasets/` and
-`ml/experiments/` are ignored by Git.
+`ml/experiments/` are ignored by Git. Generated classification datasets, checkpoints, calibration
+artefacts, threshold policies, and inference artefacts under the same `ml/` areas are also ignored
+by Git.

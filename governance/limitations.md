@@ -39,3 +39,9 @@ Milestone 8 segmentation is a small PyTorch/MONAI baseline trained only on synth
 lesion masks. Synthetic Dice, recall, volume error, and surface metrics cannot support clinical
 claims. No public-data training, radiologist validation, lesion classification, diagnosis, or
 medical-device compliance is implemented.
+
+Milestone 9 classification is a small PyTorch baseline trained only on synthetic ROI-like crops for
+binary synthetic lesion presence. Synthetic AUROC, AUPRC, recall, calibration diagnostics,
+threshold behavior, and abstention outputs cannot support clinical claims. No real-patient
+classification, benign-versus-malignant classification, radiologist validation, diagnosis,
+triage, or medical-device compliance is implemented.

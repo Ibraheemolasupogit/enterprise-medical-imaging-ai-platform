@@ -11,6 +11,7 @@ REQUIRED_MARKDOWN_FILES = (
     Path("SECURITY.md"),
     Path("docs/architecture.md"),
     Path("docs/clinical_workflow.md"),
+    Path("docs/classification_design.md"),
     Path("docs/data_flow.md"),
     Path("docs/data_provenance.md"),
     Path("docs/deidentification_design.md"),
@@ -36,6 +37,7 @@ REQUIRED_MARKDOWN_FILES = (
     Path("governance/limitations.md"),
     Path("ml/dataset_cards/synthetic_ct_dataset.md"),
     Path("ml/model_cards/segmentation_baseline.md"),
+    Path("ml/model_cards/classification_baseline.md"),
 )
 
 DISCLAIMER = (

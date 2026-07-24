@@ -10,7 +10,8 @@ Current limitations:
 - Registration is limited to SimpleITK centre-of-mass, rigid, and affine engineering baselines for preprocessed volumes.
 - Localisation is limited to deterministic atlas-style left/right adrenal-region placeholders for synthetic engineering validation.
 - Segmentation is limited to a small PyTorch/MONAI 3D U-Net trained on synthetic engineering lesion masks.
-- No NIfTI export, general preprocessing resampling, full anatomical reorientation, deformable registration, learned localisation beyond the baseline, advanced segmentation, or classification exists.
+- Classification is limited to a small PyTorch 3D CNN trained on synthetic ROI-like crops for binary synthetic lesion presence only.
+- No NIfTI export, general preprocessing resampling, full anatomical reorientation, deformable registration, learned localisation beyond the baseline, advanced segmentation, benign-versus-malignant classification, or clinical diagnosis exists.
 - No API, dashboard, MLflow, Docker, Kubernetes, Terraform, or AWS implementation exists.
 - No clinical validation has been performed.
 - Synthetic volumes are not clinically realistic CT scans.
@@ -24,6 +25,9 @@ Current limitations:
   atlas centres do not establish adrenal localisation accuracy or anatomical correctness.
 - Milestone 8 segmentation reports are engineering evidence only. Synthetic Dice, recall, volume
   error, and surface distances do not establish clinical lesion segmentation performance.
+- Milestone 9 classification reports are engineering evidence only. Synthetic AUROC, AUPRC, recall,
+  Brier score, calibration diagnostics, threshold behavior, and abstention rates do not establish
+  clinical lesion detection or diagnostic classification performance.
 - Missing slices are inferred only when spacing evidence is reliable; metadata may be incomplete or inaccurate.
 
 The platform is a portfolio and research demonstrator, not an approved medical device.

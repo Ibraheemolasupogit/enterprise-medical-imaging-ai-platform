@@ -44,6 +44,7 @@ from medical_imaging_platform.synthetic.generator import load_synthetic_config
 from medical_imaging_platform.synthetic.io import generate_dataset, validate_dataset
 from medical_imaging_platform.utils.config import (
     ConfigError,
+    load_classification_config,
     load_dicom_ingestion_config,
     load_localisation_config,
     load_preprocessing_config,
@@ -350,6 +351,65 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_segmentation_parser.add_argument("experiment_dir")
     validate_segmentation_parser.add_argument("--json", action="store_true")
+
+    prepare_classification_parser = subparsers.add_parser(
+        "prepare-classification-data",
+        help="Prepare synthetic lesion-presence classification ROI samples.",
+    )
+    prepare_classification_parser.add_argument(
+        "--synthetic-dataset-dir", default="data/synthetic/generated"
+    )
+    prepare_classification_parser.add_argument("--config", default="config/classification.yaml")
+    prepare_classification_parser.add_argument("--output-dir", default=None)
+    prepare_classification_parser.add_argument("--overwrite", action="store_true")
+    prepare_classification_parser.add_argument("--json", action="store_true")
+
+    train_classification_parser = subparsers.add_parser(
+        "train-classification",
+        help="Train the synthetic lesion-presence classifier.",
+    )
+    train_classification_parser.add_argument("dataset_dir")
+    train_classification_parser.add_argument("--config", default="config/classification.yaml")
+    train_classification_parser.add_argument("--output-dir", default=None)
+    train_classification_parser.add_argument("--seed", type=int, default=None)
+    train_classification_parser.add_argument("--epochs", type=int, default=None)
+    train_classification_parser.add_argument("--device", default=None)
+    train_classification_parser.add_argument("--overwrite", action="store_true")
+    train_classification_parser.add_argument("--json", action="store_true")
+
+    evaluate_classification_parser = subparsers.add_parser(
+        "evaluate-classification",
+        help="Validate and inspect a classification experiment.",
+    )
+    evaluate_classification_parser.add_argument("experiment_dir")
+    evaluate_classification_parser.add_argument("--json", action="store_true")
+
+    classify_volume_parser = subparsers.add_parser(
+        "classify-volume",
+        help="Run classification inference for one ROI volume.",
+    )
+    classify_volume_parser.add_argument("input_volume")
+    classify_volume_parser.add_argument("--checkpoint", required=True)
+    classify_volume_parser.add_argument("--calibration", required=True)
+    classify_volume_parser.add_argument("--threshold-policy", required=True)
+    classify_volume_parser.add_argument("--config", default="config/classification.yaml")
+    classify_volume_parser.add_argument("--output-dir", required=True)
+    classify_volume_parser.add_argument("--overwrite", action="store_true")
+    classify_volume_parser.add_argument("--json", action="store_true")
+
+    inspect_classification_parser = subparsers.add_parser(
+        "inspect-classification-experiment",
+        help="Inspect a classification experiment directory.",
+    )
+    inspect_classification_parser.add_argument("experiment_dir")
+    inspect_classification_parser.add_argument("--json", action="store_true")
+
+    validate_classification_parser = subparsers.add_parser(
+        "validate-classification-experiment",
+        help="Validate a classification experiment directory.",
+    )
+    validate_classification_parser.add_argument("experiment_dir")
+    validate_classification_parser.add_argument("--json", action="store_true")
 
     return parser
 
@@ -961,6 +1021,142 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(segmentation_metadata, indent=2, sort_keys=True))
         else:
             print(f"Wrote segmentation inference outputs to {args.output_dir}.")
+        return 0
+
+    if args.command == "prepare-classification-data":
+        from medical_imaging_platform.classification.dataset import (
+            ClassificationDataError,
+            prepare_classification_dataset,
+        )
+
+        try:
+            classification_config = load_classification_config(Path(args.config))
+            output_root = (
+                Path(args.output_dir)
+                if args.output_dir is not None
+                else classification_config.dataset_output_directory
+            )
+            classification_manifest = prepare_classification_dataset(
+                Path(args.synthetic_dataset_dir),
+                output_root=output_root,
+                config=classification_config,
+                overwrite=args.overwrite,
+            )
+        except (
+            ConfigError,
+            ClassificationDataError,
+            MedicalImagingPlatformError,
+            FileExistsError,
+        ) as exc:
+            print(f"Classification dataset preparation failed: {exc}")
+            return 1
+        if args.json:
+            print(
+                json.dumps(
+                    classification_manifest.model_dump(mode="json"), indent=2, sort_keys=True
+                )
+            )
+        else:
+            print(
+                f"Prepared classification dataset {classification_manifest.dataset_id} "
+                f"with {len(classification_manifest.samples)} samples."
+            )
+        return 0
+
+    if args.command == "train-classification":
+        from medical_imaging_platform.classification.trainer import train_classification_experiment
+
+        try:
+            classification_config = load_classification_config(Path(args.config))
+            output_root = (
+                Path(args.output_dir)
+                if args.output_dir is not None
+                else classification_config.output_directory
+            )
+            classification_payload = train_classification_experiment(
+                Path(args.dataset_dir),
+                output_root=output_root,
+                config=classification_config,
+                seed=args.seed,
+                epochs=args.epochs,
+                device_name=args.device,
+                overwrite=args.overwrite,
+            )
+        except ValueError as exc:
+            print(f"Classification experiment rejected: {exc}")
+            return 3
+        except (ConfigError, MedicalImagingPlatformError, FileExistsError) as exc:
+            print(f"Classification training failed: {exc}")
+            return 1
+        if args.json:
+            print(json.dumps(classification_payload, indent=2, sort_keys=True))
+        else:
+            print(
+                f"Trained classification experiment {classification_payload['experiment_id']} "
+                f"status={classification_payload['status']}."
+            )
+        if classification_payload["status"] == "REJECTED":
+            return 3
+        if classification_payload["status"] == "FAIL":
+            return 2
+        return 0
+
+    if args.command in {
+        "evaluate-classification",
+        "inspect-classification-experiment",
+        "validate-classification-experiment",
+    }:
+        from medical_imaging_platform.classification.export import (
+            ClassificationOutputError,
+            inspect_classification_experiment,
+            validate_classification_experiment,
+        )
+
+        try:
+            if args.command == "validate-classification-experiment":
+                classification_summary = validate_classification_experiment(
+                    Path(args.experiment_dir)
+                )
+            else:
+                classification_summary = inspect_classification_experiment(
+                    Path(args.experiment_dir)
+                )
+        except ClassificationOutputError as exc:
+            print(f"Classification experiment validation failed: {exc}")
+            return 4
+        if args.json:
+            print(json.dumps(classification_summary, indent=2, sort_keys=True))
+        else:
+            print(
+                f"Classification experiment {classification_summary['experiment_id']} "
+                f"status={classification_summary['status']}."
+            )
+        return 0
+
+    if args.command == "classify-volume":
+        from medical_imaging_platform.classification.inference import classify_volume
+
+        try:
+            classification_config = load_classification_config(Path(args.config))
+            classification_metadata = classify_volume(
+                Path(args.input_volume),
+                checkpoint_path=Path(args.checkpoint),
+                calibration_path=Path(args.calibration),
+                threshold_policy_path=Path(args.threshold_policy),
+                output_dir=Path(args.output_dir),
+                config=classification_config,
+                overwrite=args.overwrite,
+            )
+        except ValueError as exc:
+            print(f"Classification inference rejected: {exc}")
+            return 3
+        except (ConfigError, MedicalImagingPlatformError, FileExistsError) as exc:
+            print(f"Classification inference failed: {exc}")
+            return 1
+        if args.json:
+            print(json.dumps(classification_metadata, indent=2, sort_keys=True))
+        else:
+            print(f"Wrote classification inference outputs to {args.output_dir}.")
         return 0
 
     parser.error(f"Unsupported command: {args.command}")

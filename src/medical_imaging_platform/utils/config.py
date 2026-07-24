@@ -8,6 +8,7 @@ from typing import Any, ClassVar
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
+from medical_imaging_platform.classification.models import ClassificationConfig
 from medical_imaging_platform.ingestion.models import DicomIngestionConfig
 from medical_imaging_platform.localisation.models import LocalisationConfig
 from medical_imaging_platform.preprocessing.models import PreprocessingConfig
@@ -179,3 +180,15 @@ def load_segmentation_config(path: Path) -> SegmentationConfig:
         return SegmentationConfig.model_validate(settings["segmentation"])
     except ValidationError as exc:
         raise ConfigError(f"Invalid segmentation configuration in {path}: {exc}") from exc
+
+
+def load_classification_config(path: Path) -> ClassificationConfig:
+    """Load typed Milestone 9 classification settings from classification.yaml."""
+    data = load_yaml_file(path)
+    settings = data.get("settings")
+    if not isinstance(settings, dict) or "classification" not in settings:
+        raise ConfigError(f"Missing settings.classification in {path}")
+    try:
+        return ClassificationConfig.model_validate(settings["classification"])
+    except ValidationError as exc:
+        raise ConfigError(f"Invalid classification configuration in {path}: {exc}") from exc

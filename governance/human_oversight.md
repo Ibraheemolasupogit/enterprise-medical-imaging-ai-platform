@@ -17,3 +17,10 @@ Milestone 8 segmentation reports, checkpoints, and inference masks require human
 before any downstream research use. Reviewers must treat synthetic Dice, recall, thresholded masks,
 and post-processing outputs as technical evidence only; empty predictions, false negatives, false
 positives, and failed quality gates must not be ignored.
+
+Milestone 9 classification reports, checkpoints, calibration artefacts, threshold policies, and
+inference outputs require human engineering review before any downstream research use. Reviewers
+must treat synthetic AUROC, AUPRC, recall, calibration diagnostics, threshold policy, and
+`indeterminate` abstention as technical evidence only. False negatives, false positives,
+miscalibration, class imbalance, broad or narrow abstention intervals, and failed quality gates must
+block downstream research use until reviewed.

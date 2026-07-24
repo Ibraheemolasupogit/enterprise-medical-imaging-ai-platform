@@ -4,10 +4,10 @@
 
 Enterprise Medical Imaging AI Platform is a planned production-oriented medical-imaging AI platform for abdominal CT research workflows. The long-term goal is to demonstrate how DICOM ingestion, de-identification, quality control, image standardisation, longitudinal registration, adrenal-region localisation, lesion analysis, governed review, MLOps, cloud architecture, and clinical AI assurance fit together as one engineered system.
 
-Milestones 1-8 establish repository foundations, synthetic data, DICOM ingestion, quality control,
-preprocessing, registration, localisation, and a synthetic segmentation baseline. APIs, dashboards,
-cloud deployment, containers, monitoring, classification, calibration, and clinical deployment are
-**Planned - not yet implemented**.
+Milestones 1-9 establish repository foundations, synthetic data, DICOM ingestion, quality control,
+preprocessing, registration, localisation, synthetic segmentation, and binary synthetic
+lesion-presence classification with calibration. APIs, dashboards, cloud deployment, containers,
+monitoring, advanced classification, and clinical deployment are **Planned - not yet implemented**.
 
 ## Clinical And Engineering Problem
 
@@ -104,9 +104,20 @@ Complete in Milestone 8:
 - Dice, IoU, precision, recall, specificity, volume-error, and surface-distance metrics.
 - Segmentation model-quality gates, CLI commands, Make targets, and model card.
 
+Complete in Milestone 9:
+
+- Synthetic classification dataset preparation from ROI-like adrenal-side crops.
+- Binary labels for `no_visible_synthetic_lesion` and `synthetic_lesion_present`.
+- CPU-compatible original PyTorch 3D CNN baseline with no pretrained weights.
+- Validation-only calibration and threshold policy evidence.
+- Inference abstention with the inference-only `indeterminate` label.
+- AUROC, AUPRC, recall, specificity, precision, NPV, Brier score, calibration, and confusion metrics.
+- Classification quality gates, CLI commands, Make targets, and model card.
+
 Planned - not yet implemented:
 
-- Deformable registration, learned localisation beyond the baseline, advanced segmentation, and classification.
+- Deformable registration, learned localisation beyond the baseline, advanced segmentation, and
+  benign-versus-malignant or clinical classification.
 - FastAPI, Streamlit, MLflow, Docker, Kubernetes, Terraform, and AWS integrations.
 - Any diagnostic or clinical decision support behavior.
 
@@ -125,6 +136,8 @@ Milestone 1 uses a deliberately small Python 3.12 stack:
 - `pytest`, `ruff`, `mypy`, `bandit`, and coverage tooling for quality.
 
 - PyTorch and MONAI are used for the Milestone 8 synthetic segmentation baseline.
+- PyTorch and scikit-learn are used for the Milestone 9 synthetic classification, calibration, and
+  thresholding baseline.
 
 Planned - not yet implemented:
 
@@ -240,6 +253,20 @@ medical-imaging-platform train-segmentation ml/datasets/segmentation/<dataset_id
 Segmentation uses synthetic engineering lesion masks only. Generated checkpoints under
 `ml/experiments/` are ignored by Git and must not be interpreted as clinical-performance evidence.
 
+Classification commands:
+
+```bash
+make prepare-classification-data
+make train-classification
+make evaluate-classification
+make verify-classification
+medical-imaging-platform train-classification ml/datasets/classification/<dataset_id>
+```
+
+Classification uses synthetic ROI-like crops and binary synthetic lesion-presence labels only.
+Generated checkpoints, calibration artefacts, threshold policies, and inference outputs under
+`ml/experiments/` are ignored by Git and must not be interpreted as clinical-performance evidence.
+
 ## Data Safety
 
 Only synthetic data or publicly available de-identified data may be used. Do not commit real patient data, model weights derived from restricted patient data, credentials, cloud account identifiers, DICOM studies with identifying metadata, or screenshots containing protected health information.
@@ -258,7 +285,7 @@ This repository is not an approved medical device, is not validated for NHS depl
 6. Registration. Complete for SimpleITK centre-of-mass, rigid, and affine baselines only.
 7. Baseline localisation. Complete for atlas-style adrenal-region placeholder localisation only; no segmentation.
 8. Synthetic segmentation baseline. Complete for small MONAI 3D U-Net on synthetic masks only.
-9. Classification and calibration.
+9. Classification and calibration. Complete for binary synthetic lesion-presence classification only.
 10. Longitudinal analysis.
 11. API and review dashboard.
 12. MLOps platform.
@@ -273,4 +300,7 @@ The project was informed by research review of earlier CT alignment and adrenal 
 
 ## Limitations
 
-The current repository foundation does not train models, serve predictions, perform registration, or deploy infrastructure. See [docs/limitations.md](docs/limitations.md) and [governance/limitations.md](governance/limitations.md).
+The current repository does not serve predictions, perform clinical diagnosis, or deploy
+infrastructure. Current modelling is limited to synthetic segmentation and binary synthetic
+lesion-presence classification. See [docs/limitations.md](docs/limitations.md) and
+[governance/limitations.md](governance/limitations.md).

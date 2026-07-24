@@ -73,4 +73,5 @@ Synthetic masks are simple engineering fixtures and do not represent scanner div
 diversity, lesion appearance diversity, radiologist annotation variability, or clinical pathology.
 Synthetic Dice, recall, and surface distances do not demonstrate clinical performance. Localisation
 errors can propagate into future segmentation workflows, although Milestone 8 trains directly from
-synthetic lesion masks.
+synthetic lesion masks. Downstream classification workflows must treat segmentation outputs as
+provenance and risk context, not as diagnostic evidence.

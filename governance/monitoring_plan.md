@@ -35,3 +35,10 @@ Milestone 8 segmentation reports introduce future monitoring candidates: dataset
 training loss finiteness, validation Dice, test recall, false-positive voxel burden, relative volume
 error, checkpoint checksum failures, inference empty-mask warnings, and failed model-quality gates.
 These remain synthetic engineering signals and are not clinical segmentation performance metrics.
+
+Milestone 9 classification reports introduce future monitoring candidates: derived dataset leakage
+findings, class balance by split, finite loss status, validation AUROC and AUPRC, validation recall,
+Brier score, expected calibration error, calibration fallback rate, selected threshold, false
+positive and false negative counts, abstention rate, checkpoint and calibration checksum failures,
+and failed model-quality gates. These remain synthetic engineering signals and are not clinical
+classification performance metrics.

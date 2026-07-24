@@ -1,4 +1,4 @@
-.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality-check-dicom verify-dicom-quality preprocess-dicom validate-preprocessed-volume verify-preprocessing register-synthetic-pair validate-registration verify-registration generate-localisation-fixtures localise-synthetic-regions validate-localisation verify-localisation prepare-segmentation-data train-segmentation evaluate-segmentation verify-segmentation quality clean
+.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality-check-dicom verify-dicom-quality preprocess-dicom validate-preprocessed-volume verify-preprocessing register-synthetic-pair validate-registration verify-registration generate-localisation-fixtures localise-synthetic-regions validate-localisation verify-localisation prepare-segmentation-data train-segmentation evaluate-segmentation verify-segmentation prepare-classification-data train-classification evaluate-classification verify-classification quality clean
 
 PYTHON ?= python3
 SYNTHETIC_DATA_DIR ?= data/synthetic/generated
@@ -15,6 +15,10 @@ SEGMENTATION_DATASET_DIR ?= ml/datasets/segmentation
 SEGMENTATION_EXPERIMENT_DIR ?= ml/experiments/segmentation
 SEGMENTATION_INFERENCE_DIR ?= ml/experiments/segmentation-inference
 SEGMENTATION_ENV ?= MPLCONFIGDIR=/tmp/medical-imaging-platform-mplconfig
+CLASSIFICATION_DATASET_DIR ?= ml/datasets/classification
+CLASSIFICATION_EXPERIMENT_DIR ?= ml/experiments/classification
+CLASSIFICATION_INFERENCE_DIR ?= ml/experiments/classification-inference
+CLASSIFICATION_SYNTHETIC_CASES ?= 12
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -116,6 +120,21 @@ evaluate-segmentation:
 verify-segmentation: train-segmentation evaluate-segmentation
 	$(SEGMENTATION_ENV) $(PYTHON) -m medical_imaging_platform segment-volume $$(find $(SEGMENTATION_DATASET_DIR) -path "*/synthetic-case-0001-current/image.npy" | sort | head -n 1) --checkpoint $$(find $(SEGMENTATION_EXPERIMENT_DIR) -mindepth 2 -maxdepth 2 -name best_model.pt | sort | head -n 1) --output-dir $(SEGMENTATION_INFERENCE_DIR)/positive --overwrite
 	$(SEGMENTATION_ENV) $(PYTHON) -m medical_imaging_platform segment-volume $$(find $(SEGMENTATION_DATASET_DIR) -path "*/synthetic-case-0004-previous/image.npy" | sort | head -n 1) --checkpoint $$(find $(SEGMENTATION_EXPERIMENT_DIR) -mindepth 2 -maxdepth 2 -name best_model.pt | sort | head -n 1) --output-dir $(SEGMENTATION_INFERENCE_DIR)/negative --overwrite
+
+prepare-classification-data:
+	$(PYTHON) -m medical_imaging_platform generate-synthetic-data --output-dir $(SYNTHETIC_DATA_DIR) --cases $(CLASSIFICATION_SYNTHETIC_CASES) --overwrite
+	$(SEGMENTATION_ENV) $(PYTHON) -m medical_imaging_platform prepare-classification-data --synthetic-dataset-dir $(SYNTHETIC_DATA_DIR) --output-dir $(CLASSIFICATION_DATASET_DIR) --overwrite
+
+train-classification: prepare-classification-data
+	$(SEGMENTATION_ENV) $(PYTHON) -m medical_imaging_platform train-classification $$(find $(CLASSIFICATION_DATASET_DIR) -mindepth 1 -maxdepth 1 -type d | sort | head -n 1) --output-dir $(CLASSIFICATION_EXPERIMENT_DIR) --overwrite
+
+evaluate-classification:
+	$(SEGMENTATION_ENV) $(PYTHON) -m medical_imaging_platform validate-classification-experiment $$(find $(CLASSIFICATION_EXPERIMENT_DIR) -mindepth 1 -maxdepth 1 -type d | sort | head -n 1)
+	$(SEGMENTATION_ENV) $(PYTHON) -m medical_imaging_platform inspect-classification-experiment $$(find $(CLASSIFICATION_EXPERIMENT_DIR) -mindepth 1 -maxdepth 1 -type d | sort | head -n 1)
+
+verify-classification: train-classification evaluate-classification
+	$(SEGMENTATION_ENV) $(PYTHON) -m medical_imaging_platform classify-volume $$(find $(CLASSIFICATION_DATASET_DIR) -path "*/synthetic-case-0001-current-left/image.npy" | sort | head -n 1) --checkpoint $$(find $(CLASSIFICATION_EXPERIMENT_DIR) -mindepth 2 -maxdepth 2 -name best_model.pt | sort | head -n 1) --calibration $$(find $(CLASSIFICATION_EXPERIMENT_DIR) -mindepth 2 -maxdepth 2 -name calibration.json | sort | head -n 1) --threshold-policy $$(find $(CLASSIFICATION_EXPERIMENT_DIR) -mindepth 2 -maxdepth 2 -name threshold_policy.json | sort | head -n 1) --output-dir $(CLASSIFICATION_INFERENCE_DIR)/positive --overwrite
+	$(SEGMENTATION_ENV) $(PYTHON) -m medical_imaging_platform classify-volume $$(find $(CLASSIFICATION_DATASET_DIR) -path "*/synthetic-case-0004-previous-right/image.npy" | sort | head -n 1) --checkpoint $$(find $(CLASSIFICATION_EXPERIMENT_DIR) -mindepth 2 -maxdepth 2 -name best_model.pt | sort | head -n 1) --calibration $$(find $(CLASSIFICATION_EXPERIMENT_DIR) -mindepth 2 -maxdepth 2 -name calibration.json | sort | head -n 1) --threshold-policy $$(find $(CLASSIFICATION_EXPERIMENT_DIR) -mindepth 2 -maxdepth 2 -name threshold_policy.json | sort | head -n 1) --output-dir $(CLASSIFICATION_INFERENCE_DIR)/negative --overwrite
 
 quality: format-check lint type-check validate-config validate-docs test security
 
