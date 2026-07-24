@@ -1,0 +1,84 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "enterprise-medical-imaging-ai-platform"
+version = "0.1.0"
+description = "Research foundation for a governed enterprise medical-imaging AI platform."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+authors = [
+  { name = "Enterprise Medical Imaging AI Platform contributors" }
+]
+keywords = [
+  "medical-imaging",
+  "clinical-ai",
+  "configuration",
+  "governance",
+  "research"
+]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Typing :: Typed"
+]
+dependencies = [
+  "pydantic>=2.8,<3",
+  "PyYAML>=6.0.2,<7"
+]
+
+[project.optional-dependencies]
+dev = [
+  "bandit>=1.7.9,<2",
+  "coverage[toml]>=7.6,<8",
+  "mypy>=1.11,<2",
+  "pytest>=8.3,<9",
+  "pytest-cov>=5,<6",
+  "ruff>=0.6,<1",
+  "types-PyYAML>=6.0.12,<7"
+]
+
+[project.scripts]
+medical-imaging-platform = "medical_imaging_platform.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/medical_imaging_platform"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["B", "C4", "E", "F", "I", "N", "UP", "W"]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["medical_imaging_platform"]
+
+[tool.pytest.ini_options]
+addopts = "--cov=medical_imaging_platform --cov-report=term-missing --cov-report=xml"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["medical_imaging_platform"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 90
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv"]
+skips = ["B101"]

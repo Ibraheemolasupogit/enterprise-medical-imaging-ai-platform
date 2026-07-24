@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Editors and OS files
+.DS_Store
+.idea/
+.vscode/
+
+# Data and generated artefacts
+data/raw/
+data/interim/
+data/processed/
+data/synthetic/generated/
+outputs/
+reports/generated/
+*.dcm
+*.nii
+*.nii.gz
+*.h5
+*.pt
+*.pth
+*.onnx
+
+# Secrets and cloud artefacts
+*.pem
+*.key
+*.tfstate
+*.tfstate.*

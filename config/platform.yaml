@@ -1,0 +1,17 @@
+config_name: platform
+milestone: 1
+status: foundation
+purpose: Repository-level metadata and milestone boundaries.
+owner: platform-engineering
+settings:
+  project_name: Enterprise Medical Imaging AI Platform
+  supported_python: "3.12"
+  implementation_status: foundation_only
+  intended_use: research_and_engineering_demonstrator
+safeguards:
+  - Outputs must not be used for clinical diagnosis or patient-management decisions.
+  - Future capabilities must be marked as Planned - not yet implemented until delivered.
+future_capabilities:
+  - End-to-end governed medical-imaging workflow.
+  - API and review interface.
+  - MLOps, container, Kubernetes, and AWS architecture.

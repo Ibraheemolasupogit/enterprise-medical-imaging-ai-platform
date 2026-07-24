@@ -1,0 +1,16 @@
+config_name: monitoring
+milestone: 1
+status: planned_not_implemented
+purpose: Placeholder structure for future monitoring configuration.
+owner: mlops
+settings:
+  operational_monitoring: planned
+  model_monitoring: planned
+  data_drift_monitoring: planned
+safeguards:
+  - No operational monitoring service exists in Milestone 1.
+  - Future monitoring must include auditability and human-review signals.
+future_capabilities:
+  - Structured metrics.
+  - Drift reports.
+  - Operational health dashboards.

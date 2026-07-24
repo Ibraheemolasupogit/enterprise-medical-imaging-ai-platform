@@ -1,0 +1,16 @@
+config_name: preprocessing
+milestone: 1
+status: planned_not_implemented
+purpose: Placeholder structure for future CT standardisation settings.
+owner: imaging-engineering
+settings:
+  orientation_policy: documented_future_setting
+  spacing_policy: documented_future_setting
+  intensity_policy: documented_future_setting
+safeguards:
+  - No DICOM-to-NIfTI or image processing behavior exists in Milestone 1.
+  - Future preprocessing parameters must be reproducible and configuration-driven.
+future_capabilities:
+  - DICOM-to-NIfTI conversion.
+  - Canonical orientation.
+  - Voxel resampling and intensity normalisation.

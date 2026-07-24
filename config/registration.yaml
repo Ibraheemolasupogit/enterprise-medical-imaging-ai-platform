@@ -1,0 +1,16 @@
+config_name: registration
+milestone: 1
+status: planned_not_implemented
+purpose: Placeholder structure for future longitudinal registration settings.
+owner: imaging-engineering
+settings:
+  baseline_registration: rigid_then_affine_planned
+  quality_gate_policy: planned
+  failure_handling: planned
+safeguards:
+  - No registration algorithm exists in Milestone 1.
+  - Future registration must flag poor alignment rather than silently proceeding.
+future_capabilities:
+  - Rigid registration.
+  - Affine registration.
+  - Registration quality metrics and overlays.

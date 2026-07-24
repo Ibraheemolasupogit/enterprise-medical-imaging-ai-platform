@@ -1,0 +1,17 @@
+config_name: governance
+milestone: 1
+status: foundation
+purpose: Repository-level clinical AI governance boundaries.
+owner: clinical-ai-governance
+settings:
+  intended_use: research_and_engineering_demonstrator
+  human_review: mandatory
+  medical_device_status: not_an_approved_medical_device
+  deployment_status: not_validated_for_nhs_deployment
+safeguards:
+  - Outputs must not be used for diagnosis or patient management.
+  - Only synthetic or publicly available de-identified data may be used.
+future_capabilities:
+  - Model cards.
+  - Dataset cards.
+  - Hazard review and model change control.

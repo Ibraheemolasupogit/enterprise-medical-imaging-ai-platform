@@ -1,0 +1,11 @@
+hazard_id,hazard,cause,potential_harm,initial_severity,controls,residual_risk,owner,status
+HZ-001,Incorrect longitudinal scan pairing,Wrong current and previous study association,Incorrect change assessment,High,Future provenance checks and human review,Medium,clinical-ai-governance,Open
+HZ-002,Failed or poor registration,Protocol differences or algorithm failure,Misleading comparison overlay,High,Future registration quality gates and failure flags,Medium,imaging-engineering,Open
+HZ-003,False-negative lesion output,Model miss or poor image quality,Missed suspected lesion signal,High,Future sensitivity-focused evaluation and human review,Medium,machine-learning,Open
+HZ-004,False-positive lesion output,Model overcall or artefact,Unnecessary reviewer concern,Medium,Future false-positive reporting and review controls,Low,machine-learning,Open
+HZ-005,Poor image quality,Motion artefact or incomplete scan,Unreliable downstream analysis,High,Future quality-control checks,Medium,imaging-engineering,Open
+HZ-006,Unsupported imaging protocol,Scanner or contrast protocol outside scope,Invalid model assumptions,High,Future protocol validation and abstention,Medium,data-governance,Open
+HZ-007,Burned-in identifying information,Identifiers present in pixel data,Privacy breach,High,Future burned-in annotation checks and data review,Medium,data-governance,Open
+HZ-008,Automation bias,Reviewer over-trusts model output,Incorrect clinical interpretation,High,Research-only disclaimer and mandatory human review,Medium,clinical-ai-governance,Open
+HZ-009,Missing model-version audit data,Incomplete provenance capture,Untraceable prediction,Medium,Future audit logging and model registry,Low,mlops,Open
+HZ-010,Patient leakage between training and evaluation splits,Improper split policy,Inflated performance estimates,High,Future patient-level split validation,Medium,machine-learning,Open

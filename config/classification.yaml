@@ -1,0 +1,16 @@
+config_name: classification
+milestone: 1
+status: planned_not_implemented
+purpose: Placeholder structure for future lesion classification settings.
+owner: machine-learning
+settings:
+  supported_labels: planned_research_labels_only
+  malignancy_benignity_scope: out_of_scope_without_suitable_public_labels
+  calibration_policy: planned
+safeguards:
+  - No classifier exists in Milestone 1.
+  - Malignancy-versus-benignity classification is out of scope unless dataset support is proven.
+future_capabilities:
+  - 2.5D benchmark classifier.
+  - 3D classifier.
+  - Calibration and abstention policy.

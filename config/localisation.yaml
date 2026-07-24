@@ -1,0 +1,16 @@
+config_name: localisation
+milestone: 1
+status: planned_not_implemented
+purpose: Placeholder structure for future adrenal ROI localisation settings.
+owner: machine-learning
+settings:
+  roi_strategy: planned
+  left_right_adrenal_handling: planned
+  anatomical_scope: abdominal_ct_research
+safeguards:
+  - No anatomical localisation model exists in Milestone 1.
+  - ROI methods must document dataset and protocol limitations.
+future_capabilities:
+  - Atlas baseline.
+  - Bounding-box ROI extraction.
+  - Trainable adrenal localisation.

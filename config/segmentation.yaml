@@ -1,0 +1,16 @@
+config_name: segmentation
+milestone: 1
+status: planned_not_implemented
+purpose: Placeholder structure for future lesion segmentation settings.
+owner: machine-learning
+settings:
+  baseline_model_family: monai_3d_unet_planned
+  evaluation_focus: dice_and_surface_metrics_planned
+  model_artifact_policy: no_weights_in_git
+safeguards:
+  - No segmentation model exists in Milestone 1.
+  - Future results must be reported as research outputs only.
+future_capabilities:
+  - MONAI 3D U-Net baseline.
+  - SegResNet comparison.
+  - Segmentation overlays.

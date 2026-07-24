@@ -1,0 +1,17 @@
+config_name: evaluation
+milestone: 1
+status: planned_not_implemented
+purpose: Placeholder structure for future evaluation policy.
+owner: machine-learning
+settings:
+  split_policy: patient_level_splits_required_in_future
+  leakage_policy: prevent_patient_leakage
+  reporting_policy: confidence_intervals_planned
+safeguards:
+  - Evaluation must not rely on accuracy alone for clinically sensitive tasks.
+  - Future validation must document dataset limitations.
+future_capabilities:
+  - Classification metrics.
+  - Segmentation metrics.
+  - Registration metrics.
+  - Subgroup and drift analysis.
