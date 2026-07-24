@@ -45,3 +45,8 @@ binary synthetic lesion presence. Synthetic AUROC, AUPRC, recall, calibration di
 threshold behavior, and abstention outputs cannot support clinical claims. No real-patient
 classification, benign-versus-malignant classification, radiologist validation, diagnosis,
 triage, or medical-device compliance is implemented.
+
+Milestone 10 longitudinal analysis uses synthetic masks, deterministic component matching, and
+spacing-aware engineering measurements only. Synthetic change labels cannot support progression,
+treatment-response, RECIST, diagnostic, triage, or patient-management claims. Measurement and
+matching outputs require human engineering review and upstream quality review.

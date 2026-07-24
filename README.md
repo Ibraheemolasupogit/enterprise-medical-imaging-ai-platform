@@ -4,10 +4,11 @@
 
 Enterprise Medical Imaging AI Platform is a planned production-oriented medical-imaging AI platform for abdominal CT research workflows. The long-term goal is to demonstrate how DICOM ingestion, de-identification, quality control, image standardisation, longitudinal registration, adrenal-region localisation, lesion analysis, governed review, MLOps, cloud architecture, and clinical AI assurance fit together as one engineered system.
 
-Milestones 1-9 establish repository foundations, synthetic data, DICOM ingestion, quality control,
+Milestones 1-10 establish repository foundations, synthetic data, DICOM ingestion, quality control,
 preprocessing, registration, localisation, synthetic segmentation, and binary synthetic
-lesion-presence classification with calibration. APIs, dashboards, cloud deployment, containers,
-monitoring, advanced classification, and clinical deployment are **Planned - not yet implemented**.
+lesion-presence classification with calibration, and governed synthetic longitudinal lesion-change
+analysis. APIs, dashboards, cloud deployment, containers, monitoring, advanced classification, and
+clinical deployment are **Planned - not yet implemented**.
 
 ## Clinical And Engineering Problem
 
@@ -114,10 +115,19 @@ Complete in Milestone 9:
 - AUROC, AUPRC, recall, specificity, precision, NPV, Brier score, calibration, and confusion metrics.
 - Classification quality gates, CLI commands, Make targets, and model card.
 
+Complete in Milestone 10:
+
+- Previous/current synthetic lesion-mask measurements with spacing-aware physical volumes and diameters.
+- Deterministic lesion component matching with centroid, overlap, IoU, and ambiguity handling.
+- Absolute and percentage volume and diameter change calculations.
+- Engineering labels: `new`, `increased`, `stable`, `reduced`, `resolved`, and `indeterminate`.
+- Upstream registration, segmentation, localisation, classification, calibration, and abstention propagation.
+- Longitudinal quality gates, evidence exports, review arrays, CLI commands, and Make targets.
+
 Planned - not yet implemented:
 
-- Deformable registration, learned localisation beyond the baseline, advanced segmentation, and
-  benign-versus-malignant or clinical classification.
+- Deformable registration, learned localisation beyond the baseline, advanced segmentation,
+  benign-versus-malignant or clinical classification, and RECIST or treatment-response assessment.
 - FastAPI, Streamlit, MLflow, Docker, Kubernetes, Terraform, and AWS integrations.
 - Any diagnostic or clinical decision support behavior.
 
@@ -138,6 +148,8 @@ Milestone 1 uses a deliberately small Python 3.12 stack:
 - PyTorch and MONAI are used for the Milestone 8 synthetic segmentation baseline.
 - PyTorch and scikit-learn are used for the Milestone 9 synthetic classification, calibration, and
   thresholding baseline.
+- NumPy and SciPy are used for the Milestone 10 synthetic longitudinal measurement and component
+  matching baseline.
 
 Planned - not yet implemented:
 
@@ -267,6 +279,18 @@ Classification uses synthetic ROI-like crops and binary synthetic lesion-presenc
 Generated checkpoints, calibration artefacts, threshold policies, and inference outputs under
 `ml/experiments/` are ignored by Git and must not be interpreted as clinical-performance evidence.
 
+Longitudinal analysis commands:
+
+```bash
+make analyse-synthetic-longitudinal
+make validate-longitudinal
+make verify-longitudinal
+medical-imaging-platform analyse-longitudinal-pair --previous-mask <prev.npy> --current-mask <curr.npy> --previous-spacing 2.5 2.5 2.5 --current-spacing 2.5 2.5 2.5 --case-id <case> --research-subject-id <subject> --side left --registration-run-id <run>
+```
+
+Longitudinal labels are synthetic engineering labels only. They are not RECIST, disease progression,
+treatment response, diagnosis, or clinical decision support.
+
 ## Data Safety
 
 Only synthetic data or publicly available de-identified data may be used. Do not commit real patient data, model weights derived from restricted patient data, credentials, cloud account identifiers, DICOM studies with identifying metadata, or screenshots containing protected health information.
@@ -286,7 +310,7 @@ This repository is not an approved medical device, is not validated for NHS depl
 7. Baseline localisation. Complete for atlas-style adrenal-region placeholder localisation only; no segmentation.
 8. Synthetic segmentation baseline. Complete for small MONAI 3D U-Net on synthetic masks only.
 9. Classification and calibration. Complete for binary synthetic lesion-presence classification only.
-10. Longitudinal analysis.
+10. Longitudinal analysis. Complete for governed synthetic engineering labels only.
 11. API and review dashboard.
 12. MLOps platform.
 13. Docker and Kubernetes.
@@ -300,7 +324,7 @@ The project was informed by research review of earlier CT alignment and adrenal 
 
 ## Limitations
 
-The current repository does not serve predictions, perform clinical diagnosis, or deploy
-infrastructure. Current modelling is limited to synthetic segmentation and binary synthetic
-lesion-presence classification. See [docs/limitations.md](docs/limitations.md) and
-[governance/limitations.md](governance/limitations.md).
+The current repository does not serve predictions, perform clinical diagnosis, implement RECIST, or
+deploy infrastructure. Current modelling and analysis are limited to synthetic segmentation, binary
+synthetic lesion-presence classification, and synthetic longitudinal engineering labels. See
+[docs/limitations.md](docs/limitations.md) and [governance/limitations.md](governance/limitations.md).

@@ -9,7 +9,7 @@
 7. Baseline localisation. Complete for deterministic adrenal-region placeholder localisation only; no segmentation.
 8. Synthetic segmentation baseline. Complete for small MONAI 3D U-Net on synthetic masks only.
 9. Classification and calibration. Complete for binary synthetic lesion-presence classification only.
-10. Longitudinal analysis.
+10. Longitudinal analysis. Complete for governed synthetic engineering labels only.
 11. API and review dashboard.
 12. MLOps platform.
 13. Docker and Kubernetes.
@@ -17,7 +17,7 @@
 15. Clinical AI assurance.
 16. Final portfolio packaging.
 
-Milestones 1-9 are implemented in the current repository state. Milestone 9 does not implement
+Milestones 1-10 are implemented in the current repository state. Milestone 10 does not implement
 deformable registration, NIfTI export, general preprocessing resampling, learned localisation beyond
 the baseline, advanced segmentation, benign-versus-malignant classification, clinical lesion
-detection, cloud deployment, or clinical decision support.
+detection, RECIST, treatment-response assessment, cloud deployment, or clinical decision support.

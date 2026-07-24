@@ -24,3 +24,9 @@ must treat synthetic AUROC, AUPRC, recall, calibration diagnostics, threshold po
 `indeterminate` abstention as technical evidence only. False negatives, false positives,
 miscalibration, class imbalance, broad or narrow abstention intervals, and failed quality gates must
 block downstream research use until reviewed.
+
+Milestone 10 longitudinal reports and review arrays require human engineering review before any
+downstream research use. Reviewers must treat `new`, `increased`, `stable`, `reduced`, `resolved`,
+and `indeterminate` as synthetic engineering labels only. They are not progression, treatment
+response, RECIST, diagnosis, or clinical decision support. Ambiguous matches, failed upstream
+quality, spacing concerns, small denominators, and classification abstention must not be bypassed.

@@ -1,10 +1,10 @@
 # Architecture
 
-Milestones 1-9 provide repository foundation, synthetic fixtures, local DICOM ingestion,
+Milestones 1-10 provide repository foundation, synthetic fixtures, local DICOM ingestion,
 metadata-focused de-identification, technical DICOM quality control, and deterministic CT
 preprocessing to NumPy volumes, SimpleITK registration baselines, and deterministic adrenal-region
 placeholder localisation, plus small synthetic lesion segmentation and lesion-presence
-classification baselines.
+classification baselines and governed synthetic longitudinal lesion-change analysis.
 
 Implemented foundation components:
 
@@ -24,6 +24,9 @@ Implemented foundation components:
 - PyTorch classification foundation with synthetic ROI-like crops, a compact 3D CNN, validation-only
   calibration and threshold policy, inference abstention, deterministic evidence, quality gates, and
   model card.
+- Longitudinal analysis foundation with spacing-aware mask measurements, deterministic component
+  matching, synthetic engineering change labels, upstream quality propagation, review arrays,
+  evidence checksums, and reports.
 
 Planned - not yet implemented:
 
@@ -32,7 +35,7 @@ Planned - not yet implemented:
 - Deformable or anatomy-constrained longitudinal registration.
 - Learned or anatomy-aware adrenal ROI localisation.
 - Advanced lesion segmentation and clinical classification.
-- Longitudinal change measurement.
+- Clinical longitudinal change measurement, RECIST, and treatment-response assessment.
 - FastAPI review service.
 - Review dashboard.
 - Monitoring, audit, registry, and retraining workflows.

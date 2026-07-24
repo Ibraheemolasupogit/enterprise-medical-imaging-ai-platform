@@ -76,6 +76,10 @@ Milestone 6 registration outputs may be consumed by Milestone 7 localisation, bu
 success remains a technical precondition rather than proof of anatomical alignment. Downstream
 localisation preserves registration status, geometry, and override provenance.
 
+Milestone 10 longitudinal analysis can consume registration run IDs and registration quality
+statuses as upstream evidence. Failed registration can force `indeterminate` longitudinal labels,
+and registration success still does not prove clinical anatomical correctness.
+
 Milestone 6 does not implement deformable registration, deep-learning registration, PyTorch, MONAI,
 lesion segmentation, classification, PACS/DICOMweb, notebooks, MLflow, API, dashboard, Docker,
 Kubernetes, Terraform, or AWS.

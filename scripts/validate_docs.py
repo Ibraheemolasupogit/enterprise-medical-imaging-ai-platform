@@ -20,6 +20,7 @@ REQUIRED_MARKDOWN_FILES = (
     Path("docs/dataset_selection_criteria.md"),
     Path("docs/imaging_quality_control.md"),
     Path("docs/localisation_design.md"),
+    Path("docs/longitudinal_analysis_design.md"),
     Path("docs/roadmap.md"),
     Path("docs/registration_design.md"),
     Path("docs/segmentation_design.md"),

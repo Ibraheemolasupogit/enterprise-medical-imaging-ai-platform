@@ -63,3 +63,7 @@ quality gates, and deterministic reports before PyTorch/MONAI modelling mileston
 Milestone 8 segmentation may eventually consume localisation-derived ROIs. Localisation failures,
 left/right reversals, or excessive padding must be treated as upstream blockers because they can
 propagate directly into segmentation samples.
+
+Milestone 10 longitudinal analysis records localisation run IDs and statuses when available.
+Left/right inconsistency or localisation failure must remain visible and can contribute to
+indeterminate engineering labels.

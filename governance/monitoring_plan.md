@@ -42,3 +42,9 @@ Brier score, expected calibration error, calibration fallback rate, selected thr
 positive and false negative counts, abstention rate, checkpoint and calibration checksum failures,
 and failed model-quality gates. These remain synthetic engineering signals and are not clinical
 classification performance metrics.
+
+Milestone 10 longitudinal reports introduce future monitoring candidates: pair validity failures,
+temporal-order reversals, side mismatches, geometry mismatches, registration and segmentation
+failure propagation, ambiguous match rate, new/resolved label counts, small-denominator cases,
+indeterminate rate, checksum failures, and failed longitudinal quality gates. These remain synthetic
+engineering signals and are not clinical progression or response metrics.

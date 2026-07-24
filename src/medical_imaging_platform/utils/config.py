@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from medical_imaging_platform.classification.models import ClassificationConfig
 from medical_imaging_platform.ingestion.models import DicomIngestionConfig
 from medical_imaging_platform.localisation.models import LocalisationConfig
+from medical_imaging_platform.longitudinal.models import LongitudinalConfig
 from medical_imaging_platform.preprocessing.models import PreprocessingConfig
 from medical_imaging_platform.quality_control.models import QualityControlConfig
 from medical_imaging_platform.registration.models import RegistrationConfig
@@ -64,6 +65,7 @@ class RepositoryConfigSet(BaseModel):
         "localisation.yaml",
         "segmentation.yaml",
         "classification.yaml",
+        "longitudinal.yaml",
         "evaluation.yaml",
         "monitoring.yaml",
         "governance.yaml",
@@ -192,3 +194,15 @@ def load_classification_config(path: Path) -> ClassificationConfig:
         return ClassificationConfig.model_validate(settings["classification"])
     except ValidationError as exc:
         raise ConfigError(f"Invalid classification configuration in {path}: {exc}") from exc
+
+
+def load_longitudinal_config(path: Path) -> LongitudinalConfig:
+    """Load typed Milestone 10 longitudinal settings from longitudinal.yaml."""
+    data = load_yaml_file(path)
+    settings = data.get("settings")
+    if not isinstance(settings, dict) or "longitudinal" not in settings:
+        raise ConfigError(f"Missing settings.longitudinal in {path}")
+    try:
+        return LongitudinalConfig.model_validate(settings["longitudinal"])
+    except ValidationError as exc:
+        raise ConfigError(f"Invalid longitudinal configuration in {path}: {exc}") from exc

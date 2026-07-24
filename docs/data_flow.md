@@ -59,3 +59,10 @@ Generated segmentation datasets, checkpoints, and inference artefacts under `ml/
 `ml/experiments/` are ignored by Git. Generated classification datasets, checkpoints, calibration
 artefacts, threshold policies, and inference artefacts under the same `ml/` areas are also ignored
 by Git.
+
+Milestone 10 adds longitudinal analysis outputs under `ml/experiments/longitudinal/`. Longitudinal
+analysis consumes explicit previous/current synthetic lesion masks and spacing, records pair
+metadata, propagates upstream registration/localisation/segmentation/classification status, writes
+measurements, matches, change labels, quality findings, summaries, Markdown reports, and
+deterministic NumPy review arrays. These artefacts are ignored by Git and are not clinical
+progression, response, or RECIST outputs.

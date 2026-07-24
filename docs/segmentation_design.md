@@ -75,3 +75,7 @@ Synthetic Dice, recall, and surface distances do not demonstrate clinical perfor
 errors can propagate into future segmentation workflows, although Milestone 8 trains directly from
 synthetic lesion masks. Downstream classification workflows must treat segmentation outputs as
 provenance and risk context, not as diagnostic evidence.
+
+Milestone 10 longitudinal analysis consumes lesion masks and segmentation quality statuses as
+upstream evidence. Failed segmentation can force `indeterminate` labels, and synthetic segmentation
+metrics must not be converted into clinical progression or response claims.

@@ -47,6 +47,7 @@ from medical_imaging_platform.utils.config import (
     load_classification_config,
     load_dicom_ingestion_config,
     load_localisation_config,
+    load_longitudinal_config,
     load_preprocessing_config,
     load_quality_control_config,
     load_registration_config,
@@ -410,6 +411,48 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_classification_parser.add_argument("experiment_dir")
     validate_classification_parser.add_argument("--json", action="store_true")
+
+    longitudinal_parser = subparsers.add_parser(
+        "analyse-longitudinal-pair",
+        help="Analyse synthetic previous/current lesion masks for engineering change labels.",
+    )
+    longitudinal_parser.add_argument("--previous-mask", required=True)
+    longitudinal_parser.add_argument("--current-mask", required=True)
+    longitudinal_parser.add_argument("--previous-spacing", nargs=3, type=float, required=True)
+    longitudinal_parser.add_argument("--current-spacing", nargs=3, type=float, required=True)
+    longitudinal_parser.add_argument("--case-id", required=True)
+    longitudinal_parser.add_argument("--research-subject-id", required=True)
+    longitudinal_parser.add_argument("--side", choices=["left", "right"], required=True)
+    longitudinal_parser.add_argument("--previous-timepoint", default="previous")
+    longitudinal_parser.add_argument("--current-timepoint", default="current")
+    longitudinal_parser.add_argument("--registration-run-id", default=None)
+    longitudinal_parser.add_argument("--localisation-run-id", action="append", default=[])
+    longitudinal_parser.add_argument("--segmentation-run-id", action="append", default=[])
+    longitudinal_parser.add_argument("--classification-run-id", action="append", default=[])
+    longitudinal_parser.add_argument("--registration-status", default="PASS")
+    longitudinal_parser.add_argument("--segmentation-status", default="PASS")
+    longitudinal_parser.add_argument("--localisation-status", default="PASS")
+    longitudinal_parser.add_argument("--classification-status", default="PASS")
+    longitudinal_parser.add_argument("--classification-abstention-status", default="NOT_ABSTAINED")
+    longitudinal_parser.add_argument("--upstream-status-json", default=None)
+    longitudinal_parser.add_argument("--config", default="config/longitudinal.yaml")
+    longitudinal_parser.add_argument("--output-dir", default=None)
+    longitudinal_parser.add_argument("--overwrite", action="store_true")
+    longitudinal_parser.add_argument("--json", action="store_true")
+
+    inspect_longitudinal_parser = subparsers.add_parser(
+        "inspect-longitudinal-analysis",
+        help="Inspect a longitudinal analysis output directory.",
+    )
+    inspect_longitudinal_parser.add_argument("analysis_dir")
+    inspect_longitudinal_parser.add_argument("--json", action="store_true")
+
+    validate_longitudinal_parser = subparsers.add_parser(
+        "validate-longitudinal-analysis",
+        help="Validate a longitudinal analysis output directory.",
+    )
+    validate_longitudinal_parser.add_argument("analysis_dir")
+    validate_longitudinal_parser.add_argument("--json", action="store_true")
 
     return parser
 
@@ -1157,6 +1200,91 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(classification_metadata, indent=2, sort_keys=True))
         else:
             print(f"Wrote classification inference outputs to {args.output_dir}.")
+        return 0
+
+    if args.command == "analyse-longitudinal-pair":
+        from medical_imaging_platform.longitudinal.pipeline import (
+            LongitudinalAnalysisError,
+            analyse_longitudinal_pair,
+            load_upstream_statuses,
+        )
+
+        try:
+            longitudinal_config = load_longitudinal_config(Path(args.config))
+            output_root = (
+                Path(args.output_dir)
+                if args.output_dir is not None
+                else longitudinal_config.output_directory
+            )
+            upstream_statuses = load_upstream_statuses(
+                Path(args.upstream_status_json) if args.upstream_status_json else None
+            ) or {
+                "registration": args.registration_status,
+                "segmentation": args.segmentation_status,
+                "localisation": args.localisation_status,
+                "classification": args.classification_status,
+                "classification_abstention": args.classification_abstention_status,
+            }
+            longitudinal_payload = analyse_longitudinal_pair(
+                previous_mask_path=Path(args.previous_mask),
+                current_mask_path=Path(args.current_mask),
+                previous_spacing_mm=tuple(args.previous_spacing),
+                current_spacing_mm=tuple(args.current_spacing),
+                case_id=args.case_id,
+                research_subject_id=args.research_subject_id,
+                side=args.side,
+                previous_timepoint=args.previous_timepoint,
+                current_timepoint=args.current_timepoint,
+                output_root=output_root,
+                config=longitudinal_config,
+                registration_run_id=args.registration_run_id,
+                localisation_run_ids=args.localisation_run_id,
+                segmentation_run_ids=args.segmentation_run_id,
+                classification_run_ids=args.classification_run_id,
+                upstream_quality_statuses=upstream_statuses,
+                overwrite=args.overwrite,
+            )
+        except (ConfigError, LongitudinalAnalysisError, ValueError) as exc:
+            print(f"Longitudinal analysis rejected: {exc}")
+            return 3
+        except (MedicalImagingPlatformError, FileExistsError) as exc:
+            print(f"Longitudinal analysis failed: {exc}")
+            return 1
+        if args.json:
+            print(json.dumps(longitudinal_payload, indent=2, sort_keys=True))
+        else:
+            print(
+                f"Analysed longitudinal pair {longitudinal_payload['analysis_id']} "
+                f"status={longitudinal_payload['status']}."
+            )
+        if longitudinal_payload["status"] == "REJECTED":
+            return 3
+        if longitudinal_payload["status"] == "FAIL":
+            return 2
+        return 0
+
+    if args.command in {"inspect-longitudinal-analysis", "validate-longitudinal-analysis"}:
+        from medical_imaging_platform.longitudinal.export import (
+            LongitudinalOutputError,
+            inspect_longitudinal_analysis,
+            validate_longitudinal_analysis,
+        )
+
+        try:
+            if args.command == "validate-longitudinal-analysis":
+                longitudinal_summary = validate_longitudinal_analysis(Path(args.analysis_dir))
+            else:
+                longitudinal_summary = inspect_longitudinal_analysis(Path(args.analysis_dir))
+        except LongitudinalOutputError as exc:
+            print(f"Longitudinal analysis validation failed: {exc}")
+            return 4
+        if args.json:
+            print(json.dumps(longitudinal_summary, indent=2, sort_keys=True))
+        else:
+            print(
+                f"Longitudinal analysis {longitudinal_summary['analysis_id']} "
+                f"status={longitudinal_summary['status']}."
+            )
         return 0
 
     parser.error(f"Unsupported command: {args.command}")

@@ -1,0 +1,33 @@
+config_name: longitudinal
+milestone: 10
+status: foundation
+purpose: Governed synthetic longitudinal lesion-change analysis engineering baseline.
+owner: machine-learning
+settings:
+  longitudinal:
+    policy_version: "m10-longitudinal-v1"
+    minimum_component_voxels: 1
+    maximum_match_distance_mm: 8.0
+    minimum_match_iou: 0.05
+    minimum_match_dice: 0.10
+    centroid_weight: 1.0
+    overlap_weight: 1.0
+    volume_increase_threshold_percent: 25.0
+    volume_reduction_threshold_percent: 25.0
+    diameter_increase_threshold_percent: 10.0
+    diameter_reduction_threshold_percent: 10.0
+    small_denominator_mm3: 1.0
+    require_registration_pass: true
+    require_segmentation_pass: true
+    classification_abstention_forces_indeterminate: true
+    allow_multiple_components: true
+    output_directory: ml/experiments/longitudinal
+    overwrite: false
+safeguards:
+  - Labels are synthetic engineering change labels only.
+  - This is not RECIST, progression assessment, treatment response, or diagnosis.
+  - Upstream failures and classification abstention can force indeterminate outputs.
+future_capabilities:
+  - Public de-identified longitudinal dataset adapters with documented label semantics.
+  - Human-review workflows for ambiguous matching.
+  - Governed longitudinal dashboards and API review surfaces in later milestones.

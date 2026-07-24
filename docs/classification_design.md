@@ -58,6 +58,10 @@ maximum false-positive policies.
 Inference applies calibration, thresholding, and an abstention interval. Probabilities inside the
 configured abstention interval return the inference-only label `indeterminate`.
 
+Milestone 10 longitudinal analysis can propagate classification run IDs, calibration evidence, and
+abstention status. Abstained classification must not be converted into a confident longitudinal
+engineering label.
+
 ## Outputs
 
 Generated artefacts are ignored by Git:
