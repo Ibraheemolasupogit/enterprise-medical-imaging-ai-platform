@@ -40,6 +40,15 @@ Complete in Milestone 1:
 - Tests and code-quality tooling.
 - Basic CI.
 
+Complete in Milestone 2:
+
+- Synthetic CT-like engineering fixture generation.
+- Synthetic body, adrenal-placeholder, and lesion masks.
+- Longitudinal previous/current synthetic pairs.
+- Deterministic manifests with SHA-256 checksums.
+- Dataset validation and subject-level split validation.
+- Synthetic-data governance documentation.
+
 Planned - not yet implemented:
 
 - DICOM ingestion and de-identification.
@@ -101,6 +110,17 @@ make quality
 
 `make quality` is the canonical clean-checkout validation target.
 
+Synthetic data commands:
+
+```bash
+make generate-synthetic-data
+make validate-dataset
+make verify-synthetic-data
+medical-imaging-platform summarise-dataset data/synthetic/generated
+```
+
+Generated synthetic arrays are ignored by Git. They are engineering fixtures only and are not clinically realistic CT scans.
+
 ## Data Safety
 
 Only synthetic data or publicly available de-identified data may be used. Do not commit real patient data, model weights derived from restricted patient data, credentials, cloud account identifiers, DICOM studies with identifying metadata, or screenshots containing protected health information.
@@ -112,7 +132,7 @@ This repository is not an approved medical device, is not validated for NHS depl
 ## 16-Milestone Roadmap
 
 1. Repository foundation.
-2. Synthetic and public-data foundation.
+2. Synthetic and public-data foundation. Complete for synthetic-data foundation and public-data selection criteria only; no public data is downloaded.
 3. DICOM ingestion and governance.
 4. Imaging quality control.
 5. Preprocessing.

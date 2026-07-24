@@ -1,6 +1,6 @@
 # Data Flow
 
-Milestone 1 does not ingest, generate, transform, or store medical images.
+Milestone 2 can generate synthetic NumPy arrays for engineering fixtures. It does not ingest, transform, or store real medical images.
 
 Planned - not yet implemented data zones:
 

@@ -1,7 +1,7 @@
 # Roadmap
 
-1. Repository foundation.
-2. Synthetic and public-data foundation.
+1. Repository foundation. Complete.
+2. Synthetic and public-data foundation. Complete for synthetic-data foundation and public-data selection criteria only; no public data is downloaded.
 3. DICOM ingestion and governance.
 4. Imaging quality control.
 5. Preprocessing.

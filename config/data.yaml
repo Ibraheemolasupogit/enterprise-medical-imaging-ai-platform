@@ -11,6 +11,37 @@ settings:
     - identifiable_patient_data
     - restricted_patient_data_without_governance
   storage_policy: no_real_data_in_git
+  synthetic_data:
+    dataset_id: synthetic-ct-engineering-fixtures
+    dataset_version: "0.2.0"
+    manifest_version: "1.0"
+    output_root: data/synthetic/generated
+    dataset_size: 6
+    random_seed: 20260724
+    volume_shape:
+      - 32
+      - 32
+      - 32
+    voxel_spacing_mm:
+      - 2.5
+      - 2.5
+      - 2.5
+    noise_std_hu: 8.0
+    adrenal_radius_voxels: 4
+    lesion_radius_voxels: 2
+    lesion_intensity_hu: 95.0
+    scenarios:
+      - stable
+      - increased
+      - reduced
+      - new
+      - resolved
+      - translated
+    split_ratios:
+      train: 0.5
+      validation: 0.25
+      test: 0.25
+    generator_version: synthetic-generator-v0.2.0
 safeguards:
   - Do not commit DICOM studies, NIfTI volumes, credentials, or restricted labels.
   - Dataset provenance must be documented before use.

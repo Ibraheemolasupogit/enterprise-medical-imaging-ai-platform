@@ -28,7 +28,8 @@ env/
 data/raw/
 data/interim/
 data/processed/
-data/synthetic/generated/
+data/synthetic/*
+!data/synthetic/README.md
 outputs/
 reports/generated/
 *.dcm

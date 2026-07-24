@@ -2,6 +2,8 @@
 
 Only synthetic or publicly available de-identified data may be used.
 
+Milestone 2 uses locally generated synthetic arrays only. It does not download public data or process real DICOM/NIfTI studies.
+
 Future data workflows must address:
 
 - Direct DICOM identifiers.
@@ -12,4 +14,4 @@ Future data workflows must address:
 - Audit logging.
 - Prevention of patient data entering Git.
 
-Milestone 1 does not implement de-identification or DICOM ingestion.
+Milestone 2 does not implement de-identification or DICOM ingestion.

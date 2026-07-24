@@ -12,8 +12,11 @@ REQUIRED_MARKDOWN_FILES = (
     Path("docs/architecture.md"),
     Path("docs/clinical_workflow.md"),
     Path("docs/data_flow.md"),
+    Path("docs/data_provenance.md"),
+    Path("docs/dataset_selection_criteria.md"),
     Path("docs/roadmap.md"),
     Path("docs/security.md"),
+    Path("docs/synthetic_data_design.md"),
     Path("docs/attribution.md"),
     Path("docs/limitations.md"),
     Path("governance/intended_use.md"),
@@ -24,6 +27,7 @@ REQUIRED_MARKDOWN_FILES = (
     Path("governance/model_change_control.md"),
     Path("governance/monitoring_plan.md"),
     Path("governance/limitations.md"),
+    Path("ml/dataset_cards/synthetic_ct_dataset.md"),
 )
 
 DISCLAIMER = (
