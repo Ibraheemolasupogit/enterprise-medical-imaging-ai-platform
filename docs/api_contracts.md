@@ -59,6 +59,10 @@ disclaimer.
 Review endpoints validate local evidence checksums before returning a bounded summary. They do not
 return local absolute paths, arrays, model weights, or raw unrestricted manifests.
 
+Milestone 12 reviewer UI consumes these contracts through a typed local API client. The UI preserves
+API error codes, quality statuses, abstention state, and evidence-integrity failures for display. It
+does not call modelling code directly.
+
 ## Error Codes
 
 - `API-REQ-400`: malformed request metadata.

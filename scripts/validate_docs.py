@@ -25,6 +25,8 @@ REQUIRED_MARKDOWN_FILES = (
     Path("docs/longitudinal_analysis_design.md"),
     Path("docs/roadmap.md"),
     Path("docs/registration_design.md"),
+    Path("docs/reviewer_ui_design.md"),
+    Path("docs/reviewer_workflow.md"),
     Path("docs/segmentation_design.md"),
     Path("docs/security.md"),
     Path("docs/synthetic_data_design.md"),

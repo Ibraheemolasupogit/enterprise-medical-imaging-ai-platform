@@ -34,3 +34,15 @@ Milestone 11 API security controls:
 
 Authentication, authorization, TLS termination, persistent audit logging, rate limiting, network
 deployment, and secrets management remain future work.
+
+Milestone 12 reviewer UI security controls:
+
+- Loopback API URL and Streamlit binding by default.
+- Remote API endpoints and remote binding rejected unless explicitly configured.
+- Bounded `.npy` and JSON upload extension checks.
+- Upload-size validation before NumPy processing.
+- NumPy loading with `allow_pickle=False`.
+- Finite-value and 3D-shape checks for uploaded arrays.
+- Safe evidence identifiers and export path containment.
+- No arbitrary HTML rendering, shell execution, direct URL fetching, or model-weight display.
+- No logging of raw arrays, sensitive payloads, or reviewer notes.

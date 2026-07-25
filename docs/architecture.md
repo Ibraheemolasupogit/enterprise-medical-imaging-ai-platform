@@ -1,11 +1,11 @@
 # Architecture
 
-Milestones 1-11 provide repository foundation, synthetic fixtures, local DICOM ingestion,
+Milestones 1-12 provide repository foundation, synthetic fixtures, local DICOM ingestion,
 metadata-focused de-identification, technical DICOM quality control, and deterministic CT
 preprocessing to NumPy volumes, SimpleITK registration baselines, and deterministic adrenal-region
 placeholder localisation, plus small synthetic lesion segmentation and lesion-presence
-classification baselines, governed synthetic longitudinal lesion-change analysis, and a local
-FastAPI research interface.
+classification baselines, governed synthetic longitudinal lesion-change analysis, a local
+FastAPI research interface, and a local Streamlit reviewer UI.
 
 Implemented foundation components:
 
@@ -31,6 +31,9 @@ Implemented foundation components:
 - API foundation with local FastAPI app factory, typed API config, health/readiness/version routes,
   governed prediction/analysis routes, read-only evidence review, deterministic API errors, request
   IDs, request limits, and filesystem allowlist controls.
+- Reviewer UI foundation with typed config, no direct model execution, governed API client, overview
+  status, synthetic review pages, read-only evidence inspection, human-review decisions, session
+  state controls, upload validation, and local review export.
 
 Planned - not yet implemented:
 
@@ -40,7 +43,7 @@ Planned - not yet implemented:
 - Learned or anatomy-aware adrenal ROI localisation.
 - Advanced lesion segmentation and clinical classification.
 - Clinical longitudinal change measurement, RECIST, and treatment-response assessment.
-- Human-review dashboard.
+- Production-grade human-review dashboard with authentication and persistent audit logging.
 - Monitoring, audit, registry, and retraining workflows.
 
 The intended architecture will be added incrementally by milestone so each component has tests,

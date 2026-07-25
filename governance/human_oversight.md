@@ -35,3 +35,7 @@ Milestone 11 API responses require the same human engineering review as the unde
 API consumers must treat summaries, probabilities, masks, change labels, checksums, and readiness
 findings as technical evidence only. The API must not be presented as autonomous review, triage,
 diagnosis, or patient-management support.
+
+Milestone 12 reviewer UI decisions remain separate from model output. Reviewers must keep
+abstention, failed quality gates, readiness failures, and evidence-integrity failures visible in
+their engineering decision. A reviewer decision is not clinical approval.

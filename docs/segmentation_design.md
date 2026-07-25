@@ -84,3 +84,7 @@ Milestone 11 exposes segmentation inference through `POST /v1/segmentation/predi
 research use only. The API requires a configured checkpoint, enforces local input-root controls,
 returns bounded probability and mask summaries, and can optionally persist a predicted mask under an
 ignored local output directory. The endpoint must not be used as a diagnostic segmentation service.
+
+Milestone 12 displays segmentation API summaries in the reviewer UI. The UI may show bounded input
+slice visualisation and API-returned output references, but it does not display model weights or run
+segmentation inference directly.

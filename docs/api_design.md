@@ -35,3 +35,7 @@ Not implemented in Milestone 11:
 - Clinical diagnosis, RECIST, treatment-response assessment, or approved medical-device behavior.
 
 The service is an engineering demonstrator for local research workflows only.
+
+Milestone 12 adds a local Streamlit reviewer UI as an API consumer. The API remains the execution
+boundary for segmentation, classification, longitudinal analysis, and evidence review. The reviewer
+UI must not bypass API filesystem controls or model-quality gates.

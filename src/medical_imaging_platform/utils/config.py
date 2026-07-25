@@ -16,6 +16,7 @@ from medical_imaging_platform.longitudinal.models import LongitudinalConfig
 from medical_imaging_platform.preprocessing.models import PreprocessingConfig
 from medical_imaging_platform.quality_control.models import QualityControlConfig
 from medical_imaging_platform.registration.models import RegistrationConfig
+from medical_imaging_platform.reviewer_ui.models import ReviewerUIConfig
 from medical_imaging_platform.segmentation.models import SegmentationConfig
 from medical_imaging_platform.utils.exceptions import MedicalImagingPlatformError
 
@@ -61,6 +62,7 @@ class RepositoryConfigSet(BaseModel):
     required_files: ClassVar[tuple[str, ...]] = (
         "platform.yaml",
         "api.yaml",
+        "reviewer_ui.yaml",
         "data.yaml",
         "preprocessing.yaml",
         "registration.yaml",
@@ -220,3 +222,15 @@ def load_api_config(path: Path) -> APIConfig:
         return APIConfig.model_validate(settings["api"])
     except ValidationError as exc:
         raise ConfigError(f"Invalid API configuration in {path}: {exc}") from exc
+
+
+def load_reviewer_ui_config(path: Path) -> ReviewerUIConfig:
+    """Load typed Milestone 12 reviewer UI settings from reviewer_ui.yaml."""
+    data = load_yaml_file(path)
+    settings = data.get("settings")
+    if not isinstance(settings, dict) or "reviewer_ui" not in settings:
+        raise ConfigError(f"Missing settings.reviewer_ui in {path}")
+    try:
+        return ReviewerUIConfig.model_validate(settings["reviewer_ui"])
+    except ValidationError as exc:
+        raise ConfigError(f"Invalid reviewer UI configuration in {path}: {exc}") from exc

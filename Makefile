@@ -1,4 +1,4 @@
-.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality-check-dicom verify-dicom-quality preprocess-dicom validate-preprocessed-volume verify-preprocessing register-synthetic-pair validate-registration verify-registration generate-localisation-fixtures localise-synthetic-regions validate-localisation verify-localisation prepare-segmentation-data train-segmentation evaluate-segmentation verify-segmentation prepare-classification-data train-classification evaluate-classification verify-classification analyse-synthetic-longitudinal validate-longitudinal verify-longitudinal validate-api test-api verify-api serve-api quality clean
+.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality-check-dicom verify-dicom-quality preprocess-dicom validate-preprocessed-volume verify-preprocessing register-synthetic-pair validate-registration verify-registration generate-localisation-fixtures localise-synthetic-regions validate-localisation verify-localisation prepare-segmentation-data train-segmentation evaluate-segmentation verify-segmentation prepare-classification-data train-classification evaluate-classification verify-classification analyse-synthetic-longitudinal validate-longitudinal verify-longitudinal validate-api test-api verify-api serve-api validate-reviewer-ui test-reviewer-ui verify-reviewer-ui serve-reviewer-ui quality clean
 
 PYTHON ?= python3
 SYNTHETIC_DATA_DIR ?= data/synthetic/generated
@@ -21,6 +21,7 @@ CLASSIFICATION_INFERENCE_DIR ?= ml/experiments/classification-inference
 CLASSIFICATION_SYNTHETIC_CASES ?= 12
 LONGITUDINAL_EXPERIMENT_DIR ?= ml/experiments/longitudinal
 API_CONFIG ?= config/api.yaml
+REVIEWER_UI_CONFIG ?= config/reviewer_ui.yaml
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -170,6 +171,18 @@ verify-api: test-api
 
 serve-api:
 	$(PYTHON) -m medical_imaging_platform serve-api --config $(API_CONFIG)
+
+validate-reviewer-ui:
+	$(PYTHON) -m medical_imaging_platform validate-reviewer-ui-config --config $(REVIEWER_UI_CONFIG)
+
+test-reviewer-ui:
+	$(PYTHON) -m pytest tests/test_reviewer_ui.py --no-cov
+
+verify-reviewer-ui: validate-reviewer-ui test-reviewer-ui
+	git check-ignore -q reports/generated/reviewer-sessions/example-review/review_decision.json
+
+serve-reviewer-ui:
+	$(PYTHON) -m medical_imaging_platform serve-reviewer-ui --config $(REVIEWER_UI_CONFIG)
 
 quality: format-check lint type-check validate-config validate-docs test security
 

@@ -99,3 +99,7 @@ evidence review through `GET /v1/review/longitudinal/{analysis_id}`. The API pre
 quality propagation, returns engineering summaries, validates evidence checksums before review, and
 keeps local absolute paths out of public review responses. It remains a research demonstrator, not a
 clinical comparison or treatment-response service.
+
+Milestone 12 displays longitudinal API summaries in the reviewer UI and supports separate human
+engineering review decisions. UI labels remain `new`, `increased`, `stable`, `reduced`, `resolved`,
+or `indeterminate`; they are not disease-progression or treatment-response labels.

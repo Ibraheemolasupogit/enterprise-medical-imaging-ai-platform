@@ -55,3 +55,10 @@ latency, error rates, and filesystem/path security violations. API monitoring mu
 payload values, raw arrays, image contents, model weights, credentials, direct identifiers, or
 unredacted local paths. These remain local research engineering signals and are not clinical safety,
 diagnostic performance, or deployment-approval metrics.
+
+Milestone 12 reviewer UI monitoring should cover UI readiness, API dependency failures, upload
+rejection counts, oversized upload attempts, invalid NumPy uploads, non-finite array rejections,
+remote API configuration attempts, evidence-integrity errors, reviewer decision distribution,
+abstention/degraded-response display frequency, export failures, export path violations, latency,
+and UI error rates. Monitoring must not log raw arrays, model weights, sensitive payloads,
+unredacted local paths, credentials, reviewer notes, or identifiers.

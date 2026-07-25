@@ -19,3 +19,8 @@ Milestone 11 API configuration records local checkpoint, calibration, and thresh
 readiness checksums. Changing any model artefact served by the API requires corresponding evidence
 review, checksum traceability, quality-gate review, and explicit documentation. API readiness is not
 model approval.
+
+Milestone 12 reviewer UI configuration records the API endpoint and local review-export policy but
+does not approve model artefacts. UI changes that alter label, quality, abstention, or reviewer
+decision presentation require governance review because display changes can affect reviewer
+interpretation.

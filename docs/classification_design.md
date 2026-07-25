@@ -106,3 +106,6 @@ Milestone 11 exposes classification inference through `POST /v1/classification/p
 research use only. The API requires checkpoint, calibration, and threshold-policy artefacts, returns
 probabilities, checksums, engineering labels, and abstention state, and does not return weights or
 training data. The endpoint is not benign-versus-malignant classification and is not diagnostic.
+
+Milestone 12 displays classification API summaries in the reviewer UI. The `indeterminate` label and
+abstention reason remain prominent and are not collapsed into a binary result.

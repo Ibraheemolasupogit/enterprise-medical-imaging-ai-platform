@@ -73,3 +73,8 @@ existing segmentation, classification, or longitudinal code paths, and returns b
 summaries. Read-only review endpoints validate evidence checksums before returning public summaries.
 The API does not expose absolute local paths, raw images, masks, probability maps, model weights,
 credentials, DICOM files, PACS data, or cloud resources.
+
+Milestone 12 adds reviewer-session exports under `reports/generated/reviewer-sessions/`. The
+reviewer UI consumes governed API JSON responses and bounded local uploads, keeps model output
+separate from reviewer decisions, and writes stable review-decision JSON, bounded evidence summaries,
+and Markdown reports. These exports are ignored by Git and are not clinical approval records.

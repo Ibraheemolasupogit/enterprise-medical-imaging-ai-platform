@@ -55,3 +55,7 @@ Milestone 11 API routes provide local governed research access to existing synth
 classification, longitudinal, and review evidence workflows. API responses are bounded engineering
 summaries only. Readiness checks, checksums, successful requests, and sanitized errors do not imply
 clinical validation, cybersecurity approval, deployment approval, or medical-device compliance.
+
+Milestone 12 reviewer UI routes display local governed API outputs and collect human engineering
+review decisions. UI decisions, exports, and reports are not clinical approvals, audit records for a
+regulated system, diagnostic findings, RECIST assessments, or treatment-response assessments.

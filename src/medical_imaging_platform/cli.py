@@ -52,6 +52,7 @@ from medical_imaging_platform.utils.config import (
     load_preprocessing_config,
     load_quality_control_config,
     load_registration_config,
+    load_reviewer_ui_config,
     load_segmentation_config,
     validate_repository_configs,
 )
@@ -434,6 +435,28 @@ def build_parser() -> argparse.ArgumentParser:
     serve_api_parser.add_argument("--config", default="config/api.yaml")
     serve_api_parser.add_argument("--host", default=None)
     serve_api_parser.add_argument("--port", type=int, default=None)
+
+    reviewer_ui_config_parser = subparsers.add_parser(
+        "validate-reviewer-ui-config",
+        help="Validate reviewer UI configuration.",
+    )
+    reviewer_ui_config_parser.add_argument("--config", default="config/reviewer_ui.yaml")
+    reviewer_ui_config_parser.add_argument("--json", action="store_true")
+
+    reviewer_ui_ready_parser = subparsers.add_parser(
+        "inspect-reviewer-ui-readiness",
+        help="Inspect reviewer UI configuration and API dependency readiness.",
+    )
+    reviewer_ui_ready_parser.add_argument("--config", default="config/reviewer_ui.yaml")
+    reviewer_ui_ready_parser.add_argument("--json", action="store_true")
+
+    serve_reviewer_ui_parser = subparsers.add_parser(
+        "serve-reviewer-ui",
+        help="Serve the local Streamlit reviewer UI.",
+    )
+    serve_reviewer_ui_parser.add_argument("--config", default="config/reviewer_ui.yaml")
+    serve_reviewer_ui_parser.add_argument("--host", default=None)
+    serve_reviewer_ui_parser.add_argument("--port", type=int, default=None)
 
     longitudinal_parser = subparsers.add_parser(
         "analyse-longitudinal-pair",
@@ -1278,6 +1301,106 @@ def main(argv: list[str] | None = None) -> int:
             port=port,
             reload=False,
         )
+        return 0
+
+    if args.command == "validate-reviewer-ui-config":
+        try:
+            reviewer_config = load_reviewer_ui_config(Path(args.config))
+        except ConfigError as exc:
+            print(f"Reviewer UI configuration validation failed: {exc}")
+            return 1
+        payload = reviewer_config.model_dump(mode="json")
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(f"Validated reviewer UI configuration {reviewer_config.policy_version}.")
+        return 0
+
+    if args.command == "inspect-reviewer-ui-readiness":
+        from medical_imaging_platform.reviewer_ui.api_client import ReviewerAPIClient
+        from medical_imaging_platform.reviewer_ui.models import ReviewerAPIError
+
+        try:
+            reviewer_config = load_reviewer_ui_config(Path(args.config))
+        except ConfigError as exc:
+            print(f"Reviewer UI readiness inspection failed: {exc}")
+            return 1
+        ui_findings: list[dict[str, object]] = [
+            {
+                "rule_id": "UI-QC-CONFIG-001",
+                "passed": True,
+                "message": "Reviewer UI configuration loaded.",
+            }
+        ]
+        client = ReviewerAPIClient(reviewer_config)
+        try:
+            health = client.health()
+            ready = client.ready()
+            api_message = (
+                f"API dependency status health={health.get('status')} "
+                f"readiness={ready.get('status')}."
+            )
+            ui_findings.append(
+                {
+                    "rule_id": "UI-QC-API-001",
+                    "passed": health.get("status") == "healthy" and ready.get("status") == "ready",
+                    "message": api_message,
+                }
+            )
+        except ReviewerAPIError as exc:
+            ui_findings.append(
+                {
+                    "rule_id": "UI-QC-API-001",
+                    "passed": False,
+                    "message": exc.message,
+                    "error_code": exc.error_code,
+                }
+            )
+        payload = {
+            "status": "ready" if all(item["passed"] for item in ui_findings) else "not_ready",
+            "quality_findings": ui_findings,
+            "api_base_url": reviewer_config.api_base_url,
+        }
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(f"Reviewer UI readiness status={payload['status']}.")
+        return 0 if payload["status"] == "ready" else 3
+
+    if args.command == "serve-reviewer-ui":
+        try:
+            reviewer_config = load_reviewer_ui_config(Path(args.config))
+            host = args.host or reviewer_config.host
+            port = args.port or reviewer_config.port
+            if host == "0.0.0.0" and not reviewer_config.allow_remote_bind:  # nosec B104
+                print("Reviewer UI serve rejected: 0.0.0.0 requires allow_remote_bind=true.")
+                return 3
+        except ConfigError as exc:
+            print(f"Reviewer UI serve failed: {exc}")
+            return 1
+        import sys
+
+        from streamlit.web import cli as streamlit_cli
+
+        app_path = Path(__file__).parent / "reviewer_ui" / "app.py"
+        print(
+            f"Starting reviewer UI {reviewer_config.policy_version} on {host}:{port}; "
+            f"API dependency={reviewer_config.api_base_url}."
+        )
+        sys.argv = [
+            "streamlit",
+            "run",
+            str(app_path),
+            "--server.address",
+            host,
+            "--server.port",
+            str(port),
+            "--server.headless",
+            "true",
+            "--browser.gatherUsageStats",
+            "false",
+        ]
+        streamlit_cli.main()
         return 0
 
     if args.command == "analyse-longitudinal-pair":
