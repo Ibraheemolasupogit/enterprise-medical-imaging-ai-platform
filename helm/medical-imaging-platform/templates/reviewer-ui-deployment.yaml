@@ -1,0 +1,71 @@
+{{- if .Values.reviewerUi.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "medical-imaging-platform.fullname" . }}-reviewer-ui
+  labels:
+    {{- include "medical-imaging-platform.labels" . | nindent 4 }}
+    app.kubernetes.io/component: reviewer-ui
+spec:
+  replicas: {{ .Values.reviewerUi.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: reviewer-ui
+  template:
+    metadata:
+      labels:
+        {{- include "medical-imaging-platform.labels" . | nindent 8 }}
+        app.kubernetes.io/component: reviewer-ui
+    spec:
+      serviceAccountName: {{ include "medical-imaging-platform.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.global.serviceAccount.automountServiceAccountToken }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      containers:
+        - name: reviewer-ui
+          image: {{ include "medical-imaging-platform.image" (dict "root" . "image" .Values.reviewerUi.image) | quote }}
+          imagePullPolicy: {{ default .Values.global.imagePullPolicy .Values.reviewerUi.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.reviewerUi.service.port }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "medical-imaging-platform.fullname" . }}-config
+          {{- range .Values.reviewerUi.secretRefs }}
+            - secretRef:
+                name: {{ . | quote }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.reviewerUi.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.reviewerUi.probes.liveness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.reviewerUi.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.reviewerUi.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.reviewerUi.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.reviewerUi.probes.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.reviewerUi.probes.readiness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.reviewerUi.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.reviewerUi.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.reviewerUi.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.reviewerUi.probes.readiness.failureThreshold }}
+          volumeMounts:
+            {{- range .Values.reviewerUi.writableMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+            {{- end }}
+      volumes:
+        {{- range .Values.reviewerUi.writableMounts }}
+        - name: {{ .name }}
+          emptyDir:
+            sizeLimit: {{ .sizeLimit }}
+        {{- end }}
+{{- end }}

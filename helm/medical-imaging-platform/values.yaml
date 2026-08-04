@@ -1,0 +1,153 @@
+global:
+  imagePullPolicy: IfNotPresent
+  imageTag: "0.1.0-m13-local"
+  imageDigest: ""
+  syntheticOnly: true
+  serviceAccount:
+    create: true
+    name: ""
+    automountServiceAccountToken: false
+
+api:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: "medical-imaging-api"
+    tag: ""
+    digest: ""
+    pullPolicy: ""
+  service:
+    type: ClusterIP
+    port: 8000
+  config:
+    path: "/app/config/container/api.yaml"
+    environment: "local-kubernetes"
+    logLevel: "INFO"
+    syntheticOnly: "true"
+  secretRefs: []
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "768Mi"
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 2
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: null
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  probes:
+    liveness:
+      path: "/health"
+      initialDelaySeconds: 10
+      periodSeconds: 20
+      timeoutSeconds: 3
+      failureThreshold: 3
+    readiness:
+      path: "/ready"
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+    startup:
+      path: "/health"
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 12
+  writableMounts:
+    - name: tmp
+      mountPath: "/tmp"
+      sizeLimit: "128Mi"
+    - name: generated
+      mountPath: "/app/reports/generated"
+      sizeLimit: "256Mi"
+
+reviewerUi:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: "medical-imaging-reviewer-ui"
+    tag: ""
+    digest: ""
+    pullPolicy: ""
+  service:
+    type: ClusterIP
+    port: 8501
+  config:
+    apiBaseUrl: "http://medical-imaging-platform-api:8000"
+    environment: "local-kubernetes"
+    logLevel: "INFO"
+    syntheticOnly: "true"
+  secretRefs: []
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "768Mi"
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 2
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: null
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  probes:
+    liveness:
+      path: "/_stcore/health"
+      initialDelaySeconds: 15
+      periodSeconds: 20
+      timeoutSeconds: 3
+      failureThreshold: 3
+    readiness:
+      path: "/_stcore/health"
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+  writableMounts:
+    - name: tmp
+      mountPath: "/tmp"
+      sizeLimit: "128Mi"
+    - name: generated
+      mountPath: "/app/reports/generated"
+      sizeLimit: "256Mi"
+
+podSecurityContext:
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  privileged: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+networkPolicy:
+  enabled: true
+  allowDnsEgress: true
+
+ingress:
+  enabled: false
+  className: ""
+  hosts: []
+  tls: []
+
+terminationGracePeriodSeconds: 30
+nodeSelector: {}
+tolerations: []
+affinity: {}

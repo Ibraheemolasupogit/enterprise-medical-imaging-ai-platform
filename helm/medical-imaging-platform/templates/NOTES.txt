@@ -1,0 +1,13 @@
+Medical Imaging Platform chart rendered for {{ .Release.Name }}.
+
+This chart is for a research and engineering demonstrator only. It is not for
+diagnosis, clinical decision-making, NHS approval, or medical-device deployment.
+
+API service:
+  {{ include "medical-imaging-platform.fullname" . }}-api:{{ .Values.api.service.port }}
+
+Reviewer UI service:
+  {{ include "medical-imaging-platform.fullname" . }}-reviewer-ui:{{ .Values.reviewerUi.service.port }}
+
+Ingress is disabled by default. Keep inference endpoints internal unless a
+separate governance review approves a controlled exposure pattern.

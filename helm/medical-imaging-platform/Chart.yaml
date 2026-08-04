@@ -1,0 +1,16 @@
+apiVersion: v2
+name: medical-imaging-platform
+description: Secure local Kubernetes deployment chart for the medical imaging research demonstrator.
+type: application
+version: 0.15.0
+appVersion: "0.1.0"
+keywords:
+  - medical-imaging
+  - research-demonstrator
+  - synthetic-data
+home: https://example.invalid/medical-imaging-platform
+sources:
+  - https://example.invalid/medical-imaging-platform
+annotations:
+  medical-imaging-platform.openai.com/scope: "research-engineering-demonstrator"
+  medical-imaging-platform.openai.com/clinical-use: "not-for-diagnosis"

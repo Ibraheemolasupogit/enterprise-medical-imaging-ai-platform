@@ -63,6 +63,40 @@ jobs:
       - name: Scan Python dependencies
         run: make scan-dependencies
 
+  kubernetes-static-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Validate Helm chart and values
+        run: make validate-helm
+
+      - name: Render Kubernetes manifests
+        run: make render-kubernetes
+
+      - name: Validate Kubernetes policy
+        run: make validate-kubernetes-policy
+
+      - name: Build Kubernetes evidence
+        run: make build-kubernetes-evidence
+
+      - name: Validate Kubernetes evidence
+        run: make validate-kubernetes-evidence
+
   image-build-and-evidence:
     runs-on: ubuntu-latest
     timeout-minutes: 45

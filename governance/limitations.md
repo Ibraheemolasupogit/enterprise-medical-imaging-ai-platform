@@ -69,3 +69,10 @@ deterioration. Audit JSONL evidence is not a regulated clinical audit store.
 Local images, SBOMs, scans, smoke tests and release manifests are engineering evidence only. They do
 not establish production security, clinical safety, high availability, disaster recovery, cloud
 certification, or Kubernetes readiness.
+
+## Kubernetes Deployment Limitations
+
+Milestone 15 does not provide AWS infrastructure, EKS, Terraform, production ingress, managed
+identity, service mesh, GPU scheduling, automated rollback, automated retraining, automatic model
+promotion, or production clinical deployment. The Helm chart and static policy evidence are local
+engineering assurance artefacts only.

@@ -78,3 +78,10 @@ mismatches, scanner unavailable statuses, high or critical vulnerability finding
 release manifest checksum mismatches, sensitive-log redaction failures, and unexpected writable
 filesystem or root-user findings. Release evidence must not log secrets, raw arrays, model weights,
 reviewer notes with identifiers, or sensitive payloads.
+
+## Kubernetes Deployment Signals
+
+Milestone 15 Kubernetes evidence should record Helm lint availability, values-schema validation,
+rendered-manifest checksums, static policy checks, workload inventory, security-control summaries,
+runtime smoke availability, cleanup status, and overall deployment-evidence status. Missing local
+runtime evidence is `UNAVAILABLE` or `INCOMPLETE` and must not be treated as a pass.

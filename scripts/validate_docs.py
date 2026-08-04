@@ -18,6 +18,8 @@ REQUIRED_MARKDOWN_FILES = (
     Path("docs/data_flow.md"),
     Path("docs/data_provenance.md"),
     Path("docs/deidentification_design.md"),
+    Path("docs/deployment/kubernetes.md"),
+    Path("docs/deployment/kubernetes_operations.md"),
     Path("docs/dicom_ingestion_design.md"),
     Path("docs/dicom_metadata_model.md"),
     Path("docs/dataset_selection_criteria.md"),

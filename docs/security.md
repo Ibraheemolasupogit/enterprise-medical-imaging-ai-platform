@@ -52,3 +52,19 @@ Milestone 13 adds local container controls: non-root UID/GID `10001:10001`, read
 filesystems, dropped Linux capabilities, `no-new-privileges`, local-only port bindings, no Docker
 socket mounts, no privileged mode, bounded health checks, `.dockerignore` exclusions for generated
 data and secrets, scanner hooks, and ignored release evidence.
+
+## Kubernetes Controls
+
+Milestone 15 adds Helm and Kubernetes controls for the API and reviewer UI:
+
+- Pod security contexts enforce non-root UID/GID `10001`, `runAsNonRoot`, and RuntimeDefault seccomp.
+- Container security contexts enforce read-only root filesystems, `allowPrivilegeEscalation=false`,
+  `privileged=false`, and `capabilities.drop=["ALL"]`.
+- Service account token automount is disabled by default.
+- Writable paths use bounded `emptyDir` volumes only.
+- Host networking, host PID, host IPC, and hostPath volumes are rejected by static policy checks.
+- CPU and memory requests and limits are mandatory.
+- API and reviewer UI services default to internal `ClusterIP`; Ingress is disabled by default.
+- NetworkPolicy renders default-deny behavior, reviewer-UI-to-API ingress, and DNS egress.
+- Real secrets are not included in chart defaults; sensitive settings must use external Secret
+  references.

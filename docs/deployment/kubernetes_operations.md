@@ -1,0 +1,30 @@
+# Kubernetes Operations Guide
+
+Milestone 15 operations are deliberately local and bounded. The normal quality path performs static
+Helm and manifest validation without requiring a live cluster.
+
+Run checkout-safe validation:
+
+```bash
+make validate-helm
+make render-kubernetes
+make validate-kubernetes-policy
+make build-kubernetes-evidence
+make validate-kubernetes-evidence
+```
+
+When kind or minikube plus kubectl are available, runtime checks may be recorded separately:
+
+```bash
+make deploy-local-kubernetes
+make kubernetes-smoke
+make clean-local-kubernetes
+```
+
+If runtime tooling is unavailable, evidence records `UNAVAILABLE` and the overall deployment evidence
+remains `INCOMPLETE`. This is an honest status, not a security pass.
+
+Investigation and rollback are manual. A failed readiness check, policy violation, or smoke failure
+must open human review of the Helm values, rendered manifests, image versions, model registry state,
+and monitoring evidence. Automated retraining, automatic model promotion, automated rollback, AWS
+deployment and public inference exposure are out of scope.

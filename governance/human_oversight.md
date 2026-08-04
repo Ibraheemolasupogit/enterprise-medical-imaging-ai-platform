@@ -54,3 +54,7 @@ container release evidence must not be treated as deployment approval.
 Monitoring `WARN` and `ALERT` results require human investigation and documented change-control
 review. Reviewers must treat drift output as synthetic engineering evidence only, not as diagnosis,
 triage, clinical performance deterioration, or medical-device safety evidence.
+
+Milestone 15 Kubernetes evidence also requires human interpretation. Static policy checks and local
+smoke evidence can support a deployment review, but they do not authorize clinical use, public
+inference exposure, model promotion, or production release.

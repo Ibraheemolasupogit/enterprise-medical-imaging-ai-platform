@@ -95,3 +95,12 @@ deterministic synthetic aggregate windows only; it does not ingest patient image
 headers, reviewer notes, or identifiers. Audit evidence is append-only JSONL with request IDs,
 correlation IDs, synthetic provenance references, output checksums, reviewer action, actor type, and
 override/export events, while rejecting PHI-sensitive fields.
+
+## Kubernetes Deployment Evidence Flow
+
+Milestone 15 adds ignored Kubernetes evidence under `reports/generated/kubernetes/`. Helm values and
+templates define local deployment intent for the API and reviewer UI. The checkout-safe renderer
+produces deterministic manifests, policy validation inspects the rendered objects, and evidence
+records Helm lint availability, schema validation, security controls, workload inventory, smoke
+status, checksums, and a Markdown report. If kind, minikube, kubectl, or Helm are unavailable, that
+state is recorded as `UNAVAILABLE` or `INCOMPLETE` rather than a pass.

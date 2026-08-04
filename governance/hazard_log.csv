@@ -141,3 +141,7 @@ HZ-139,Automatic model promotion,Registered candidate treated as approved withou
 HZ-140,Monitoring drift overclaim,Synthetic drift alert described as clinical performance deterioration,Unsafe clinical inference,High,Research-only monitoring report and human investigation policy,Medium,clinical-ai-governance,Open
 HZ-141,Audit PHI leakage,Audit metadata contains patient identifiers or raw arrays,Privacy breach,High,Audit schema rejects PHI-sensitive fields and raw payload keys,Medium,data-governance,Open
 HZ-142,Stale registry evidence,Registry manifest does not match current checkpoint or config checksums,Invalid governance evidence,Medium,Checksum recording and validation tests,Low,mlops,Open
+HZ-143,Public inference exposure,Kubernetes Service or Ingress exposes API publicly by default,Unauthorised inference access,High,ClusterIP defaults Ingress disabled and policy validation rejects public exposure,Medium,platform-engineering,Open
+HZ-144,Privileged Kubernetes workload,Pod runs privileged root writable container,Cluster compromise,High,Helm security contexts and static policy checks for non-root read-only cap-drop,Medium,security,Open
+HZ-145,Missing runtime deployment evidence,Kubernetes evidence marked pass without smoke execution,False assurance,Medium,UNAVAILABLE/INCOMPLETE statuses and no false PASS evidence validation,Low,platform-engineering,Open
+HZ-146,Secret leakage in Helm values,Real credentials committed to chart values,Credential disclosure,High,Secret references only and no active secret values in manifests,Medium,security,Open

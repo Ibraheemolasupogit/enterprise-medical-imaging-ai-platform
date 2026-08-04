@@ -586,6 +586,22 @@ def build_parser() -> argparse.ArgumentParser:
     )
     audit_evidence_parser.add_argument("--json", action="store_true")
 
+    kubernetes_commands = {
+        "validate-helm": "Validate Helm chart structure and optional helm lint.",
+        "render-kubernetes": "Render deterministic Kubernetes manifests for local evidence.",
+        "validate-kubernetes-policy": (
+            "Validate rendered manifests against secure Kubernetes policy."
+        ),
+        "deploy-local-kubernetes": "Record local Kubernetes deployment availability.",
+        "kubernetes-smoke": "Run or record local Kubernetes smoke-test availability.",
+        "build-kubernetes-evidence": "Build deterministic Kubernetes deployment evidence.",
+        "validate-kubernetes-evidence": "Validate generated Kubernetes deployment evidence.",
+        "clean-local-kubernetes": "Record local Kubernetes cleanup evidence.",
+    }
+    for command_name, help_text in kubernetes_commands.items():
+        command_parser = subparsers.add_parser(command_name, help=help_text)
+        command_parser.add_argument("--json", action="store_true")
+
     longitudinal_parser = subparsers.add_parser(
         "analyse-longitudinal-pair",
         help="Analyse synthetic previous/current lesion masks for engineering change labels.",
@@ -1990,6 +2006,132 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(f"Monitoring evidence validation status={status}.")
         return 0 if status == "PASS" else 2
+
+    if args.command in {
+        "validate-helm",
+        "render-kubernetes",
+        "validate-kubernetes-policy",
+        "deploy-local-kubernetes",
+        "kubernetes-smoke",
+        "build-kubernetes-evidence",
+        "validate-kubernetes-evidence",
+        "clean-local-kubernetes",
+    }:
+        from medical_imaging_platform.kubernetes.assurance import (
+            build_kubernetes_evidence,
+            clean_local_kubernetes,
+            deploy_local_kubernetes,
+            kubernetes_smoke,
+            render_kubernetes_manifests,
+            validate_helm_chart,
+            validate_kubernetes_evidence,
+            validate_kubernetes_policy,
+            validate_values_schema,
+        )
+
+        if args.command == "validate-helm":
+            helm_result = validate_helm_chart()
+            schema_result = validate_values_schema()
+            payload = {"helm_lint": helm_result, "schema_validation": schema_result}
+            if args.json:
+                print(
+                    json.dumps(
+                        {key: value.model_dump(mode="json") for key, value in payload.items()},
+                        indent=2,
+                        sort_keys=True,
+                    )
+                )
+            else:
+                print(f"Helm validation helm={helm_result.status} schema={schema_result.status}.")
+            return 0 if schema_result.status == "PASS" and helm_result.status != "FAIL" else 2
+        if args.command == "render-kubernetes":
+            manifests = render_kubernetes_manifests()
+            if args.json:
+                print(json.dumps({"rendered_objects": len(manifests)}, indent=2))
+            else:
+                print(f"Rendered {len(manifests)} Kubernetes objects.")
+            return 0
+        if args.command == "validate-kubernetes-policy":
+            kubernetes_policy_checks = validate_kubernetes_policy()
+            status = (
+                "PASS"
+                if all(check.status == "PASS" for check in kubernetes_policy_checks)
+                else "FAIL"
+            )
+            if args.json:
+                print(
+                    json.dumps(
+                        {
+                            "status": status,
+                            "checks": [
+                                check.model_dump(mode="json") for check in kubernetes_policy_checks
+                            ],
+                        },
+                        indent=2,
+                        sort_keys=True,
+                    )
+                )
+            else:
+                print(f"Kubernetes policy validation status={status}.")
+            return 0 if status == "PASS" else 2
+        if args.command == "deploy-local-kubernetes":
+            kubernetes_runtime_result = deploy_local_kubernetes()
+        elif args.command == "kubernetes-smoke":
+            kubernetes_runtime_result = kubernetes_smoke()
+        elif args.command == "clean-local-kubernetes":
+            kubernetes_runtime_result = clean_local_kubernetes()
+        elif args.command == "build-kubernetes-evidence":
+            kubernetes_manifest = build_kubernetes_evidence()
+            if args.json:
+                print(
+                    json.dumps(
+                        kubernetes_manifest.model_dump(mode="json"),
+                        indent=2,
+                        sort_keys=True,
+                    )
+                )
+            else:
+                print(f"Built Kubernetes evidence status={kubernetes_manifest.overall_status}.")
+            return 0 if kubernetes_manifest.overall_status != "FAIL" else 2
+        else:
+            kubernetes_evidence_checks = validate_kubernetes_evidence()
+            status = (
+                "PASS"
+                if all(check.status == "PASS" for check in kubernetes_evidence_checks)
+                else "FAIL"
+            )
+            if args.json:
+                print(
+                    json.dumps(
+                        {
+                            "status": status,
+                            "checks": [
+                                check.model_dump(mode="json")
+                                for check in kubernetes_evidence_checks
+                            ],
+                        },
+                        indent=2,
+                        sort_keys=True,
+                    )
+                )
+            else:
+                print(f"Kubernetes evidence validation status={status}.")
+            return 0 if status == "PASS" else 2
+        if args.json:
+            print(
+                json.dumps(
+                    kubernetes_runtime_result.model_dump(mode="json"),
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+        else:
+            print(
+                "Kubernetes runtime result "
+                f"status={kubernetes_runtime_result.status} "
+                f"executed={kubernetes_runtime_result.executed}."
+            )
+        return 0 if kubernetes_runtime_result.status in {"PASS", "UNAVAILABLE", "INCOMPLETE"} else 2
 
     if args.command == "analyse-longitudinal-pair":
         from medical_imaging_platform.longitudinal.pipeline import (

@@ -1,13 +1,14 @@
 # Architecture
 
-Milestones 1-14 provide repository foundation, synthetic fixtures, local DICOM ingestion,
+Milestones 1-15 provide repository foundation, synthetic fixtures, local DICOM ingestion,
 metadata-focused de-identification, technical DICOM quality control, and deterministic CT
 preprocessing to NumPy volumes, SimpleITK registration baselines, and deterministic adrenal-region
 placeholder localisation, plus small synthetic lesion segmentation and lesion-presence
 classification baselines, governed synthetic longitudinal lesion-change analysis, a local
 FastAPI research interface, a local Streamlit reviewer UI, and local container release assurance.
 Milestone 14 adds a local governed model registry, deterministic synthetic monitoring/drift
-evidence, and append-only JSONL audit evidence.
+evidence, and append-only JSONL audit evidence. Milestone 15 adds secure Helm/Kubernetes packaging
+and checkout-safe static deployment assurance for the API and reviewer UI.
 
 Implemented foundation components:
 
@@ -43,6 +44,10 @@ Implemented foundation components:
   classification model versions, explicit human approval metadata, deterministic synthetic
   monitoring baselines/windows, simple drift checks, alert summaries, append-only audit JSONL,
   checksums, and Markdown reports.
+- Kubernetes deployment foundation with a Helm chart, API and reviewer UI Deployments, internal
+  Services, ConfigMap, optional Secret references, ServiceAccount, NetworkPolicy, HPA, PDB,
+  conservative resources, secure pod/container contexts, rendered manifests, static policy checks,
+  and ignored evidence under `reports/generated/kubernetes/`.
 
 Planned - not yet implemented:
 
@@ -53,7 +58,8 @@ Planned - not yet implemented:
 - Advanced lesion segmentation and clinical classification.
 - Clinical longitudinal change measurement, RECIST, and treatment-response assessment.
 - Production-grade human-review dashboard with authentication and persistent audit logging.
-- Automated retraining, automated rollback, model auto-promotion, and cloud deployment.
+- Automated retraining, automated rollback, model auto-promotion, service mesh, GPU scheduling,
+  public inference exposure, and cloud deployment.
 
 The intended architecture will be added incrementally by milestone so each component has tests,
 documentation, and governance boundaries before adjacent capabilities depend on it.

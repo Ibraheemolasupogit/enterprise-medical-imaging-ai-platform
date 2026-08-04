@@ -45,3 +45,9 @@ rollback, automated retraining, deployment, or clinical release.
 Monitoring `WARN` or `ALERT` evidence must open an investigation, verify data and evidence
 integrity, review recent model/config/container changes, and document any rollback or retirement
 decision through change control. No automated action is permitted.
+
+Kubernetes deployment changes follow the same human-governed pattern. Helm values, image references,
+resource settings, NetworkPolicy, Secret references, and public exposure changes require review
+before use beyond local demonstration. The chart supports immutable tags or digest references and
+blocks floating `latest` defaults, but it does not deploy to AWS, promote models, retrain models, or
+roll back workloads automatically.

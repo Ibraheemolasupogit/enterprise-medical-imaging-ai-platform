@@ -4,13 +4,13 @@
 
 Enterprise Medical Imaging AI Platform is a planned production-oriented medical-imaging AI platform for abdominal CT research workflows. The long-term goal is to demonstrate how DICOM ingestion, de-identification, quality control, image standardisation, longitudinal registration, adrenal-region localisation, lesion analysis, governed review, MLOps, cloud architecture, and clinical AI assurance fit together as one engineered system.
 
-Milestones 1-14 establish repository foundations, synthetic data, DICOM ingestion, quality control,
+Milestones 1-15 establish repository foundations, synthetic data, DICOM ingestion, quality control,
 preprocessing, registration, localisation, synthetic segmentation, and binary synthetic
 lesion-presence classification with calibration, governed synthetic longitudinal lesion-change
 analysis, a governed local FastAPI research interface, a local Streamlit reviewer UI, and local
 container release-assurance controls, plus local synthetic registry, monitoring, drift, and audit
-evidence. Cloud deployment, advanced classification, and
-clinical deployment are **Planned - not yet implemented**.
+evidence, plus secure Helm/Kubernetes packaging and static deployment assurance. Cloud deployment,
+advanced classification, and clinical deployment are **Planned - not yet implemented**.
 
 ## Clinical And Engineering Problem
 
@@ -158,11 +158,23 @@ Complete in Milestone 14:
   alert summaries, append-only JSONL audit evidence, checksums, reports, CLI commands, Make targets,
   and tests.
 
+Complete in Milestone 15:
+
+- Secure Helm chart for the API and reviewer UI under `helm/medical-imaging-platform/`.
+- Kubernetes Deployments, internal ClusterIP Services, ConfigMap, optional Secret references,
+  ServiceAccount, NetworkPolicy, HPA, PDB, and NOTES.
+- Non-root UID/GID `10001`, read-only root filesystems, no privilege escalation, no privileged
+  containers, dropped capabilities, RuntimeDefault seccomp, bounded writable `emptyDir` mounts,
+  resource requests/limits, probes, and bounded graceful termination.
+- Internal networking by default with Ingress disabled and inference endpoints not publicly exposed.
+- Deterministic rendered manifests, static policy checks, Kubernetes evidence, CLI commands, Make
+  targets, and tests.
+
 Planned - not yet implemented:
 
 - Deformable registration, learned localisation beyond the baseline, advanced segmentation,
   benign-versus-malignant or clinical classification, and RECIST or treatment-response assessment.
-- MLflow, Kubernetes, Terraform, AWS integrations, automated retraining, automated rollback, and
+- MLflow, Terraform, AWS integrations, automated retraining, automated rollback, and
   automated model promotion.
 - Any diagnostic or clinical decision support behavior.
 
@@ -191,11 +203,13 @@ Milestone 1 uses a deliberately small Python 3.12 stack:
 - Docker is used for the Milestone 13 local container release-assurance foundation.
 - Standard-library JSON/JSONL evidence is used for the Milestone 14 local registry, monitoring,
   drift, and audit foundation.
+- Helm YAML plus checkout-safe Python validation are used for the Milestone 15 Kubernetes deployment
+  foundation.
 
 Planned - not yet implemented:
 
 - nibabel and OpenCV imaging workflows.
-- MLflow, Kubernetes, and AWS.
+- MLflow and AWS.
 
 ## Local Setup
 

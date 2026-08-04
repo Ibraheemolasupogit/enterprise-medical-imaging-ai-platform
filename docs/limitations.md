@@ -14,8 +14,9 @@ Current limitations:
 - Longitudinal analysis is limited to synthetic mask measurements, deterministic matching, and engineering change labels.
 - No NIfTI export, general preprocessing resampling, full anatomical reorientation, deformable registration, learned localisation beyond the baseline, advanced segmentation, benign-versus-malignant classification, RECIST, treatment-response assessment, or clinical diagnosis exists.
 - A local governed FastAPI research API, Streamlit reviewer UI, local container release evidence,
-  and local synthetic registry/monitoring/audit evidence exist, but no authentication, production
-  audit store, MLflow, Kubernetes, Terraform, or AWS implementation exists.
+  local synthetic registry/monitoring/audit evidence, and secure Helm/Kubernetes chart evidence
+  exist, but no authentication, production audit store, MLflow, Terraform, AWS, EKS, service mesh, or
+  production cloud implementation exists.
 - No clinical validation has been performed.
 - Synthetic volumes are not clinically realistic CT scans.
 - Synthetic lesion shapes do not represent the diversity of real pathology.
@@ -43,6 +44,10 @@ Current limitations:
   engineering evidence only. Drift findings do not establish clinical performance deterioration,
   model safety, deployment readiness, NHS approval, or medical-device compliance. No automated
   retraining, rollback, deployment, or model promotion is implemented.
+- Milestone 15 Kubernetes and Helm evidence is local deployment assurance only. Static policy checks
+  do not establish production security, cluster admission behavior, cloud readiness, high
+  availability, clinical operational approval, or medical-device compliance. Runtime smoke is
+  recorded as `UNAVAILABLE` when local tooling is absent and must not be represented as a pass.
 - Missing slices are inferred only when spacing evidence is reliable; metadata may be incomplete or inaccurate.
 
 The platform is a portfolio and research demonstrator, not an approved medical device.
@@ -51,3 +56,10 @@ The platform is a portfolio and research demonstrator, not an approved medical d
 Milestone 13 container images and release evidence are local engineering artefacts only. They do not
 represent production deployment readiness, internet-facing security, clinical operational approval,
 cloud certification, high availability, disaster recovery, or Kubernetes readiness.
+
+## Kubernetes Deployment Limitations
+
+Milestone 15 Helm and Kubernetes artefacts are local engineering deployment evidence only. They do
+not implement AWS, EKS, Terraform, GPU scheduling, service mesh, production ingress, production
+identity, automated rollback, automated retraining, automatic model promotion, or clinical
+deployment. Inference endpoints remain internal by default.
