@@ -84,3 +84,14 @@ Milestone 13 packages the existing API and reviewer UI data flow into local cont
 datasets, experiments, checkpoints and reviewer exports are excluded from image build contexts;
 evidence and checkpoints are mounted read-only when needed, while outputs are written only to
 explicit generated directories.
+
+## Registry, Monitoring And Audit Data Flow
+
+Milestone 14 adds ignored local evidence under `reports/generated/registry/`,
+`reports/generated/monitoring/`, and `reports/generated/audit/`. Registry evidence records
+synthetic segmentation and classification model-version metadata, checksums, metrics, thresholds,
+calibration metadata, lifecycle state, and explicit approval metadata. Monitoring evidence uses
+deterministic synthetic aggregate windows only; it does not ingest patient images, raw arrays, DICOM
+headers, reviewer notes, or identifiers. Audit evidence is append-only JSONL with request IDs,
+correlation IDs, synthetic provenance references, output checksums, reviewer action, actor type, and
+override/export events, while rejecting PHI-sensitive fields.

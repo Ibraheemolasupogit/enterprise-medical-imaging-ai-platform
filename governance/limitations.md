@@ -59,6 +59,11 @@ clinical validation, cybersecurity approval, deployment approval, or medical-dev
 Milestone 12 reviewer UI routes display local governed API outputs and collect human engineering
 review decisions. UI decisions, exports, and reports are not clinical approvals, audit records for a
 regulated system, diagnostic findings, RECIST assessments, or treatment-response assessments.
+
+Milestone 14 model registry, monitoring, drift, alert, and audit evidence is local synthetic
+engineering evidence only. Registry approval is human-governed and does not deploy a model. Drift
+alerts trigger investigation and change-control review only; they do not prove clinical performance
+deterioration. Audit JSONL evidence is not a regulated clinical audit store.
 ## Container And Release Limitations
 
 Local images, SBOMs, scans, smoke tests and release manifests are engineering evidence only. They do

@@ -44,3 +44,13 @@ their engineering decision. A reviewer decision is not clinical approval.
 Milestone 13 does not change the human-review boundary. The containerised reviewer UI remains an
 engineering review interface, the model output remains separate from the reviewer decision, and no
 container smoke-test result may be interpreted as clinical approval.
+
+## Registry And Monitoring Oversight
+
+Milestone 14 requires human governance approval for any model version to enter the `approved`
+lifecycle state. Candidate registration, passing synthetic metrics, clean monitoring evidence, or
+container release evidence must not be treated as deployment approval.
+
+Monitoring `WARN` and `ALERT` results require human investigation and documented change-control
+review. Reviewers must treat drift output as synthetic engineering evidence only, not as diagnosis,
+triage, clinical performance deterioration, or medical-device safety evidence.

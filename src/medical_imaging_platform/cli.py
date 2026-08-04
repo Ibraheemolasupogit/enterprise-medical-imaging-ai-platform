@@ -526,6 +526,66 @@ def build_parser() -> argparse.ArgumentParser:
     image_scan_parser.add_argument("--config", default="config/container.yaml")
     image_scan_parser.add_argument("--json", action="store_true")
 
+    register_model_parser = subparsers.add_parser(
+        "register-model",
+        help="Register deterministic synthetic model versions in the local governed registry.",
+    )
+    register_model_parser.add_argument(
+        "--model-type", choices=["segmentation", "classification", "all"], default="all"
+    )
+    register_model_parser.add_argument("--registry-path", default=None)
+    register_model_parser.add_argument("--json", action="store_true")
+
+    list_models_parser = subparsers.add_parser(
+        "list-models",
+        help="List local governed model registry records.",
+    )
+    list_models_parser.add_argument("--registry-path", default=None)
+    list_models_parser.add_argument("--json", action="store_true")
+
+    approve_model_parser = subparsers.add_parser(
+        "approve-model",
+        help="Explicitly approve a registered model version with human governance metadata.",
+    )
+    approve_model_parser.add_argument("--model-name", required=True)
+    approve_model_parser.add_argument("--version", required=True)
+    approve_model_parser.add_argument("--approved-by", required=True)
+    approve_model_parser.add_argument("--approval-ticket", required=True)
+    approve_model_parser.add_argument("--rationale", required=True)
+    approve_model_parser.add_argument("--approval-timestamp", default="2026-01-01T00:05:00Z")
+    approve_model_parser.add_argument("--registry-path", default=None)
+    approve_model_parser.add_argument("--json", action="store_true")
+
+    monitoring_baseline_parser = subparsers.add_parser(
+        "build-monitoring-baseline",
+        help="Build deterministic synthetic monitoring baseline evidence.",
+    )
+    monitoring_baseline_parser.add_argument("--json", action="store_true")
+
+    run_monitoring_parser = subparsers.add_parser(
+        "run-monitoring",
+        help="Run deterministic synthetic monitoring against the stored baseline.",
+    )
+    run_monitoring_parser.add_argument("--json", action="store_true")
+
+    simulate_drift_parser = subparsers.add_parser(
+        "simulate-monitoring-drift",
+        help="Run deterministic synthetic drift simulation against the stored baseline.",
+    )
+    simulate_drift_parser.add_argument("--json", action="store_true")
+
+    validate_monitoring_parser = subparsers.add_parser(
+        "validate-monitoring-evidence",
+        help="Validate generated registry, monitoring, and audit evidence.",
+    )
+    validate_monitoring_parser.add_argument("--json", action="store_true")
+
+    audit_evidence_parser = subparsers.add_parser(
+        "build-audit-evidence",
+        help="Build deterministic append-only synthetic audit evidence.",
+    )
+    audit_evidence_parser.add_argument("--json", action="store_true")
+
     longitudinal_parser = subparsers.add_parser(
         "analyse-longitudinal-pair",
         help="Analyse synthetic previous/current lesion masks for engineering change labels.",
@@ -1783,6 +1843,153 @@ def main(argv: list[str] | None = None) -> int:
             )
         image_scan_statuses = {scan_result.status for scan_result in image_scan_results}
         return 0 if image_scan_statuses == {"PASS"} else 2
+
+    if args.command == "register-model":
+        from medical_imaging_platform.governance.models import ModelType
+        from medical_imaging_platform.governance.registry import (
+            REGISTRY_PATH,
+            build_model_record,
+            load_registry,
+            register_model,
+        )
+
+        path = Path(args.registry_path) if args.registry_path is not None else REGISTRY_PATH
+        try:
+            model_types: tuple[tuple[ModelType, str, str], ...] = (
+                ("segmentation", "m14-segmentation-synthetic-v1", "config/segmentation.yaml"),
+                ("classification", "m14-classification-synthetic-v1", "config/classification.yaml"),
+            )
+            selected = [
+                item
+                for item in model_types
+                if args.model_type == "all" or item[0] == args.model_type
+            ]
+            registry_manifest = load_registry(path)
+            for model_type, version, config_reference in selected:
+                if any(
+                    record.model_type == model_type and record.version == version
+                    for record in registry_manifest.records
+                ):
+                    continue
+                registry_manifest = register_model(
+                    build_model_record(
+                        model_type=model_type,
+                        version=version,
+                        checkpoint_reference=f"synthetic://{model_type}/best_model.pt",
+                        config_reference=config_reference,
+                        training_data_reference=f"synthetic://m14/{model_type}/dataset",
+                    ),
+                    path,
+                )
+        except ValueError as exc:
+            print(f"Model registration failed: {exc}")
+            return 1
+        if args.json:
+            print(json.dumps(registry_manifest.model_dump(mode="json"), indent=2, sort_keys=True))
+        else:
+            print(f"Registered/listed {len(registry_manifest.records)} model records at {path}.")
+        return 0
+
+    if args.command == "list-models":
+        from medical_imaging_platform.governance.registry import REGISTRY_PATH, load_registry
+
+        path = Path(args.registry_path) if args.registry_path is not None else REGISTRY_PATH
+        registry_manifest = load_registry(path)
+        if args.json:
+            print(json.dumps(registry_manifest.model_dump(mode="json"), indent=2, sort_keys=True))
+        else:
+            print(f"Registry contains {len(registry_manifest.records)} model records.")
+            for record in registry_manifest.records:
+                print(
+                    f"{record.model_name} {record.version} "
+                    f"type={record.model_type} state={record.lifecycle_state}"
+                )
+        return 0
+
+    if args.command == "approve-model":
+        from medical_imaging_platform.governance.models import ApprovalMetadata
+        from medical_imaging_platform.governance.registry import REGISTRY_PATH, approve_model
+
+        path = Path(args.registry_path) if args.registry_path is not None else REGISTRY_PATH
+        try:
+            registry_manifest = approve_model(
+                args.model_name,
+                args.version,
+                ApprovalMetadata(
+                    approved_by=args.approved_by,
+                    approval_ticket=args.approval_ticket,
+                    approval_timestamp=args.approval_timestamp,
+                    rationale=args.rationale,
+                ),
+                path,
+            )
+        except ValueError as exc:
+            print(f"Model approval failed: {exc}")
+            return 1
+        if args.json:
+            print(json.dumps(registry_manifest.model_dump(mode="json"), indent=2, sort_keys=True))
+        else:
+            print(f"Approved {args.model_name}:{args.version}.")
+        return 0
+
+    if args.command == "build-monitoring-baseline":
+        from medical_imaging_platform.governance.monitoring import build_baseline
+        from medical_imaging_platform.governance.registry import ensure_demo_registry
+
+        ensure_demo_registry()
+        baseline = build_baseline()
+        if args.json:
+            print(json.dumps(baseline.model_dump(mode="json"), indent=2, sort_keys=True))
+        else:
+            print(f"Built monitoring baseline {baseline.baseline_id}.")
+        return 0
+
+    if args.command == "run-monitoring":
+        from medical_imaging_platform.governance.monitoring import run_monitoring
+
+        run = run_monitoring(mode="normal")
+        if args.json:
+            print(json.dumps(run.model_dump(mode="json"), indent=2, sort_keys=True))
+        else:
+            print(f"Monitoring run {run.run_id} status={run.overall_status}.")
+        return 0 if run.overall_status == "PASS" else 2
+
+    if args.command == "simulate-monitoring-drift":
+        from medical_imaging_platform.governance.monitoring import run_monitoring
+
+        run = run_monitoring(mode="simulated_drift")
+        if args.json:
+            print(json.dumps(run.model_dump(mode="json"), indent=2, sort_keys=True))
+        else:
+            print(f"Simulated monitoring drift {run.run_id} status={run.overall_status}.")
+        return 0
+
+    if args.command == "build-audit-evidence":
+        from medical_imaging_platform.governance.audit import build_audit_evidence
+
+        events = build_audit_evidence()
+        if args.json:
+            print(json.dumps([event.model_dump(mode="json") for event in events], indent=2))
+        else:
+            print(f"Built audit evidence with {len(events)} events.")
+        return 0
+
+    if args.command == "validate-monitoring-evidence":
+        from medical_imaging_platform.governance.monitoring import validate_monitoring_evidence
+
+        validation_checks = validate_monitoring_evidence()
+        status = "PASS" if all(check["status"] == "PASS" for check in validation_checks) else "FAIL"
+        if args.json:
+            print(
+                json.dumps(
+                    {"status": status, "checks": validation_checks},
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+        else:
+            print(f"Monitoring evidence validation status={status}.")
+        return 0 if status == "PASS" else 2
 
     if args.command == "analyse-longitudinal-pair":
         from medical_imaging_platform.longitudinal.pipeline import (

@@ -13,8 +13,9 @@ Current limitations:
 - Classification is limited to a small PyTorch 3D CNN trained on synthetic ROI-like crops for binary synthetic lesion presence only.
 - Longitudinal analysis is limited to synthetic mask measurements, deterministic matching, and engineering change labels.
 - No NIfTI export, general preprocessing resampling, full anatomical reorientation, deformable registration, learned localisation beyond the baseline, advanced segmentation, benign-versus-malignant classification, RECIST, treatment-response assessment, or clinical diagnosis exists.
-- A local governed FastAPI research API and Streamlit reviewer UI exist, but no authentication, persistent audit
-  log, MLflow, Docker, Kubernetes, Terraform, or AWS implementation exists.
+- A local governed FastAPI research API, Streamlit reviewer UI, local container release evidence,
+  and local synthetic registry/monitoring/audit evidence exist, but no authentication, production
+  audit store, MLflow, Kubernetes, Terraform, or AWS implementation exists.
 - No clinical validation has been performed.
 - Synthetic volumes are not clinically realistic CT scans.
 - Synthetic lesion shapes do not represent the diversity of real pathology.
@@ -38,6 +39,10 @@ Current limitations:
   approval.
 - Milestone 12 reviewer decisions are engineering workflow artefacts only. They are not clinical
   approval, diagnosis, treatment-response assessment, RECIST compliance, or medical-device evidence.
+- Milestone 14 registry, monitoring, drift, alert, and audit evidence is deterministic local
+  engineering evidence only. Drift findings do not establish clinical performance deterioration,
+  model safety, deployment readiness, NHS approval, or medical-device compliance. No automated
+  retraining, rollback, deployment, or model promotion is implemented.
 - Missing slices are inferred only when spacing evidence is reliable; metadata may be incomplete or inaccurate.
 
 The platform is a portfolio and research demonstrator, not an approved medical device.

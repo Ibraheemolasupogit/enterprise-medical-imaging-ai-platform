@@ -1,16 +1,28 @@
 config_name: monitoring
-milestone: 1
-status: planned_not_implemented
-purpose: Placeholder structure for future monitoring configuration.
+milestone: 14
+status: foundation
+purpose: Local synthetic monitoring baseline, drift, registry and audit evidence configuration.
 owner: mlops
 settings:
-  operational_monitoring: planned
-  model_monitoring: planned
-  data_drift_monitoring: planned
+  monitoring:
+    baseline_id: m14-synthetic-monitoring-baseline-v1
+    output_directory: reports/generated/monitoring
+    registry_directory: reports/generated/registry
+    audit_directory: reports/generated/audit
+    warn_multiplier: 2.0
+    alert_multiplier: 3.0
+    alert_severity: high
+    synthetic_only: true
+    automated_retraining: false
+    automated_rollback: false
+    automated_promotion: false
+    human_approval_required: true
 safeguards:
-  - No operational monitoring service exists in Milestone 1.
-  - Future monitoring must include auditability and human-review signals.
+  - Monitoring evidence uses deterministic synthetic windows only.
+  - Drift alerts trigger human investigation only and do not claim clinical performance deterioration.
+  - Registry approval is explicit and never automatic.
+  - Audit events must reject patient-identifiable metadata and raw arrays.
 future_capabilities:
-  - Structured metrics.
-  - Drift reports.
-  - Operational health dashboards.
+  - Production metric exporters after governance review.
+  - Authenticated persistent audit storage after governance review.
+  - Cloud monitoring integration after later infrastructure milestones.

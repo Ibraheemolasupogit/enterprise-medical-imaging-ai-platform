@@ -29,3 +29,19 @@ interpretation.
 Milestone 13 records image names, dependency versions, Dockerfile checksums, configuration
 checksums, scanner status and smoke-test status. Generated release evidence does not approve model
 changes, publish images, or replace model governance review.
+
+## Governed Model Registry
+
+Milestone 14 records local registry manifests for synthetic segmentation and classification model
+versions. Each record includes checkpoint checksum, model type, framework versions, config checksum,
+training-data reference, evaluation metrics, thresholds, calibration metadata, lifecycle state, and
+approval metadata when approved.
+
+Allowed lifecycle states are `candidate`, `approved`, `rejected`, and `retired`. Registration
+creates candidates only. Approval requires explicit human approval metadata, including reviewer,
+ticket, timestamp, and rationale. The registry does not implement automatic promotion, automated
+rollback, automated retraining, deployment, or clinical release.
+
+Monitoring `WARN` or `ALERT` evidence must open an investigation, verify data and evidence
+integrity, review recent model/config/container changes, and document any rollback or retirement
+decision through change control. No automated action is permitted.

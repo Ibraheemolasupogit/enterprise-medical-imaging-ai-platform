@@ -1,16 +1,25 @@
 # Monitoring Plan
 
-Monitoring is Planned - not yet implemented.
+Milestone 14 implements deterministic local synthetic monitoring evidence. It is not a production
+monitoring service and does not connect to clinical systems.
 
-Future monitoring should cover:
+Implemented synthetic monitoring covers:
 
 - Operational health.
-- Imaging metadata distributions.
-- Data drift.
-- Model performance.
-- Calibration.
-- Human disagreement and correction rates.
+- Request volume.
+- Latency.
+- Inference failures.
+- Preprocessing failures.
+- Image-quality failures.
+- Segmentation output volume and confidence.
+- Classification probability, confidence, and abstention.
+- Calibration drift when synthetic labels are available.
 - Audit completeness.
+
+Current windows are compared with a stored synthetic baseline using simple deterministic threshold
+checks. Results are `PASS`, `WARN`, or `ALERT`; `WARN` and `ALERT` require human investigation,
+rollback/change-control review where appropriate, and explicit governance disposition. They must not
+be described as clinical performance deterioration.
 
 Milestone 4 quality reports introduce technical data-quality signals that may feed future monitoring, including corrupt-file rates, private-tag presence, burned-in annotation status, and quality-control failure rates.
 
