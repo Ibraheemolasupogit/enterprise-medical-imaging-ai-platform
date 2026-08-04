@@ -48,6 +48,10 @@ Current limitations:
   do not establish production security, cluster admission behavior, cloud readiness, high
   availability, clinical operational approval, or medical-device compliance. Runtime smoke is
   recorded as `UNAVAILABLE` when local tooling is absent and must not be represented as a pass.
+- Milestone 16 AWS and Terraform evidence is target-state infrastructure evidence only. It does not
+  deploy AWS resources, run `terraform apply`, publish images, configure production DNS, install real
+  TLS certificates, establish high availability, prove cloud operational readiness, or create a live
+  clinical service.
 - Missing slices are inferred only when spacing evidence is reliable; metadata may be incomplete or inaccurate.
 
 The platform is a portfolio and research demonstrator, not an approved medical device.
@@ -63,3 +67,10 @@ Milestone 15 Helm and Kubernetes artefacts are local engineering deployment evid
 not implement AWS, EKS, Terraform, GPU scheduling, service mesh, production ingress, production
 identity, automated rollback, automated retraining, automatic model promotion, or clinical
 deployment. Inference endpoints remain internal by default.
+
+## AWS Infrastructure Limitations
+
+Milestone 16 Terraform artefacts are static, validation-safe design artefacts. They do not create
+paid resources unless an operator separately chooses to run Terraform outside the repository's normal
+checks. No AWS credentials are required for evidence generation, and missing optional scanners are
+recorded as `UNAVAILABLE` rather than treated as security approval.

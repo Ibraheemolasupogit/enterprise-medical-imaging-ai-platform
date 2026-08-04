@@ -58,3 +58,8 @@ triage, clinical performance deterioration, or medical-device safety evidence.
 Milestone 15 Kubernetes evidence also requires human interpretation. Static policy checks and local
 smoke evidence can support a deployment review, but they do not authorize clinical use, public
 inference exposure, model promotion, or production release.
+
+Milestone 16 AWS evidence also requires human interpretation. Terraform validation, policy checks,
+scanner output, CloudWatch alarm definitions, and CloudTrail architecture can support infrastructure
+review, but they do not approve clinical use, deploy AWS resources, promote models, publish images,
+or replace reviewer accountability.

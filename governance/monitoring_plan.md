@@ -85,3 +85,13 @@ Milestone 15 Kubernetes evidence should record Helm lint availability, values-sc
 rendered-manifest checksums, static policy checks, workload inventory, security-control summaries,
 runtime smoke availability, cleanup status, and overall deployment-evidence status. Missing local
 runtime evidence is `UNAVAILABLE` or `INCOMPLETE` and must not be treated as a pass.
+
+## AWS Infrastructure Monitoring Boundaries
+
+Milestone 16 maps engineering signals to a target AWS observability design using CloudWatch log
+groups, metrics and alarms for readiness failures, API error rate, pod restarts, latency, and node
+pressure. CloudWatch evidence is infrastructure and application-operations evidence only; it must
+not be described as clinical-performance monitoring, diagnostic safety surveillance, or medical
+device post-market monitoring. CloudTrail records AWS control-plane activity and remains separate
+from application audit evidence, reviewer actions, registry lifecycle events, and monitoring drift
+evidence.

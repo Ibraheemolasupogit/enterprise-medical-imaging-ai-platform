@@ -8,7 +8,10 @@ classification baselines, governed synthetic longitudinal lesion-change analysis
 FastAPI research interface, a local Streamlit reviewer UI, and local container release assurance.
 Milestone 14 adds a local governed model registry, deterministic synthetic monitoring/drift
 evidence, and append-only JSONL audit evidence. Milestone 15 adds secure Helm/Kubernetes packaging
-and checkout-safe static deployment assurance for the API and reviewer UI.
+and checkout-safe static deployment assurance for the API and reviewer UI. Milestone 16 adds a
+controlled AWS target-state architecture and Terraform static assurance for ECR, EKS, S3, KMS,
+Secrets Manager references, CloudWatch, CloudTrail, VPC networking, IAM boundaries, and cost-aware
+validation defaults without deploying AWS resources.
 
 Implemented foundation components:
 
@@ -48,6 +51,10 @@ Implemented foundation components:
   Services, ConfigMap, optional Secret references, ServiceAccount, NetworkPolicy, HPA, PDB,
   conservative resources, secure pod/container contexts, rendered manifests, static policy checks,
   and ignored evidence under `reports/generated/kubernetes/`.
+- AWS infrastructure-as-code foundation with modular Terraform under `infra/terraform/`, private
+  ECR repositories, private-by-default EKS design, governed S3 buckets, customer-managed KMS keys,
+  explicit Secrets Manager references, CloudWatch/CloudTrail architecture, custom static policy
+  checks, cost-driver evidence, and ignored evidence under `reports/generated/aws/`.
 
 Planned - not yet implemented:
 
@@ -59,7 +66,7 @@ Planned - not yet implemented:
 - Clinical longitudinal change measurement, RECIST, and treatment-response assessment.
 - Production-grade human-review dashboard with authentication and persistent audit logging.
 - Automated retraining, automated rollback, model auto-promotion, service mesh, GPU scheduling,
-  public inference exposure, and cloud deployment.
+  public inference exposure, Terraform apply workflows, and live cloud deployment.
 
 The intended architecture will be added incrementally by milestone so each component has tests,
 documentation, and governance boundaries before adjacent capabilities depend on it.

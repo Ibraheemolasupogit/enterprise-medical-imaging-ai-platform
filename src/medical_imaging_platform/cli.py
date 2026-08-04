@@ -602,6 +602,21 @@ def build_parser() -> argparse.ArgumentParser:
         command_parser = subparsers.add_parser(command_name, help=help_text)
         command_parser.add_argument("--json", action="store_true")
 
+    aws_commands = {
+        "terraform-fmt-check": "Run terraform fmt -check for the AWS IaC tree.",
+        "terraform-init": "Run terraform init with the backend disabled.",
+        "terraform-validate": "Run terraform validate for the AWS IaC tree.",
+        "validate-aws-policy": "Run deterministic AWS/Terraform policy checks.",
+        "scan-terraform": "Run optional Terraform security scanners when available.",
+        "build-aws-evidence": "Build deterministic AWS architecture evidence.",
+        "validate-aws-evidence": "Validate generated AWS architecture evidence.",
+        "clean-terraform": "Remove local Terraform cache artefacts.",
+        "aws-plan": "Optionally run terraform plan without applying resources.",
+    }
+    for command_name, help_text in aws_commands.items():
+        command_parser = subparsers.add_parser(command_name, help=help_text)
+        command_parser.add_argument("--json", action="store_true")
+
     longitudinal_parser = subparsers.add_parser(
         "analyse-longitudinal-pair",
         help="Analyse synthetic previous/current lesion masks for engineering change labels.",
@@ -2132,6 +2147,114 @@ def main(argv: list[str] | None = None) -> int:
                 f"executed={kubernetes_runtime_result.executed}."
             )
         return 0 if kubernetes_runtime_result.status in {"PASS", "UNAVAILABLE", "INCOMPLETE"} else 2
+
+    if args.command in {
+        "terraform-fmt-check",
+        "terraform-init",
+        "terraform-validate",
+        "validate-aws-policy",
+        "scan-terraform",
+        "build-aws-evidence",
+        "validate-aws-evidence",
+        "clean-terraform",
+        "aws-plan",
+    }:
+        from medical_imaging_platform.aws.assurance import (
+            aws_plan,
+            build_aws_evidence,
+            clean_terraform,
+            scan_terraform,
+            terraform_fmt_check,
+            terraform_init,
+            terraform_validate,
+            validate_aws_evidence,
+            validate_aws_policy,
+        )
+
+        if args.command in {
+            "terraform-fmt-check",
+            "terraform-init",
+            "terraform-validate",
+            "clean-terraform",
+            "aws-plan",
+        }:
+            aws_check = {
+                "terraform-fmt-check": terraform_fmt_check,
+                "terraform-init": terraform_init,
+                "terraform-validate": terraform_validate,
+                "clean-terraform": clean_terraform,
+                "aws-plan": aws_plan,
+            }[args.command]()
+            if args.json:
+                print(json.dumps(aws_check.model_dump(mode="json"), indent=2, sort_keys=True))
+            else:
+                print(f"{aws_check.check_id} status={aws_check.status}.")
+            return 0 if aws_check.status in {"PASS", "UNAVAILABLE", "INCOMPLETE"} else 2
+        if args.command == "validate-aws-policy":
+            aws_policy_checks = validate_aws_policy()
+            status = (
+                "PASS" if all(check.status == "PASS" for check in aws_policy_checks) else "FAIL"
+            )
+            if args.json:
+                print(
+                    json.dumps(
+                        {
+                            "status": status,
+                            "checks": [
+                                check.model_dump(mode="json") for check in aws_policy_checks
+                            ],
+                        },
+                        indent=2,
+                        sort_keys=True,
+                    )
+                )
+            else:
+                print(f"AWS policy validation status={status}.")
+            return 0 if status == "PASS" else 2
+        if args.command == "scan-terraform":
+            aws_scan_checks = scan_terraform()
+            status = (
+                "PASS" if all(check.status == "PASS" for check in aws_scan_checks) else "INCOMPLETE"
+            )
+            if any(check.status in {"FAIL", "ERROR"} for check in aws_scan_checks):
+                status = "FAIL"
+            if args.json:
+                print(
+                    json.dumps(
+                        {
+                            "status": status,
+                            "checks": [check.model_dump(mode="json") for check in aws_scan_checks],
+                        },
+                        indent=2,
+                        sort_keys=True,
+                    )
+                )
+            else:
+                print(f"Terraform scanner status={status}.")
+            return 0 if status in {"PASS", "INCOMPLETE"} else 2
+        if args.command == "build-aws-evidence":
+            aws_manifest = build_aws_evidence()
+            if args.json:
+                print(json.dumps(aws_manifest.model_dump(mode="json"), indent=2, sort_keys=True))
+            else:
+                print(f"Built AWS evidence status={aws_manifest.overall_status}.")
+            return 0 if aws_manifest.overall_status != "FAIL" else 2
+        aws_evidence_checks = validate_aws_evidence()
+        status = "PASS" if all(check.status == "PASS" for check in aws_evidence_checks) else "FAIL"
+        if args.json:
+            print(
+                json.dumps(
+                    {
+                        "status": status,
+                        "checks": [check.model_dump(mode="json") for check in aws_evidence_checks],
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+        else:
+            print(f"AWS evidence validation status={status}.")
+        return 0 if status == "PASS" else 2
 
     if args.command == "analyse-longitudinal-pair":
         from medical_imaging_platform.longitudinal.pipeline import (

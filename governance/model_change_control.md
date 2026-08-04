@@ -51,3 +51,8 @@ resource settings, NetworkPolicy, Secret references, and public exposure changes
 before use beyond local demonstration. The chart supports immutable tags or digest references and
 blocks floating `latest` defaults, but it does not deploy to AWS, promote models, retrain models, or
 roll back workloads automatically.
+
+AWS infrastructure does not change the model-governance rule. Terraform can define ECR, EKS, S3,
+KMS, IAM, Secrets Manager references, CloudWatch and CloudTrail boundaries, but it must not promote
+models, select new checkpoints, trigger retraining, expose inference publicly, or automatically roll
+back model versions without explicit human change-control approval.

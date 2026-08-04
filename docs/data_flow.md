@@ -104,3 +104,16 @@ produces deterministic manifests, policy validation inspects the rendered object
 records Helm lint availability, schema validation, security controls, workload inventory, smoke
 status, checksums, and a Markdown report. If kind, minikube, kubectl, or Helm are unavailable, that
 state is recorded as `UNAVAILABLE` or `INCOMPLETE` rather than a pass.
+
+## AWS Target-State Evidence Flow
+
+Milestone 16 adds ignored AWS evidence under `reports/generated/aws/`. Terraform under
+`infra/terraform/` defines private ECR image repositories, private EKS workload boundaries, governed
+S3 storage, KMS encryption, Secrets Manager references, CloudWatch logs/alarms, and CloudTrail
+control-plane audit logging. Static validators record Terraform command status, scanner availability,
+custom policy checks, resource inventory, IAM summary, networking summary, encryption summary,
+cost-driver classifications, checksums, and a Markdown evidence report.
+
+No generated repository artefacts are uploaded during Terraform validation. AWS evidence is target
+architecture evidence only and is not a live clinical deployment, diagnostic service, or approval to
+use patient data.

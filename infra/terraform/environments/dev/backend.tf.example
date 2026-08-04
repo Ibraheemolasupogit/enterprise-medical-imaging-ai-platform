@@ -1,0 +1,10 @@
+# Example only. Do not enable a remote backend without an explicit operator decision.
+# terraform {
+#   backend "s3" {
+#     bucket         = "example-terraform-state-bucket"
+#     key            = "medical-imaging-platform/dev/terraform.tfstate"
+#     region         = "eu-west-2"
+#     encrypt        = true
+#     dynamodb_table = "example-terraform-locks"
+#   }
+# }

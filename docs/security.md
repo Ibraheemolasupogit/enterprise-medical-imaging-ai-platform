@@ -68,3 +68,18 @@ Milestone 15 adds Helm and Kubernetes controls for the API and reviewer UI:
 - NetworkPolicy renders default-deny behavior, reviewer-UI-to-API ingress, and DNS egress.
 - Real secrets are not included in chart defaults; sensitive settings must use external Secret
   references.
+
+## AWS Infrastructure Controls
+
+Milestone 16 adds AWS target-state controls in Terraform without deploying resources:
+
+- Private ECR repositories use immutable tags, scan-on-push, lifecycle policies, and KMS encryption.
+- EKS is private-endpoint by default, uses CPU-only managed nodes, encrypts Kubernetes secrets with
+  KMS, enables control-plane logging, and supports OIDC workload identity.
+- S3 buckets block public access, require TLS, use KMS encryption, enable versioning, and separate
+  checkpoints, synthetic/de-identified artefacts, governed evidence, and CloudTrail logs.
+- IAM policies avoid wildcard administrative actions and separate API checkpoint reads from
+  monitoring evidence writes.
+- Secrets Manager uses explicitly named secret references only; no secret values are committed.
+- CloudWatch log retention and alarms are defined, and CloudTrail remains distinct from application
+  audit evidence.

@@ -1,4 +1,4 @@
-.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality-check-dicom verify-dicom-quality preprocess-dicom validate-preprocessed-volume verify-preprocessing register-synthetic-pair validate-registration verify-registration generate-localisation-fixtures localise-synthetic-regions validate-localisation verify-localisation prepare-segmentation-data train-segmentation evaluate-segmentation verify-segmentation prepare-classification-data train-classification evaluate-classification verify-classification analyse-synthetic-longitudinal validate-longitudinal verify-longitudinal validate-api test-api verify-api serve-api validate-reviewer-ui test-reviewer-ui verify-reviewer-ui serve-reviewer-ui validate-containers lint-dockerfiles scan-secrets scan-dependencies build-images scan-images generate-sbom container-smoke build-release-evidence validate-release-evidence register-model list-models approve-model build-monitoring-baseline run-monitoring simulate-monitoring-drift build-audit-evidence validate-monitoring-evidence verify-monitoring validate-helm render-kubernetes validate-kubernetes-policy deploy-local-kubernetes kubernetes-smoke build-kubernetes-evidence validate-kubernetes-evidence clean-local-kubernetes verify-release quality clean
+.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality-check-dicom verify-dicom-quality preprocess-dicom validate-preprocessed-volume verify-preprocessing register-synthetic-pair validate-registration verify-registration generate-localisation-fixtures localise-synthetic-regions validate-localisation verify-localisation prepare-segmentation-data train-segmentation evaluate-segmentation verify-segmentation prepare-classification-data train-classification evaluate-classification verify-classification analyse-synthetic-longitudinal validate-longitudinal verify-longitudinal validate-api test-api verify-api serve-api validate-reviewer-ui test-reviewer-ui verify-reviewer-ui serve-reviewer-ui validate-containers lint-dockerfiles scan-secrets scan-dependencies build-images scan-images generate-sbom container-smoke build-release-evidence validate-release-evidence register-model list-models approve-model build-monitoring-baseline run-monitoring simulate-monitoring-drift build-audit-evidence validate-monitoring-evidence verify-monitoring validate-helm render-kubernetes validate-kubernetes-policy deploy-local-kubernetes kubernetes-smoke build-kubernetes-evidence validate-kubernetes-evidence clean-local-kubernetes terraform-fmt-check terraform-init terraform-validate validate-aws-policy scan-terraform build-aws-evidence validate-aws-evidence clean-terraform aws-plan verify-release quality clean
 
 PYTHON ?= python3
 SYNTHETIC_DATA_DIR ?= data/synthetic/generated
@@ -271,6 +271,33 @@ validate-kubernetes-evidence:
 
 clean-local-kubernetes:
 	$(PYTHON) -m medical_imaging_platform clean-local-kubernetes
+
+terraform-fmt-check:
+	$(PYTHON) -m medical_imaging_platform terraform-fmt-check
+
+terraform-init:
+	$(PYTHON) -m medical_imaging_platform terraform-init
+
+terraform-validate:
+	$(PYTHON) -m medical_imaging_platform terraform-validate
+
+validate-aws-policy:
+	$(PYTHON) -m medical_imaging_platform validate-aws-policy
+
+scan-terraform:
+	$(PYTHON) -m medical_imaging_platform scan-terraform
+
+build-aws-evidence:
+	$(PYTHON) -m medical_imaging_platform build-aws-evidence
+
+validate-aws-evidence:
+	$(PYTHON) -m medical_imaging_platform validate-aws-evidence
+
+clean-terraform:
+	$(PYTHON) -m medical_imaging_platform clean-terraform
+
+aws-plan:
+	$(PYTHON) -m medical_imaging_platform aws-plan
 
 verify-release: quality validate-containers lint-dockerfiles scan-secrets scan-dependencies build-images generate-sbom scan-images container-smoke build-release-evidence validate-release-evidence
 	git check-ignore -q reports/generated/releases/example/release_manifest.json

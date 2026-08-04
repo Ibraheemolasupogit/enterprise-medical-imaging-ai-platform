@@ -4,13 +4,14 @@
 
 Enterprise Medical Imaging AI Platform is a planned production-oriented medical-imaging AI platform for abdominal CT research workflows. The long-term goal is to demonstrate how DICOM ingestion, de-identification, quality control, image standardisation, longitudinal registration, adrenal-region localisation, lesion analysis, governed review, MLOps, cloud architecture, and clinical AI assurance fit together as one engineered system.
 
-Milestones 1-15 establish repository foundations, synthetic data, DICOM ingestion, quality control,
+Milestones 1-16 establish repository foundations, synthetic data, DICOM ingestion, quality control,
 preprocessing, registration, localisation, synthetic segmentation, and binary synthetic
 lesion-presence classification with calibration, governed synthetic longitudinal lesion-change
 analysis, a governed local FastAPI research interface, a local Streamlit reviewer UI, and local
 container release-assurance controls, plus local synthetic registry, monitoring, drift, and audit
-evidence, plus secure Helm/Kubernetes packaging and static deployment assurance. Cloud deployment,
-advanced classification, and clinical deployment are **Planned - not yet implemented**.
+evidence, plus secure Helm/Kubernetes packaging, static deployment assurance, and static AWS
+Terraform target architecture. Live cloud deployment, advanced classification, and clinical
+deployment are **Planned - not yet implemented**.
 
 ## Clinical And Engineering Problem
 
@@ -170,12 +171,24 @@ Complete in Milestone 15:
 - Deterministic rendered manifests, static policy checks, Kubernetes evidence, CLI commands, Make
   targets, and tests.
 
+Complete in Milestone 16:
+
+- Modular Terraform target architecture under `infra/terraform/` for ECR, EKS, S3, KMS, Secrets
+  Manager references, CloudWatch, CloudTrail, VPC networking, IAM, and cost-aware defaults.
+- Private ECR repositories, private-by-default EKS control plane, CPU-only managed node group,
+  governed S3 buckets, KMS rotation, TLS-only storage policies, CloudWatch alarms, and CloudTrail
+  control-plane audit architecture.
+- Checkout-safe AWS policy validation, optional Terraform scanner evidence, cost-driver reports,
+  architecture manifests, checksums, CLI commands, Make targets, documentation, and tests.
+- No AWS resources are deployed, no `terraform apply` target is provided, and AWS credentials are
+  not required for static evidence generation.
+
 Planned - not yet implemented:
 
 - Deformable registration, learned localisation beyond the baseline, advanced segmentation,
   benign-versus-malignant or clinical classification, and RECIST or treatment-response assessment.
-- MLflow, Terraform, AWS integrations, automated retraining, automated rollback, and
-  automated model promotion.
+- MLflow, live AWS deployment, image publication to AWS, automated retraining, automated rollback,
+  and automated model promotion.
 - Any diagnostic or clinical decision support behavior.
 
 ## Architecture
@@ -205,11 +218,13 @@ Milestone 1 uses a deliberately small Python 3.12 stack:
   drift, and audit foundation.
 - Helm YAML plus checkout-safe Python validation are used for the Milestone 15 Kubernetes deployment
   foundation.
+- Terraform plus checkout-safe Python validation are used for the Milestone 16 AWS target
+  architecture foundation.
 
 Planned - not yet implemented:
 
 - nibabel and OpenCV imaging workflows.
-- MLflow and AWS.
+- MLflow and live AWS deployment.
 
 ## Local Setup
 
