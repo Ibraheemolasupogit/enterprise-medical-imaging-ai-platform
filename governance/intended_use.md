@@ -20,3 +20,12 @@ approval, patient management, production deployment, or replacement of trained c
 Milestone 13 containers are intended for local engineering release assurance only. They are not
 intended for production deployment, patient care, clinical diagnosis, registry publication, cloud
 operation, or medical-device approval.
+
+## Final Portfolio Boundary
+
+Milestones 14-18 add governed registry, synthetic monitoring, audit, Kubernetes assurance, AWS
+target-state infrastructure, operations evidence, incident simulations, rollback/recovery
+simulations and portfolio evidence. These capabilities are intended to demonstrate engineering,
+MLOps, deployment-assurance and governance patterns only. They are not intended for clinical
+deployment, NHS approval, medical-device approval, autonomous clinical decisions, automated model
+promotion, automated retraining or automated rollback.

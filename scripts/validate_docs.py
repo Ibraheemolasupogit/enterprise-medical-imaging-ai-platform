@@ -12,6 +12,7 @@ REQUIRED_MARKDOWN_FILES = (
     Path("docs/api_design.md"),
     Path("docs/api_contracts.md"),
     Path("docs/architecture.md"),
+    Path("docs/architecture/final_end_to_end_architecture.md"),
     Path("docs/clinical_workflow.md"),
     Path("docs/classification_design.md"),
     Path("docs/containerisation.md"),
@@ -35,6 +36,12 @@ REQUIRED_MARKDOWN_FILES = (
     Path("docs/operations/rollback_recovery.md"),
     Path("docs/operations/runbooks.md"),
     Path("docs/operations/slo_error_budget.md"),
+    Path("docs/portfolio/project_summary.md"),
+    Path("docs/portfolio/cv_project_entry.md"),
+    Path("docs/portfolio/interview_talking_points.md"),
+    Path("docs/portfolio/demonstration_script.md"),
+    Path("docs/portfolio/technical_deep_dive.md"),
+    Path("docs/portfolio/recruiter_faq.md"),
     Path("docs/roadmap.md"),
     Path("docs/registration_design.md"),
     Path("docs/release_evidence.md"),
@@ -64,6 +71,32 @@ DISCLAIMER = (
     "diagnosis or patient-management decisions."
 )
 
+README_REQUIRED_SECTIONS = (
+    "Project Summary",
+    "Problem Statement",
+    "Architecture Overview",
+    "Implemented Capabilities",
+    "End-To-End Workflow",
+    "Technology Stack",
+    "Security And Governance",
+    "MLOps And Monitoring",
+    "Deployment Assurance",
+    "AWS Target-State Boundary",
+    "Quick Start",
+    "Demo Commands",
+    "Evidence Locations",
+    "Test And Quality Status",
+    "Limitations",
+    "Interview Talking Points",
+)
+
+PROHIBITED_UNQUALIFIED_CLAIMS = (
+    "nHS approved",
+    "live clinical deployment",
+    "autonomous clinical decisions",
+    "clinical decision support system",
+)
+
 
 def validate_markdown_file(path: Path) -> list[str]:
     errors: list[str] = []
@@ -90,6 +123,33 @@ def main() -> int:
     readme = Path("README.md").read_text(encoding="utf-8")
     if DISCLAIMER not in readme:
         errors.append("README.md is missing the required research-only disclaimer.")
+    for section in README_REQUIRED_SECTIONS:
+        if f"## {section}" not in readme:
+            errors.append(f"README.md is missing required section: {section}")
+
+    roadmap = Path("docs/roadmap.md").read_text(encoding="utf-8")
+    if "18. Clinical AI assurance and final portfolio packaging. Planned." in roadmap:
+        errors.append("docs/roadmap.md contains stale Milestone 18 placeholder wording.")
+
+    for path in REQUIRED_MARKDOWN_FILES:
+        content = path.read_text(encoding="utf-8")
+        lowered = content.lower()
+        for claim in PROHIBITED_UNQUALIFIED_CLAIMS:
+            claim_lower = claim.lower()
+            index = lowered.find(claim_lower)
+            prefix = lowered[max(0, index - 120) : index] if index != -1 else ""
+            negated = (
+                f"no {claim_lower}" in lowered
+                or f"not {claim_lower}" in lowered
+                or f"not a {claim_lower}" in lowered
+                or f"not an {claim_lower}" in lowered
+                or f"not intended for {claim_lower}" in lowered
+                or f"without {claim_lower}" in lowered
+                or "not intended for" in prefix
+                or "must not be used as" in prefix
+            )
+            if claim_lower in lowered and not negated:
+                errors.append(f"{path} contains unsupported claim wording: {claim}")
 
     if errors:
         for error in errors:

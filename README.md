@@ -2,473 +2,247 @@
 
 > This platform is a research and engineering demonstrator. Outputs are intended for technical evaluation and human review only and must not be used for clinical diagnosis or patient-management decisions.
 
-Enterprise Medical Imaging AI Platform is a planned production-oriented medical-imaging AI platform for abdominal CT research workflows. The long-term goal is to demonstrate how DICOM ingestion, de-identification, quality control, image standardisation, longitudinal registration, adrenal-region localisation, lesion analysis, governed review, MLOps, cloud architecture, and clinical AI assurance fit together as one engineered system.
+## Project Summary
 
-Milestones 1-17 establish repository foundations, synthetic data, DICOM ingestion, quality control,
-preprocessing, registration, localisation, synthetic segmentation, and binary synthetic
-lesion-presence classification with calibration, governed synthetic longitudinal lesion-change
-analysis, a governed local FastAPI research interface, a local Streamlit reviewer UI, and local
-container release-assurance controls, plus local synthetic registry, monitoring, drift, and audit
-evidence, plus secure Helm/Kubernetes packaging, static deployment assurance, and static AWS
-Terraform target architecture, plus production-style observability, resilience, incident-response,
-rollback and recovery evidence. Live cloud deployment, advanced classification, and clinical
-deployment are **Planned - not yet implemented**.
+Enterprise Medical Imaging AI Platform is a portfolio-scale medical-imaging AI engineering
+demonstrator for abdominal CT research workflows. It shows how governed imaging data pipelines,
+PyTorch/MONAI modelling, human review, MLOps evidence, secure deployment packaging, AWS target-state
+architecture, observability and clinical-AI governance boundaries can fit together in one
+repository.
 
-## Clinical And Engineering Problem
+The project uses synthetic or public de-identified data only. It is not a diagnostic system, not an
+approved medical device, not NHS approved, not a live clinical deployment and not a clinical
+decision-making tool.
 
-Radiologists often compare current and previous CT scans to understand whether suspected lesions are new, stable, growing, shrinking, or indeterminate. Research prototypes commonly focus on one part of this workflow, such as registration or classification. This repository is intended to grow into an end-to-end demonstrator that treats clinical safety, reproducibility, human review, auditability, and deployment engineering as first-class concerns.
+## Problem Statement
 
-## Planned Workflow
+Longitudinal CT review often requires careful comparison of current and previous imaging, technical
+quality checks, lesion localisation, model uncertainty handling, human review and strong evidence
+provenance. Many prototypes demonstrate one piece of that chain. This repository demonstrates the
+engineering structure around the full workflow while keeping clinical claims deliberately out of
+scope.
 
-All items below are **Planned - not yet implemented** unless explicitly marked as complete.
+## Architecture Overview
 
-1. Ingest synthetic or publicly available de-identified DICOM studies.
-2. Validate metadata, slice ordering, completeness, and image quality.
-3. Record de-identification and provenance actions.
-4. Convert and standardise volumetric CT data.
-5. Register longitudinal current and previous studies.
-6. Localise adrenal regions of interest.
-7. Segment and classify suspected lesions where appropriate.
-8. Measure lesion volume and longitudinal change.
-9. Generate confidence, uncertainty, quality, and review indicators.
-10. Serve results through governed APIs and a human-review interface.
-11. Track experiments, model versions, approval gates, audit events, and monitoring signals.
+The final architecture is documented in
+[docs/architecture/final_end_to_end_architecture.md](docs/architecture/final_end_to_end_architecture.md).
 
-## Current Implementation Status
+High-level flow:
 
-Complete in Milestone 1:
+1. Synthetic CT-like fixture generation.
+2. Governed DICOM ingestion, structural validation and metadata de-identification.
+3. Technical image quality control.
+4. CT preprocessing to internal NumPy volumes.
+5. Longitudinal registration and adrenal-region localisation.
+6. Synthetic segmentation and calibrated binary synthetic classification.
+7. Longitudinal lesion-change engineering analysis.
+8. Governed FastAPI research API and Streamlit reviewer UI.
+9. Local container release assurance.
+10. Model registry, monitoring, drift and audit evidence.
+11. Helm/Kubernetes assurance.
+12. AWS target-state Terraform evidence.
+13. Observability, resilience, incident, rollback and recovery evidence.
+14. Final portfolio evidence pack.
 
-- Repository structure.
-- Python packaging.
-- YAML configuration loading and validation.
-- Structured JSON-compatible logging.
-- Minimal CLI.
-- Documentation foundation.
-- Governance foundation.
-- Tests and code-quality tooling.
-- Basic CI.
+## Implemented Capabilities
 
-Complete in Milestone 2:
+- Synthetic CT generation and subject-level split validation.
+- Synthetic DICOM fixture generation, local discovery, validation and metadata de-identification.
+- Technical DICOM quality control and reporting.
+- CT-like preprocessing with geometry, intensity, crop/pad provenance and checksums.
+- SimpleITK centre-of-mass, rigid and affine registration baselines.
+- Deterministic adrenal-region localisation placeholders.
+- CPU-compatible PyTorch/MONAI 3D U-Net segmentation baseline.
+- CPU-compatible PyTorch classification baseline with calibration, thresholds and abstention.
+- Synthetic longitudinal lesion measurement and change-label evidence.
+- Governed local FastAPI API and local Streamlit reviewer UI.
+- CPU-only Docker container strategy, scanner hooks, SBOM hooks and release evidence.
+- Governed model registry, synthetic monitoring, drift simulation and append-only audit evidence.
+- Secure Helm chart, Kubernetes policy checks and optional local kind smoke workflow.
+- Terraform AWS target architecture for ECR, EKS, S3, KMS, Secrets Manager references, CloudWatch
+  and CloudTrail.
+- Structured logging, opt-in protected metrics, SLOs, incidents, rollback/recovery simulations and
+  operations runbooks.
+- Final portfolio matrix, evidence report and interview materials.
 
-- Synthetic CT-like engineering fixture generation.
-- Synthetic body, adrenal-placeholder, and lesion masks.
-- Longitudinal previous/current synthetic pairs.
-- Deterministic manifests with SHA-256 checksums.
-- Dataset validation and subject-level split validation.
-- Synthetic-data governance documentation.
+## End-To-End Workflow
 
-Complete in Milestone 3:
+Canonical local workflow:
 
-- Synthetic DICOM CT fixture generation for tests and local engineering validation.
-- Recursive local DICOM series discovery and grouping.
-- Safe technical metadata extraction.
-- Deterministic slice ordering.
-- Basic structural validation findings.
-- Metadata de-identification with private-tag removal, UID remapping, and audit records.
+```bash
+make demo
+```
 
-Complete in Milestone 4:
+`make demo` is the longer technical path and may take a while on CPU because it exercises synthetic
+data, DICOM/QC, preprocessing, registration, localisation, small model workflows, monitoring,
+deployment assurance and portfolio evidence.
 
-- Technical DICOM quality-control rule catalogue.
-- Slice completeness and duplicate-slice checks.
-- Metadata consistency checks.
-- Pixel-array integrity checks for local fixtures and de-identified data.
-- Transparent quality scoring and deterministic JSON/Markdown reports.
+Short interview workflow:
 
-Complete in Milestone 5:
+```bash
+make demo-fast
+```
 
-- DICOM-series-to-3D NumPy volume assembly for one selected synthetic/de-identified series.
-- Internal `[z, y, x]` axis convention with `[z_mm, y_mm, x_mm]` spacing metadata.
-- Per-slice rescale slope/intercept conversion to CT-like rescaled intensities.
-- Configurable intensity clipping/windowing and normalisation.
-- Deterministic engineering crop and padding operations with transform provenance.
-- Preprocessing metadata, checksums, Markdown reports, CLI commands, and validation.
+`make demo-fast` is deterministic and uses synthetic evidence. It avoids AWS credentials, paid cloud
+deployment and persistent Kubernetes requirements.
 
-Complete in Milestone 6:
+Final portfolio readiness:
 
-- Explicit fixed/moving preprocessed-volume registration workflow.
-- SimpleITK centre-of-mass, rigid, and rigid-then-affine registration baselines.
-- NumPy/SimpleITK geometry conversion between `[z, y, x]` and `[x, y, z]` conventions.
-- Registered moving-volume export, transform JSON, metrics JSON, review arrays, and reports.
-- Registration quality gates for input validity, transform plausibility, metrics, and padding.
-- Synthetic registration fixture bridge for clean-checkout verification.
+```bash
+make portfolio-readiness
+```
 
-Complete in Milestone 7:
-
-- Deterministic atlas-style adrenal-region placeholder localisation.
-- Synthetic localisation fixtures with separate left/right binary engineering masks.
-- Separate left and right ROI extraction, padding metadata, overlay arrays, and checksums.
-- Optional synthetic-label metrics for centre distance, target coverage, IoU, and swap detection.
-- Localisation quality gates, reports, CLI commands, and validation.
-
-Complete in Milestone 8:
-
-- Synthetic segmentation dataset preparation from existing synthetic manifests and splits.
-- CPU-compatible PyTorch/MONAI 3D U-Net baseline.
-- Training, validation, best/last checkpoint export, and deterministic experiment evidence.
-- Segmentation inference with sigmoid probability maps, thresholding, and post-processing.
-- Dice, IoU, precision, recall, specificity, volume-error, and surface-distance metrics.
-- Segmentation model-quality gates, CLI commands, Make targets, and model card.
-
-Complete in Milestone 9:
-
-- Synthetic classification dataset preparation from ROI-like adrenal-side crops.
-- Binary labels for `no_visible_synthetic_lesion` and `synthetic_lesion_present`.
-- CPU-compatible original PyTorch 3D CNN baseline with no pretrained weights.
-- Validation-only calibration and threshold policy evidence.
-- Inference abstention with the inference-only `indeterminate` label.
-- AUROC, AUPRC, recall, specificity, precision, NPV, Brier score, calibration, and confusion metrics.
-- Classification quality gates, CLI commands, Make targets, and model card.
-
-Complete in Milestone 10:
-
-- Previous/current synthetic lesion-mask measurements with spacing-aware physical volumes and diameters.
-- Deterministic lesion component matching with centroid, overlap, IoU, and ambiguity handling.
-- Absolute and percentage volume and diameter change calculations.
-- Engineering labels: `new`, `increased`, `stable`, `reduced`, `resolved`, and `indeterminate`.
-- Upstream registration, segmentation, localisation, classification, calibration, and abstention propagation.
-- Longitudinal quality gates, evidence exports, review arrays, CLI commands, and Make targets.
-
-Complete in Milestone 11:
-
-- Local governed FastAPI application factory and typed API configuration.
-- Health, version, and readiness endpoints with deterministic quality findings.
-- Research-only segmentation, classification, and longitudinal API routes backed by existing local pipelines.
-- Read-only review evidence endpoints for governed segmentation, classification, and longitudinal outputs.
-- Request IDs, request-size limits, safe filesystem root controls, symlink blocking, NumPy `allow_pickle=False`, sanitized errors, and security headers.
-- API CLI commands, Make targets, tests, and API design/contract documentation.
-
-Complete in Milestone 12:
-
-- Local Streamlit reviewer UI foundation that consumes governed API contracts only.
-- Overview, segmentation, classification, longitudinal, evidence, and governance review pages.
-- Typed reviewer UI config, API client, upload security, response formatting, session-state helpers, human-review decisions, and local review export.
-- CLI commands, Make targets, tests, documentation, and governance updates for the reviewer workflow.
-
-Complete in Milestone 13:
-
-- Local Docker images and Docker Compose orchestration for the API and reviewer UI.
-- CPU-only PyTorch container dependency strategy, non-root runtime users, read-only root
-  filesystems, writable mounts, SBOM/image/dependency/security scan hooks, smoke tests, release
-  evidence, and release validation.
-
-Complete in Milestone 14:
-
-- Local governed model registry for synthetic segmentation and classification baseline versions.
-- Candidate, approved, rejected, and retired lifecycle states with explicit human approval metadata
-  and no automatic promotion.
-- Deterministic synthetic monitoring baselines, normal monitoring runs, simulated drift runs,
-  alert summaries, append-only JSONL audit evidence, checksums, reports, CLI commands, Make targets,
-  and tests.
-
-Complete in Milestone 15:
-
-- Secure Helm chart for the API and reviewer UI under `helm/medical-imaging-platform/`.
-- Kubernetes Deployments, internal ClusterIP Services, ConfigMap, optional Secret references,
-  ServiceAccount, NetworkPolicy, HPA, PDB, and NOTES.
-- Non-root UID/GID `10001`, read-only root filesystems, no privilege escalation, no privileged
-  containers, dropped capabilities, RuntimeDefault seccomp, bounded writable `emptyDir` mounts,
-  resource requests/limits, probes, and bounded graceful termination.
-- Internal networking by default with Ingress disabled and inference endpoints not publicly exposed.
-- Deterministic rendered manifests, static policy checks, Kubernetes evidence, CLI commands, Make
-  targets, and tests.
-
-Complete in Milestone 16:
-
-- Modular Terraform target architecture under `infra/terraform/` for ECR, EKS, S3, KMS, Secrets
-  Manager references, CloudWatch, CloudTrail, VPC networking, IAM, and cost-aware defaults.
-- Private ECR repositories, private-by-default EKS control plane, CPU-only managed node group,
-  governed S3 buckets, KMS rotation, TLS-only storage policies, CloudWatch alarms, and CloudTrail
-  control-plane audit architecture.
-- Checkout-safe AWS policy validation, optional Terraform scanner evidence, cost-driver reports,
-  architecture manifests, checksums, CLI commands, Make targets, documentation, and tests.
-- No AWS resources are deployed, no `terraform apply` target is provided, and AWS credentials are
-  not required for static evidence generation.
-
-Complete in Milestone 17:
-
-- Protected opt-in API Prometheus metrics, structured JSON-compatible log events, redaction helpers,
-  startup/liveness/readiness/degraded-readiness semantics, and bounded reviewer UI API retries with
-  a simple circuit breaker.
-- Helm resilience and observability annotations, startup probes, topology spread, anti-affinity,
-  revision-history settings, and matching checkout-safe Kubernetes policy checks.
-- Terraform CloudWatch metric filters, alarms, and dashboard target-state mappings for engineering
-  operations signals without deploying AWS resources.
-- Deterministic SLO/error-budget evaluation, incident simulation, runbook validation, rollback and
-  recovery evidence, checksums, reports, CLI commands, Make targets, and tests under
-  `reports/generated/operations/`.
-
-Planned - not yet implemented:
-
-- Deformable registration, learned localisation beyond the baseline, advanced segmentation,
-  benign-versus-malignant or clinical classification, and RECIST or treatment-response assessment.
-- MLflow, live AWS deployment, image publication to AWS, automated retraining, automated rollback,
-  and automated model promotion. Milestone 17 simulates rollback evidence only.
-- Any diagnostic or clinical decision support behavior.
-
-## Architecture
-
-The proposed architecture is documented in [docs/architecture.md](docs/architecture.md). At a high level, future milestones will add independent components for data ingestion, governance, quality control, preprocessing, registration, modelling, longitudinal analysis, review, monitoring, and deployment.
+This is the canonical checkout-safe consolidation target. It runs quality checks, documentation
+validation, monitoring evidence, container static checks, Kubernetes static evidence, AWS static
+policy checks, operations evidence and portfolio evidence.
 
 ## Technology Stack
 
-Milestone 1 uses a deliberately small Python 3.12 stack:
+- Python 3.12.
+- NumPy, SciPy, pydicom and SimpleITK for imaging workflows.
+- PyTorch and MONAI for synthetic segmentation and classification baselines.
+- scikit-learn for classification metrics and calibration support.
+- FastAPI, Uvicorn and httpx for API workflows.
+- Streamlit for the local reviewer UI.
+- Docker and Docker Compose for local containers.
+- Helm and Kubernetes manifests for deployment assurance.
+- Terraform for AWS target-state infrastructure.
+- pytest, coverage, ruff, mypy and Bandit for quality and security checks.
 
-- Python packaging with `pyproject.toml`.
-- `PyYAML` for YAML parsing.
-- `pydantic` for typed validation.
-- Standard-library `argparse` and `logging` for CLI and logs.
-- `pytest`, `ruff`, `mypy`, `bandit`, and coverage tooling for quality.
+## Security And Governance
 
-- PyTorch and MONAI are used for the Milestone 8 synthetic segmentation baseline.
-- PyTorch and scikit-learn are used for the Milestone 9 synthetic classification, calibration, and
-  thresholding baseline.
-- NumPy and SciPy are used for the Milestone 10 synthetic longitudinal measurement and component
-  matching baseline.
-- FastAPI and Uvicorn are used for the Milestone 11 local governed research API.
-- `httpx` is used for API test-client support.
-- Streamlit is used for the Milestone 12 local reviewer UI foundation.
-- Docker is used for the Milestone 13 local container release-assurance foundation.
-- Standard-library JSON/JSONL evidence is used for the Milestone 14 local registry, monitoring,
-  drift, and audit foundation.
-- Helm YAML plus checkout-safe Python validation are used for the Milestone 15 Kubernetes deployment
-  foundation.
-- Terraform plus checkout-safe Python validation are used for the Milestone 16 AWS target
-  architecture foundation.
-- Prometheus-format text, structured JSON evidence, and deterministic local simulations are used for
-  the Milestone 17 operations, SLO, incident, rollback, and recovery foundation.
+Core boundaries:
 
-Planned - not yet implemented:
+- Synthetic or public de-identified data only.
+- No credentials, patient data, generated DICOM, model checkpoints or evidence artefacts in Git.
+- DICOM metadata de-identification and audit evidence.
+- API path allowlists, symlink rejection, request limits and sanitized errors.
+- Metrics endpoint disabled by default and protected when configured.
+- Containers and Kubernetes pods run non-root with read-only root filesystems and dropped
+  capabilities.
+- Human approval is mandatory for model lifecycle changes.
+- No automated model promotion, retraining or rollback.
 
-- nibabel and OpenCV imaging workflows.
-- MLflow and live AWS deployment.
+Governance documentation lives under [governance](governance) and includes intended use, excluded
+use, human oversight, monitoring, model change control, limitations and the hazard log.
 
-## Local Setup
+## MLOps And Monitoring
+
+The repository includes local deterministic evidence for:
+
+- Model registry lifecycle states: `candidate`, `approved`, `rejected`, `retired`.
+- Synthetic monitoring baselines and synthetic drift simulation.
+- Append-only JSONL audit evidence.
+- SLO and error-budget evidence.
+- Incident lifecycle simulation.
+- Rollback and recovery simulation.
+
+These are engineering governance signals only. They are not clinical performance monitoring,
+diagnostic safety surveillance or production post-market monitoring.
+
+## Deployment Assurance
+
+Deployment evidence is split by claim type:
+
+- Containers: locally executed release assurance for CPU-only images and Docker Compose smoke.
+- Kubernetes/Helm: static validation plus optional local kind runtime smoke.
+- AWS: target-state Terraform architecture only, not deployed.
+- Operations: simulated local evidence for observability, resilience and incident response.
+
+Repository validation does not require AWS credentials, paid services, external patient data, live
+clinical systems or Terraform apply.
+
+## AWS Target-State Boundary
+
+AWS Terraform under [infra/terraform](infra/terraform) describes a private-by-default target
+architecture with ECR, EKS, S3, KMS, Secrets Manager references, CloudWatch and CloudTrail. It is
+static infrastructure-as-code evidence only. The repository has no `terraform apply` target and does
+not deploy AWS resources.
+
+## Quick Start
 
 ```bash
 python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
-```
-
-Useful commands:
-
-```bash
-medical-imaging-platform version
-medical-imaging-platform validate-config
 make quality
 ```
 
-## Quality Commands
+## Demo Commands
 
 ```bash
-make format
-make format-check
-make lint
-make type-check
-make validate-config
-make validate-docs
-make test
-make security
+make demo-fast
+make build-portfolio-evidence
+make validate-portfolio-evidence
+make portfolio-readiness
+make clean-demo
+```
+
+Optional runtime commands are documented in
+[docs/portfolio/demonstration_script.md](docs/portfolio/demonstration_script.md).
+
+## Evidence Locations
+
+Generated artefacts are ignored by Git.
+
+- Synthetic data: `data/synthetic/generated/`
+- DICOM and QC: `data/dicom/`
+- Processed imaging outputs: `data/processed/`
+- Model datasets and experiments: `ml/datasets/`, `ml/experiments/`
+- Reviewer sessions: `reports/generated/reviewer-sessions/`
+- Release evidence: `reports/generated/releases/`
+- Registry, monitoring and audit: `reports/generated/registry/`, `reports/generated/monitoring/`,
+  `reports/generated/audit/`
+- Kubernetes evidence: `reports/generated/kubernetes/`
+- AWS evidence: `reports/generated/aws/`
+- Operations evidence: `reports/generated/operations/`
+- Portfolio evidence: `reports/generated/portfolio/`
+
+## Test And Quality Status
+
+Latest local validation for Milestone 18:
+
+- `make quality`: PASS.
+- Tests: 269 passed.
+- Coverage: 90.49%.
+- Bandit: no issues identified.
+
+Run:
+
+```bash
 make quality
+git diff --check
 ```
-
-`make quality` is the canonical clean-checkout validation target.
-
-Synthetic data commands:
-
-```bash
-make generate-synthetic-data
-make validate-dataset
-make verify-synthetic-data
-medical-imaging-platform summarise-dataset data/synthetic/generated
-```
-
-Generated synthetic arrays are ignored by Git. They are engineering fixtures only and are not clinically realistic CT scans.
-
-DICOM fixture commands:
-
-```bash
-make generate-dicom-fixtures
-make discover-dicom
-make validate-dicom-fixtures
-make verify-dicom-ingestion
-make verify-dicom-quality
-```
-
-Generated DICOM fixtures, de-identified outputs, and audit artefacts are ignored by Git.
-
-Quality reports are engineering data-quality artefacts only; they do not indicate diagnostic adequacy.
-
-Preprocessing commands:
-
-```bash
-make preprocess-dicom
-make validate-preprocessed-volume
-make verify-preprocessing
-medical-imaging-platform inspect-preprocessed-volume data/processed/preprocessing/<run_id>
-```
-
-Generated preprocessed NumPy volumes and reports are ignored by Git. They are technical artefacts for
-research engineering only and do not perform registration, localisation, segmentation,
-classification, NIfTI conversion, or spatial resampling.
-
-Registration commands:
-
-```bash
-make register-synthetic-pair
-make validate-registration
-make verify-registration
-medical-imaging-platform register-volumes --fixed <fixed-preprocessed-dir> --moving <moving-preprocessed-dir>
-```
-
-Registration is technical alignment for research evaluation only. Optimiser convergence and metric
-improvement do not prove anatomical correctness or clinical suitability.
-
-Localisation commands:
-
-```bash
-make generate-localisation-fixtures
-make localise-synthetic-regions
-make validate-localisation
-make verify-localisation
-medical-imaging-platform localise-adrenal-regions <preprocessed-or-registered-dir>
-```
-
-Localisation is an atlas/geometry baseline only. Synthetic adrenal-region masks are engineering
-placeholders, not clinical annotations, and localisation outputs must not be used diagnostically.
-
-Segmentation commands:
-
-```bash
-make prepare-segmentation-data
-make train-segmentation
-make evaluate-segmentation
-make verify-segmentation
-medical-imaging-platform train-segmentation ml/datasets/segmentation/<dataset_id>
-```
-
-Segmentation uses synthetic engineering lesion masks only. Generated checkpoints under
-`ml/experiments/` are ignored by Git and must not be interpreted as clinical-performance evidence.
-
-Classification commands:
-
-```bash
-make prepare-classification-data
-make train-classification
-make evaluate-classification
-make verify-classification
-medical-imaging-platform train-classification ml/datasets/classification/<dataset_id>
-```
-
-Classification uses synthetic ROI-like crops and binary synthetic lesion-presence labels only.
-Generated checkpoints, calibration artefacts, threshold policies, and inference outputs under
-`ml/experiments/` are ignored by Git and must not be interpreted as clinical-performance evidence.
-
-Longitudinal analysis commands:
-
-```bash
-make analyse-synthetic-longitudinal
-make validate-longitudinal
-make verify-longitudinal
-medical-imaging-platform analyse-longitudinal-pair --previous-mask <prev.npy> --current-mask <curr.npy> --previous-spacing 2.5 2.5 2.5 --current-spacing 2.5 2.5 2.5 --case-id <case> --research-subject-id <subject> --side left --registration-run-id <run>
-```
-
-Longitudinal labels are synthetic engineering labels only. They are not RECIST, disease progression,
-treatment response, diagnosis, or clinical decision support.
-
-API commands:
-
-```bash
-make validate-api
-make test-api
-make verify-api
-medical-imaging-platform validate-api-config
-medical-imaging-platform inspect-api-readiness
-medical-imaging-platform serve-api
-```
-
-The API is local-first and research-only. It accepts explicit `.npy` arrays or compact JSON arrays
-from configured local roots, returns bounded summaries rather than image volumes, and exposes
-read-only evidence review. It does not implement authentication, a dashboard, PACS/DICOMweb
-connectivity, databases, queues, cloud deployment, or clinical decision support.
-
-Reviewer UI commands:
-
-```bash
-make validate-reviewer-ui
-make test-reviewer-ui
-make verify-reviewer-ui
-medical-imaging-platform validate-reviewer-ui-config
-medical-imaging-platform inspect-reviewer-ui-readiness
-medical-imaging-platform serve-reviewer-ui
-```
-
-The reviewer UI is local-only by default and depends on the governed API. It supports bounded
-synthetic review inputs, read-only evidence inspection, explicit human-review decisions, and local
-review-session export. It does not execute model inference directly, authenticate users, persist to a
-database, or integrate with clinical workflow systems.
-
-Operations evidence commands:
-
-```bash
-make validate-observability
-make build-observability-evidence
-make evaluate-slos
-make simulate-incidents
-make build-incident-evidence
-make validate-runbooks
-make simulate-rollback
-make validate-recovery
-make build-operations-evidence
-make validate-operations-evidence
-```
-
-Operations evidence is deterministic and synthetic. It validates engineering observability,
-resilience, SLO, incident, rollback, and recovery controls only; it is not clinical safety
-monitoring and does not deploy cloud resources.
-
-## Data Safety
-
-Only synthetic data or publicly available de-identified data may be used. Do not commit real patient data, model weights derived from restricted patient data, credentials, cloud account identifiers, DICOM studies with identifying metadata, or screenshots containing protected health information.
-
-## Research-Only Intended Use
-
-This repository is not an approved medical device, is not validated for NHS deployment, and must not be used for diagnosis or patient-management decisions. Human review is mandatory for any future outputs.
-
-## Milestone Roadmap
-
-1. Repository foundation.
-2. Synthetic and public-data foundation. Complete for synthetic-data foundation and public-data selection criteria only; no public data is downloaded.
-3. DICOM ingestion and governance. Complete for local synthetic fixtures and metadata de-identification only.
-4. Imaging quality control. Complete for technical DICOM engineering checks only.
-5. Preprocessing. Complete for deterministic NumPy CT preprocessing foundation only.
-6. Registration. Complete for SimpleITK centre-of-mass, rigid, and affine baselines only.
-7. Baseline localisation. Complete for atlas-style adrenal-region placeholder localisation only; no segmentation.
-8. Synthetic segmentation baseline. Complete for small MONAI 3D U-Net on synthetic masks only.
-9. Classification and calibration. Complete for binary synthetic lesion-presence classification only.
-10. Longitudinal analysis. Complete for governed synthetic engineering labels only.
-11. API foundation. Complete for governed local FastAPI service only; review dashboard remains planned.
-12. Reviewer UI foundation. Complete for local Streamlit API-consuming reviewer interface only.
-13. Local containerisation and release assurance. Complete for local containers and evidence only.
-14. Governed model registry, monitoring and audit foundation. Complete for local synthetic evidence
-    only.
-15. Secure Kubernetes and Helm deployment foundation. Complete for local chart, kind smoke, and
-    static assurance only.
-16. AWS deployment blueprint. Complete for static Terraform target architecture only; no AWS
-    resources are deployed.
-17. Production observability, resilience and incident response. Complete for deterministic local
-    operations evidence only.
-18. Final portfolio packaging. Planned.
-
-## Attribution
-
-The project was informed by research review of earlier CT alignment and adrenal lesion detection repositories. This repository is a clean-room original implementation and does not copy their code, notebooks, documentation, repository structures, images, reports, model artefacts, or performance claims. See [docs/attribution.md](docs/attribution.md) and [NOTICE.md](NOTICE.md).
 
 ## Limitations
 
-The current repository serves local research API summaries and a local reviewer UI only. It does not
-perform clinical diagnosis, implement RECIST, provide live production monitoring, or deploy
-infrastructure. Current modelling and analysis are limited to synthetic segmentation, binary
-synthetic lesion-presence classification, and synthetic longitudinal engineering labels. See
-[docs/limitations.md](docs/limitations.md) and [governance/limitations.md](governance/limitations.md).
+- Synthetic data cannot support clinical-performance claims.
+- No diagnosis, triage, RECIST, treatment-response or patient-management behavior.
+- No PACS, DICOMweb, NHS integration, production authentication or production clinical workflow.
+- No live AWS deployment, production DNS, production TLS, service mesh or public inference.
+- No automated model promotion, retraining or rollback.
+- AWS IaC is target-state only unless an operator separately deploys it outside repository
+  validation.
+- Kubernetes evidence is deployment assurance, not proof of production security or high
+  availability.
+
+See [docs/limitations.md](docs/limitations.md).
+
+## Interview Talking Points
+
+Use these files for recruiter and technical-review preparation:
+
+- [docs/portfolio/project_summary.md](docs/portfolio/project_summary.md)
+- [docs/portfolio/cv_project_entry.md](docs/portfolio/cv_project_entry.md)
+- [docs/portfolio/interview_talking_points.md](docs/portfolio/interview_talking_points.md)
+- [docs/portfolio/demonstration_script.md](docs/portfolio/demonstration_script.md)
+- [docs/portfolio/technical_deep_dive.md](docs/portfolio/technical_deep_dive.md)
+- [docs/portfolio/recruiter_faq.md](docs/portfolio/recruiter_faq.md)
+
+## Attribution
+
+The project was informed by research review of earlier CT alignment and adrenal lesion detection
+repositories. This repository is a clean-room original implementation and does not copy their code,
+notebooks, documentation, repository structures, images, reports, model artefacts or performance
+claims. See [docs/attribution.md](docs/attribution.md) and [NOTICE.md](NOTICE.md).

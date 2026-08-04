@@ -185,3 +185,37 @@ jobs:
           name: local-release-evidence
           path: reports/generated/releases
           if-no-files-found: error
+
+  portfolio-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Set up Terraform for static checks
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.15.8"
+
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Build and validate final portfolio readiness evidence
+        run: make portfolio-readiness
+
+      - name: Upload portfolio evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: portfolio-readiness-evidence
+          path: reports/generated/portfolio
+          if-no-files-found: error

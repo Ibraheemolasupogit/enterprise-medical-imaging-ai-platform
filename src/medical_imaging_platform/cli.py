@@ -633,6 +633,16 @@ def build_parser() -> argparse.ArgumentParser:
         command_parser = subparsers.add_parser(command_name, help=help_text)
         command_parser.add_argument("--json", action="store_true")
 
+    portfolio_commands = {
+        "run-demo-fast": "Record deterministic interview-demo workflow evidence.",
+        "build-portfolio-evidence": "Build final deterministic portfolio evidence.",
+        "validate-portfolio-evidence": "Validate final portfolio evidence.",
+        "clean-demo": "Record safe local demo cleanup evidence.",
+    }
+    for command_name, help_text in portfolio_commands.items():
+        command_parser = subparsers.add_parser(command_name, help=help_text)
+        command_parser.add_argument("--json", action="store_true")
+
     longitudinal_parser = subparsers.add_parser(
         "analyse-longitudinal-pair",
         help="Analyse synthetic previous/current lesion masks for engineering change labels.",
@@ -2386,6 +2396,54 @@ def main(argv: list[str] | None = None) -> int:
             else f"Operations evidence validation status={operations_evidence_status}."
         )
         return 0 if operations_evidence_status == "PASS" else 2
+
+    if args.command in {
+        "run-demo-fast",
+        "build-portfolio-evidence",
+        "validate-portfolio-evidence",
+        "clean-demo",
+    }:
+        from medical_imaging_platform.portfolio.evidence import (
+            build_portfolio_evidence,
+            clean_demo,
+            run_demo_fast,
+            validate_portfolio_evidence,
+        )
+
+        if args.command == "run-demo-fast":
+            demo_payload = run_demo_fast()
+            print(
+                json.dumps(demo_payload, indent=2, sort_keys=True)
+                if args.json
+                else f"Demo-fast evidence status={demo_payload['overall_status']}."
+            )
+            return 0 if demo_payload["overall_status"] == "PASS" else 2
+        if args.command == "build-portfolio-evidence":
+            portfolio_manifest = build_portfolio_evidence()
+            print(
+                json.dumps(portfolio_manifest.model_dump(mode="json"), indent=2, sort_keys=True)
+                if args.json
+                else f"Built portfolio evidence status={portfolio_manifest.overall_status}."
+            )
+            return 0 if portfolio_manifest.overall_status == "PASS" else 2
+        if args.command == "clean-demo":
+            cleanup_payload = clean_demo()
+            print(
+                json.dumps(cleanup_payload, indent=2, sort_keys=True)
+                if args.json
+                else f"Clean-demo status={cleanup_payload['status']}."
+            )
+            return 0 if cleanup_payload["status"] == "PASS" else 2
+        portfolio_checks = validate_portfolio_evidence()
+        portfolio_status = (
+            "PASS" if all(check.status == "PASS" for check in portfolio_checks) else "FAIL"
+        )
+        print(
+            json.dumps([check.model_dump(mode="json") for check in portfolio_checks], indent=2)
+            if args.json
+            else f"Portfolio evidence validation status={portfolio_status}."
+        )
+        return 0 if portfolio_status == "PASS" else 2
 
     if args.command == "analyse-longitudinal-pair":
         from medical_imaging_platform.longitudinal.pipeline import (

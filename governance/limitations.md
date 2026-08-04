@@ -76,3 +76,18 @@ Milestone 15 does not provide AWS infrastructure, EKS, Terraform, production ing
 identity, service mesh, GPU scheduling, automated rollback, automated retraining, automatic model
 promotion, or production clinical deployment. The Helm chart and static policy evidence are local
 engineering assurance artefacts only.
+
+## AWS, Operations And Portfolio Limitations
+
+Milestone 16 AWS Terraform is target-state infrastructure-as-code only. It does not deploy AWS
+resources, publish images, configure production DNS, install real TLS certificates, run Terraform
+apply, prove high availability, or create a live clinical service.
+
+Milestone 17 observability, resilience, SLO, incident, rollback and recovery evidence is
+deterministic local engineering evidence only. It does not create a production monitoring stack,
+send real alerts, page operators, prove disaster recovery, automate rollback, automate retraining,
+or promote model versions.
+
+Milestone 18 portfolio evidence summarises the repository and supports interview demonstration. It
+does not add clinical capability, clinical validation, deployment approval, regulatory approval, NHS
+approval, or medical-device approval.
