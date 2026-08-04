@@ -59,3 +59,8 @@ clinical validation, cybersecurity approval, deployment approval, or medical-dev
 Milestone 12 reviewer UI routes display local governed API outputs and collect human engineering
 review decisions. UI decisions, exports, and reports are not clinical approvals, audit records for a
 regulated system, diagnostic findings, RECIST assessments, or treatment-response assessments.
+## Container And Release Limitations
+
+Local images, SBOMs, scans, smoke tests and release manifests are engineering evidence only. They do
+not establish production security, clinical safety, high availability, disaster recovery, cloud
+certification, or Kubernetes readiness.

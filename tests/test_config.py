@@ -128,6 +128,7 @@ def test_validate_repository_configs_requires_directory(tmp_path: Path) -> None:
 def test_validate_all_repository_yaml_configuration_files() -> None:
     configs = validate_repository_configs(Path("config"))
 
-    assert len(configs.configs) == 13
+    assert len(configs.configs) == 14
     assert "platform.yaml" in configs.configs
+    assert "container.yaml" in configs.configs
     assert configs.configs["governance.yaml"].settings["human_review"] == "mandatory"

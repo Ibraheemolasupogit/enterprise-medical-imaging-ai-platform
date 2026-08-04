@@ -39,3 +39,8 @@ diagnosis, or patient-management support.
 Milestone 12 reviewer UI decisions remain separate from model output. Reviewers must keep
 abstention, failed quality gates, readiness failures, and evidence-integrity failures visible in
 their engineering decision. A reviewer decision is not clinical approval.
+## Containerised Review
+
+Milestone 13 does not change the human-review boundary. The containerised reviewer UI remains an
+engineering review interface, the model output remains separate from the reviewer decision, and no
+container smoke-test result may be interpreted as clinical approval.

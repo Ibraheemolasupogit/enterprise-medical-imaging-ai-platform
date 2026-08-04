@@ -1,0 +1,37 @@
+config_name: container_reviewer_ui
+milestone: 13
+status: foundation
+purpose: Container-safe Streamlit reviewer UI configuration for local Compose orchestration.
+owner: platform-engineering
+settings:
+  reviewer_ui:
+    policy_version: "m13-container-reviewer-ui-v1"
+    page_title: "Enterprise Medical Imaging AI Reviewer"
+    page_icon: ":material/radiology:"
+    layout: wide
+    api_base_url: "http://api:8000"
+    request_timeout_seconds: 10
+    allowed_upload_extensions:
+      - ".npy"
+      - ".json"
+    maximum_upload_bytes: 1048576
+    maximum_review_items: 25
+    enable_segmentation_page: true
+    enable_classification_page: true
+    enable_longitudinal_page: true
+    enable_evidence_page: true
+    enable_governance_page: true
+    allow_local_array_upload: true
+    allow_evidence_export: true
+    allow_remote_api: true
+    allow_remote_bind: true
+    host: "0.0.0.0"
+    port: 8501
+    review_output_directory: /app/outputs/reviewer-sessions
+    show_debug_details: false
+safeguards:
+  - The reviewer UI reaches the API through the Compose service name only.
+  - No checkpoints or model artefacts are mounted into the reviewer UI container.
+  - Exports are engineering evidence only and are written to the explicit output mount.
+future_capabilities:
+  - Authenticated reviewer workflows and persistent audit stores after governance review.

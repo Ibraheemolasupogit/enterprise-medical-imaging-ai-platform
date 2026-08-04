@@ -1,0 +1,49 @@
+config_name: container
+milestone: 13
+status: foundation
+purpose: Local containerisation and release-assurance controls for research-only API and reviewer UI images.
+owner: platform-engineering
+settings:
+  container:
+    policy_version: "m13-container-release-v1"
+    api_image_name: "medical-imaging-api"
+    reviewer_ui_image_name: "medical-imaging-reviewer-ui"
+    image_tag: "0.1.0-m13-local"
+    container_runtime_requirements: "requirements/container-runtime.txt"
+    pytorch_cpu_index_url: "https://download.pytorch.org/whl/cpu"
+    pytorch_version: "2.13.0+cpu"
+    api_port: 8000
+    reviewer_ui_port: 8501
+    api_health_path: "/health"
+    api_readiness_path: "/ready"
+    api_version_path: "/version"
+    api_openapi_path: "/openapi.json"
+    reviewer_health_path: "/_stcore/health"
+    read_only_root_filesystem: true
+    run_as_non_root: true
+    required_uid: 10001
+    required_gid: 10001
+    drop_all_capabilities: true
+    no_new_privileges: true
+    maximum_memory: "2g"
+    maximum_cpus: 2.0
+    output_mount: "/app/outputs"
+    evidence_mount: "/app/evidence"
+    checkpoint_mount: "/app/checkpoints"
+    temporary_directory: "/tmp"
+    release_output_directory: "reports/generated/releases"
+    compose_project_name: "medical-imaging-local-release"
+    sbom_format: "cyclonedx-json"
+    vulnerability_fail_severities:
+      - "HIGH"
+      - "CRITICAL"
+    scanner_timeout_seconds: 120
+    smoke_timeout_seconds: 600
+    allow_docker_unavailable: true
+safeguards:
+  - Containers run locally as non-root processes with read-only roots and explicit writable mounts.
+  - Images must not embed generated data, checkpoints, secrets, or reviewer exports.
+  - Release evidence is generated under ignored paths and is not a clinical release package.
+future_capabilities:
+  - Signed release artefacts after model governance approval.
+  - Registry publication, authentication and cloud deployment in later milestones.

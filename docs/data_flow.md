@@ -78,3 +78,9 @@ Milestone 12 adds reviewer-session exports under `reports/generated/reviewer-ses
 reviewer UI consumes governed API JSON responses and bounded local uploads, keeps model output
 separate from reviewer decisions, and writes stable review-decision JSON, bounded evidence summaries,
 and Markdown reports. These exports are ignored by Git and are not clinical approval records.
+## Container Data Flow
+
+Milestone 13 packages the existing API and reviewer UI data flow into local containers. Generated
+datasets, experiments, checkpoints and reviewer exports are excluded from image build contexts;
+evidence and checkpoints are mounted read-only when needed, while outputs are written only to
+explicit generated directories.

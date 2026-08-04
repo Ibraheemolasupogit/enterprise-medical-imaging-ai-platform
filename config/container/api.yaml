@@ -1,0 +1,43 @@
+config_name: container_api
+milestone: 13
+status: foundation
+purpose: Container-safe FastAPI configuration for local Compose orchestration.
+owner: platform-engineering
+settings:
+  api:
+    policy_version: "m13-container-api-v1"
+    service_name: "enterprise-medical-imaging-ai-platform-api"
+    service_version: "0.1.0"
+    environment: local-container
+    host: "0.0.0.0"
+    port: 8000
+    log_level: INFO
+    allowed_input_roots:
+      - /app/evidence
+      - /app/outputs
+    allowed_evidence_roots:
+      - /app/evidence
+      - /app/outputs
+    maximum_request_bytes: 1048576
+    maximum_array_bytes: 1048576
+    maximum_batch_size: 1
+    request_timeout_seconds: 30
+    enable_docs: true
+    enable_openapi: true
+    require_model_checksums: true
+    require_quality_pass: true
+    allow_degraded_review: true
+    allow_external_bind: true
+    allow_threshold_override: false
+    segmentation_checkpoint: null
+    classification_checkpoint: null
+    classification_calibration: null
+    classification_threshold_policy: null
+    longitudinal_config: /app/config/longitudinal.yaml
+    output_directory: /app/outputs/api
+safeguards:
+  - 0.0.0.0 binding is allowed only inside the container network.
+  - Evidence and checkpoints are mounted externally rather than copied into images.
+  - Readiness remains blocked when required model artefacts are unavailable.
+future_capabilities:
+  - Production authentication and registry-backed model artefacts in later milestones.

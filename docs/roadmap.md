@@ -12,14 +12,15 @@
 10. Longitudinal analysis. Complete for governed synthetic engineering labels only.
 11. API foundation. Complete for governed local FastAPI service only; review dashboard remains planned.
 12. Reviewer UI foundation. Complete for local Streamlit API-consuming review interface only.
-13. MLOps platform.
-14. Docker and Kubernetes.
-15. AWS deployment blueprint.
-16. Clinical AI assurance.
-17. Final portfolio packaging.
+13. Local containerisation and release assurance. Complete for local API/UI containers only.
+14. MLOps monitoring and audit foundation.
+15. Docker orchestration hardening and Kubernetes planning.
+16. AWS deployment blueprint.
+17. Clinical AI assurance.
+18. Final portfolio packaging.
 
-Milestones 1-12 are implemented in the current repository state. Milestone 12 does not implement
+Milestones 1-13 are implemented in the current repository state. Milestone 13 does not implement
 deformable registration, NIfTI export, general preprocessing resampling, learned localisation beyond
 the baseline, advanced segmentation, benign-versus-malignant classification, clinical lesion
 detection, RECIST, treatment-response assessment, authentication, persistent dashboard workflows, cloud
-deployment, or clinical decision support.
+deployment, image publication, Kubernetes, production authentication, or clinical decision support.

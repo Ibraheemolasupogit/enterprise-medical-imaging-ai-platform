@@ -39,3 +39,8 @@ The service is an engineering demonstrator for local research workflows only.
 Milestone 12 adds a local Streamlit reviewer UI as an API consumer. The API remains the execution
 boundary for segmentation, classification, longitudinal analysis, and evidence review. The reviewer
 UI must not bypass API filesystem controls or model-quality gates.
+## Container Runtime
+
+Milestone 13 adds `config/container/api.yaml` for local Compose execution. The API binds to
+`0.0.0.0` only inside the container, preserves `/health`, `/ready`, `/version`, and OpenAPI routes,
+and keeps path allowlists, model-checksum readiness, request limits, and quality gates enabled.

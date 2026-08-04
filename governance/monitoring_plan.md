@@ -62,3 +62,10 @@ remote API configuration attempts, evidence-integrity errors, reviewer decision 
 abstention/degraded-response display frequency, export failures, export path violations, latency,
 and UI error rates. Monitoring must not log raw arrays, model weights, sensitive payloads,
 unredacted local paths, credentials, reviewer notes, or identifiers.
+## Container Release Signals
+
+Local release assurance should record container health failures, readiness failures, API/UI version
+mismatches, scanner unavailable statuses, high or critical vulnerability findings, missing SBOMs,
+release manifest checksum mismatches, sensitive-log redaction failures, and unexpected writable
+filesystem or root-user findings. Release evidence must not log secrets, raw arrays, model weights,
+reviewer notes with identifiers, or sensitive payloads.

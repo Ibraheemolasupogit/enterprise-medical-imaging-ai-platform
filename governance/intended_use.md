@@ -15,3 +15,8 @@ deployment, clinical workflow integration, diagnosis, triage, or patient-managem
 Milestone 12 reviewer UI functions are intended for local portfolio demonstration of human-review
 workflow patterns over governed API outputs. They are not intended for radiology reporting, clinical
 approval, patient management, production deployment, or replacement of trained clinical staff.
+## Containerisation Boundary
+
+Milestone 13 containers are intended for local engineering release assurance only. They are not
+intended for production deployment, patient care, clinical diagnosis, registry publication, cloud
+operation, or medical-device approval.

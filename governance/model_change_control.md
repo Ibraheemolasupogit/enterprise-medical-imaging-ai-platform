@@ -24,3 +24,8 @@ Milestone 12 reviewer UI configuration records the API endpoint and local review
 does not approve model artefacts. UI changes that alter label, quality, abstention, or reviewer
 decision presentation require governance review because display changes can affect reviewer
 interpretation.
+## Container Release Evidence
+
+Milestone 13 records image names, dependency versions, Dockerfile checksums, configuration
+checksums, scanner status and smoke-test status. Generated release evidence does not approve model
+changes, publish images, or replace model governance review.

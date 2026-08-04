@@ -35,3 +35,8 @@ network calls by default, render arbitrary HTML, or log raw arrays and reviewer 
 The interface must not be presented as clinical diagnosis, clinical decision support, radiologist
 replacement, RECIST assessment, treatment-response assessment, NHS approval, medical-device
 certification, or production deployment readiness.
+## Container Runtime
+
+Milestone 13 adds `config/container/reviewer_ui.yaml` for local Compose execution. The UI binds to
+`0.0.0.0` only inside the container, reaches the API by service name, keeps research-only banners and
+readiness warnings, mounts only reviewer export storage as writable, and does not mount checkpoints.

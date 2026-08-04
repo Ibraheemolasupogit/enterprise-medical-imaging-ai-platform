@@ -1,0 +1,8 @@
+title = "enterprise-medical-imaging-ai-platform"
+
+[allowlist]
+description = "Ignored generated release evidence is validated separately and is not committed."
+paths = [
+  '''reports/generated/.*''',
+  '''\.trivy-cache/.*''',
+]

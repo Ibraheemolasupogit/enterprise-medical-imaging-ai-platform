@@ -46,6 +46,7 @@ from medical_imaging_platform.utils.config import (
     ConfigError,
     load_api_config,
     load_classification_config,
+    load_container_config,
     load_dicom_ingestion_config,
     load_localisation_config,
     load_longitudinal_config,
@@ -457,6 +458,73 @@ def build_parser() -> argparse.ArgumentParser:
     serve_reviewer_ui_parser.add_argument("--config", default="config/reviewer_ui.yaml")
     serve_reviewer_ui_parser.add_argument("--host", default=None)
     serve_reviewer_ui_parser.add_argument("--port", type=int, default=None)
+
+    container_config_parser = subparsers.add_parser(
+        "validate-container-config",
+        help="Validate local container release-assurance configuration.",
+    )
+    container_config_parser.add_argument("--config", default="config/container.yaml")
+    container_config_parser.add_argument("--json", action="store_true")
+
+    container_security_parser = subparsers.add_parser(
+        "inspect-container-security",
+        help="Inspect Dockerfiles, Compose and build-context security controls.",
+    )
+    container_security_parser.add_argument("--config", default="config/container.yaml")
+    container_security_parser.add_argument("--json", action="store_true")
+
+    release_manifest_parser = subparsers.add_parser(
+        "build-release-manifest",
+        help="Build ignored local release evidence for container assurance.",
+    )
+    release_manifest_parser.add_argument("--config", default="config/container.yaml")
+    release_manifest_parser.add_argument("--overwrite", action="store_true")
+    release_manifest_parser.add_argument("--no-smoke-execute", action="store_true")
+    release_manifest_parser.add_argument("--json", action="store_true")
+
+    validate_release_parser = subparsers.add_parser(
+        "validate-release-evidence",
+        help="Validate generated local release evidence and checksums.",
+    )
+    validate_release_parser.add_argument("--release-dir", default=None)
+    validate_release_parser.add_argument("--json", action="store_true")
+
+    smoke_parser = subparsers.add_parser(
+        "run-container-smoke-tests",
+        help="Run local Docker Compose smoke tests without publishing images.",
+    )
+    smoke_parser.add_argument("--config", default="config/container.yaml")
+    smoke_parser.add_argument("--no-execute", action="store_true")
+    smoke_parser.add_argument("--json", action="store_true")
+
+    secrets_parser = subparsers.add_parser(
+        "scan-release-secrets",
+        help="Run optional local secret scanning for release assurance.",
+    )
+    secrets_parser.add_argument("--config", default="config/container.yaml")
+    secrets_parser.add_argument("--json", action="store_true")
+
+    dependencies_parser = subparsers.add_parser(
+        "scan-release-dependencies",
+        help="Run optional local dependency vulnerability scanning.",
+    )
+    dependencies_parser.add_argument("--config", default="config/container.yaml")
+    dependencies_parser.add_argument("--json", action="store_true")
+
+    sbom_parser = subparsers.add_parser(
+        "generate-release-sbom",
+        help="Generate local SBOM evidence for API and reviewer UI build contexts.",
+    )
+    sbom_parser.add_argument("--config", default="config/container.yaml")
+    sbom_parser.add_argument("--output-dir", default=None)
+    sbom_parser.add_argument("--json", action="store_true")
+
+    image_scan_parser = subparsers.add_parser(
+        "scan-release-images",
+        help="Run optional local image vulnerability scanning.",
+    )
+    image_scan_parser.add_argument("--config", default="config/container.yaml")
+    image_scan_parser.add_argument("--json", action="store_true")
 
     longitudinal_parser = subparsers.add_parser(
         "analyse-longitudinal-pair",
@@ -1403,6 +1471,319 @@ def main(argv: list[str] | None = None) -> int:
         streamlit_cli.main()
         return 0
 
+    if args.command == "validate-container-config":
+        try:
+            container_config = load_container_config(Path(args.config))
+        except ConfigError as exc:
+            print(f"Container configuration validation failed: {exc}")
+            return 1
+        payload = container_config.model_dump(mode="json")
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(f"Validated container configuration {container_config.policy_version}.")
+        return 0
+
+    if args.command == "inspect-container-security":
+        from medical_imaging_platform.release.compose import inspect_compose
+        from medical_imaging_platform.release.dependencies import (
+            inspect_container_dependency_policy,
+        )
+        from medical_imaging_platform.release.dockerfiles import inspect_required_dockerfiles
+        from medical_imaging_platform.release.evidence import write_tool_evidence
+        from medical_imaging_platform.release.image_policy import inspect_dockerignore
+        from medical_imaging_platform.release.scanners import scanner_inventory
+
+        try:
+            container_config = load_container_config(Path(args.config))
+        except ConfigError as exc:
+            print(f"Container security inspection failed: {exc}")
+            return 1
+        checks = [
+            *inspect_required_dockerfiles(container_config),
+            *inspect_container_dependency_policy(container_config),
+            *inspect_compose(container_config),
+            *inspect_dockerignore(),
+        ]
+        tools = scanner_inventory(timeout_seconds=15)
+        hadolint = next((tool for tool in tools if tool.tool == "hadolint"), None)
+        if hadolint is not None:
+            write_tool_evidence(
+                container_config,
+                "hadolint",
+                hadolint.model_copy(
+                    update={
+                        "details": {
+                            **hadolint.details,
+                            "optional_reason": (
+                                "Internal Dockerfile validation is the mandatory lint gate; "
+                                "Hadolint is optional advisory evidence."
+                            ),
+                        }
+                    }
+                ),
+            )
+        payload = {
+            "status": "PASS" if all(check.status == "PASS" for check in checks) else "FAIL",
+            "checks": [check.model_dump(mode="json") for check in checks],
+            "tools": [tool.model_dump(mode="json") for tool in tools],
+        }
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(
+                f"Container security inspection status={payload['status']} "
+                f"checks={len(checks)} tools={len(tools)}."
+            )
+        return 0 if payload["status"] == "PASS" else 2
+
+    if args.command == "build-release-manifest":
+        from medical_imaging_platform.release.compose import inspect_compose
+        from medical_imaging_platform.release.dependencies import (
+            inspect_container_dependency_policy,
+        )
+        from medical_imaging_platform.release.dockerfiles import inspect_required_dockerfiles
+        from medical_imaging_platform.release.evidence import (
+            load_canonical_tool_evidence,
+            load_smoke_evidence,
+        )
+        from medical_imaging_platform.release.export import export_release_evidence
+        from medical_imaging_platform.release.image_policy import inspect_dockerignore
+        from medical_imaging_platform.release.manifest import build_release_manifest
+
+        try:
+            container_config = load_container_config(Path(args.config))
+            checks = [
+                *inspect_required_dockerfiles(container_config),
+                *inspect_container_dependency_policy(container_config),
+                *inspect_compose(container_config),
+                *inspect_dockerignore(),
+            ]
+            scanner_results = load_canonical_tool_evidence(container_config)
+            smoke_result = load_smoke_evidence(container_config)
+            release_manifest = build_release_manifest(
+                container_config,
+                checks,
+                scanner_results,
+                smoke_result,
+            )
+            output_dir = export_release_evidence(
+                container_config,
+                release_manifest,
+                overwrite=args.overwrite,
+            )
+        except (ConfigError, FileExistsError, OSError, ValueError) as exc:
+            print(f"Release manifest build failed: {exc}")
+            return 1
+        payload = {
+            "release_dir": output_dir.as_posix(),
+            "manifest": release_manifest.model_dump(mode="json"),
+        }
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(f"Built release evidence at {output_dir}.")
+        return 0
+
+    if args.command == "validate-release-evidence":
+        from medical_imaging_platform.release.export import validate_release_evidence
+
+        try:
+            release_dir = _resolve_release_dir(Path(args.release_dir) if args.release_dir else None)
+            checks = validate_release_evidence(release_dir)
+        except (OSError, ValueError) as exc:
+            print(f"Release evidence validation failed: {exc}")
+            return 1
+        manifest_status = checks[-1].status if checks else "ERROR"
+        payload = {
+            "release_dir": release_dir.as_posix(),
+            "status": manifest_status
+            if all(check.status == "PASS" for check in checks[:-1])
+            else "FAIL",
+            "checks": [check.model_dump(mode="json") for check in checks],
+        }
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(f"Release evidence validation status={payload['status']} at {release_dir}.")
+        return 0 if payload["status"] == "PASS" else 2
+
+    if args.command == "run-container-smoke-tests":
+        from medical_imaging_platform.release.evidence import write_smoke_evidence
+        from medical_imaging_platform.release.smoke import run_container_smoke_tests
+
+        try:
+            container_config = load_container_config(Path(args.config))
+            smoke_result = run_container_smoke_tests(
+                container_config,
+                execute=not args.no_execute,
+            )
+        except ConfigError as exc:
+            print(f"Container smoke tests failed: {exc}")
+            return 1
+        payload = smoke_result.model_dump(mode="json")
+        write_smoke_evidence(container_config, smoke_result)
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(f"Container smoke-test status={smoke_result.status}.")
+        if smoke_result.status == "UNAVAILABLE":
+            return 7
+        return 0 if smoke_result.status in {"PASS", "SKIPPED"} else 2
+
+    if args.command == "scan-release-secrets":
+        from medical_imaging_platform.release.evidence import write_tool_evidence
+        from medical_imaging_platform.release.scanners import scan_repository_secrets
+
+        try:
+            container_config = load_container_config(Path(args.config))
+        except ConfigError as exc:
+            print(f"Secret scan failed: {exc}")
+            return 1
+        secret_scan_result = scan_repository_secrets(container_config.scanner_timeout_seconds)
+        write_tool_evidence(container_config, "gitleaks", secret_scan_result)
+        if args.json:
+            print(json.dumps(secret_scan_result.model_dump(mode="json"), indent=2, sort_keys=True))
+        else:
+            print(f"Secret scan status={secret_scan_result.status} tool={secret_scan_result.tool}.")
+            if secret_scan_result.output:
+                print(secret_scan_result.output)
+        return 0 if secret_scan_result.status in {"PASS", "UNAVAILABLE"} else 2
+
+    if args.command == "scan-release-dependencies":
+        from medical_imaging_platform.release.evidence import write_tool_evidence
+        from medical_imaging_platform.release.scanners import scan_dependencies, severity_gate
+
+        try:
+            container_config = load_container_config(Path(args.config))
+        except ConfigError as exc:
+            print(f"Dependency scan failed: {exc}")
+            return 1
+        dependency_scan_result = scan_dependencies(
+            container_config.scanner_timeout_seconds,
+            container_config.container_runtime_requirements,
+        )
+        if dependency_scan_result.available and dependency_scan_result.status == "PASS":
+            dependency_scan_result.status = (
+                "PASS"
+                if severity_gate(
+                    dependency_scan_result.findings,
+                    container_config.vulnerability_fail_severities,
+                )
+                else "FAIL"
+            )
+        write_tool_evidence(container_config, "pip-audit", dependency_scan_result)
+        if args.json:
+            print(
+                json.dumps(dependency_scan_result.model_dump(mode="json"), indent=2, sort_keys=True)
+            )
+        else:
+            print(
+                f"Dependency scan status={dependency_scan_result.status} "
+                f"tool={dependency_scan_result.tool}."
+            )
+            if dependency_scan_result.output:
+                print(dependency_scan_result.output)
+        return 0 if dependency_scan_result.status == "PASS" else 2
+
+    if args.command == "generate-release-sbom":
+        from medical_imaging_platform.release.evidence import write_tool_evidence
+        from medical_imaging_platform.release.scanners import generate_context_sbom
+
+        try:
+            container_config = load_container_config(Path(args.config))
+        except ConfigError as exc:
+            print(f"SBOM generation failed: {exc}")
+            return 1
+        output_root = (
+            Path(args.output_dir)
+            if args.output_dir is not None
+            else container_config.release_output_directory / "sbom-latest"
+        )
+        api_result = generate_context_sbom(
+            f"{container_config.api_image_name}:{container_config.image_tag}",
+            output_root / "api.sbom.cdx.json",
+            container_config.scanner_timeout_seconds,
+        )
+        ui_result = generate_context_sbom(
+            f"{container_config.reviewer_ui_image_name}:{container_config.image_tag}",
+            output_root / "reviewer-ui.sbom.cdx.json",
+            container_config.scanner_timeout_seconds,
+        )
+        write_tool_evidence(
+            container_config,
+            "syft-api",
+            api_result.model_copy(update={"details": {**api_result.details, "target": "api"}}),
+        )
+        write_tool_evidence(
+            container_config,
+            "syft-reviewer-ui",
+            ui_result.model_copy(
+                update={"details": {**ui_result.details, "target": "reviewer-ui"}}
+            ),
+        )
+        sbom_payload = [api_result.model_dump(mode="json"), ui_result.model_dump(mode="json")]
+        if args.json:
+            print(json.dumps(sbom_payload, indent=2, sort_keys=True))
+        else:
+            print(f"SBOM generation statuses={[api_result.status, ui_result.status]}.")
+        sbom_statuses = {api_result.status, ui_result.status}
+        return 0 if sbom_statuses == {"PASS"} else 2
+
+    if args.command == "scan-release-images":
+        from medical_imaging_platform.release.evidence import write_tool_evidence
+        from medical_imaging_platform.release.scanners import scan_image, severity_gate
+
+        try:
+            container_config = load_container_config(Path(args.config))
+        except ConfigError as exc:
+            print(f"Image scan failed: {exc}")
+            return 1
+        refs = [
+            f"{container_config.api_image_name}:{container_config.image_tag}",
+            f"{container_config.reviewer_ui_image_name}:{container_config.image_tag}",
+        ]
+        image_scan_results = [
+            scan_image(ref, container_config.scanner_timeout_seconds) for ref in refs
+        ]
+        for image_scan_result in image_scan_results:
+            if image_scan_result.available and image_scan_result.status == "PASS":
+                image_scan_result.status = (
+                    "PASS"
+                    if severity_gate(
+                        image_scan_result.findings,
+                        container_config.vulnerability_fail_severities,
+                    )
+                    else "FAIL"
+                )
+        for key, target, image_scan_result in zip(
+            ("trivy-api", "trivy-reviewer-ui"),
+            ("api", "reviewer-ui"),
+            image_scan_results,
+            strict=True,
+        ):
+            write_tool_evidence(
+                container_config,
+                key,
+                image_scan_result.model_copy(
+                    update={"details": {**image_scan_result.details, "target": target}}
+                ),
+            )
+        if args.json:
+            print(
+                json.dumps(
+                    [scan_result.model_dump(mode="json") for scan_result in image_scan_results],
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+        else:
+            print(
+                f"Image scan statuses={[scan_result.status for scan_result in image_scan_results]}."
+            )
+        image_scan_statuses = {scan_result.status for scan_result in image_scan_results}
+        return 0 if image_scan_statuses == {"PASS"} else 2
+
     if args.command == "analyse-longitudinal-pair":
         from medical_imaging_platform.longitudinal.pipeline import (
             LongitudinalAnalysisError,
@@ -1490,3 +1871,17 @@ def main(argv: list[str] | None = None) -> int:
 
     parser.error(f"Unsupported command: {args.command}")
     return 2
+
+
+def _resolve_release_dir(path: Path | None) -> Path:
+    if path is not None:
+        return path
+    release_root = Path("reports/generated/releases")
+    candidates = sorted(
+        item
+        for item in release_root.glob("*")
+        if item.is_dir() and (item / "release_manifest.json").is_file()
+    )
+    if not candidates:
+        raise ValueError("No generated release evidence directory found.")
+    return candidates[-1]

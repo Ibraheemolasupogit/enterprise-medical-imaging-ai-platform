@@ -1,0 +1,17 @@
+--index-url https://pypi.org/simple
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# Container-only runtime dependencies. Keep local developer dependencies in pyproject.toml.
+# The +cpu local version prevents Linux builds from resolving CUDA/NVIDIA PyTorch packages.
+torch==2.13.0+cpu; platform_system == "Linux"
+torch==2.13.0; platform_system != "Linux"
+monai==1.6.0
+fastapi>=0.115,<1
+numpy>=1.26,<2
+pydicom>=3.0,<4
+pydantic>=2.8,<3
+PyYAML>=6.0.2,<7
+scikit-learn>=1.5,<2
+SimpleITK>=2.5,<3
+streamlit>=1.36,<2
+uvicorn>=0.30,<1

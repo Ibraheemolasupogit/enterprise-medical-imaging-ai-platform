@@ -46,3 +46,9 @@ Milestone 12 reviewer UI security controls:
 - Safe evidence identifiers and export path containment.
 - No arbitrary HTML rendering, shell execution, direct URL fetching, or model-weight display.
 - No logging of raw arrays, sensitive payloads, or reviewer notes.
+## Container Controls
+
+Milestone 13 adds local container controls: non-root UID/GID `10001:10001`, read-only root
+filesystems, dropped Linux capabilities, `no-new-privileges`, local-only port bindings, no Docker
+socket mounts, no privileged mode, bounded health checks, `.dockerignore` exclusions for generated
+data and secrets, scanner hooks, and ignored release evidence.

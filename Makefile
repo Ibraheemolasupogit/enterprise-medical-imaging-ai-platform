@@ -1,4 +1,4 @@
-.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality-check-dicom verify-dicom-quality preprocess-dicom validate-preprocessed-volume verify-preprocessing register-synthetic-pair validate-registration verify-registration generate-localisation-fixtures localise-synthetic-regions validate-localisation verify-localisation prepare-segmentation-data train-segmentation evaluate-segmentation verify-segmentation prepare-classification-data train-classification evaluate-classification verify-classification analyse-synthetic-longitudinal validate-longitudinal verify-longitudinal validate-api test-api verify-api serve-api validate-reviewer-ui test-reviewer-ui verify-reviewer-ui serve-reviewer-ui quality clean
+.PHONY: install format format-check lint type-check test security validate-config validate-docs generate-synthetic-data validate-dataset verify-synthetic-data generate-dicom-fixtures discover-dicom validate-dicom-fixtures verify-dicom-ingestion quality-check-dicom verify-dicom-quality preprocess-dicom validate-preprocessed-volume verify-preprocessing register-synthetic-pair validate-registration verify-registration generate-localisation-fixtures localise-synthetic-regions validate-localisation verify-localisation prepare-segmentation-data train-segmentation evaluate-segmentation verify-segmentation prepare-classification-data train-classification evaluate-classification verify-classification analyse-synthetic-longitudinal validate-longitudinal verify-longitudinal validate-api test-api verify-api serve-api validate-reviewer-ui test-reviewer-ui verify-reviewer-ui serve-reviewer-ui validate-containers lint-dockerfiles scan-secrets scan-dependencies build-images scan-images generate-sbom container-smoke build-release-evidence validate-release-evidence verify-release quality clean
 
 PYTHON ?= python3
 SYNTHETIC_DATA_DIR ?= data/synthetic/generated
@@ -22,6 +22,8 @@ CLASSIFICATION_SYNTHETIC_CASES ?= 12
 LONGITUDINAL_EXPERIMENT_DIR ?= ml/experiments/longitudinal
 API_CONFIG ?= config/api.yaml
 REVIEWER_UI_CONFIG ?= config/reviewer_ui.yaml
+CONTAINER_CONFIG ?= config/container.yaml
+RELEASE_EVIDENCE_DIR ?=
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -183,6 +185,41 @@ verify-reviewer-ui: validate-reviewer-ui test-reviewer-ui
 
 serve-reviewer-ui:
 	$(PYTHON) -m medical_imaging_platform serve-reviewer-ui --config $(REVIEWER_UI_CONFIG)
+
+validate-containers:
+	$(PYTHON) -m medical_imaging_platform validate-container-config --config $(CONTAINER_CONFIG)
+	$(PYTHON) -m medical_imaging_platform validate-api-config --config config/container/api.yaml
+	$(PYTHON) -m medical_imaging_platform validate-reviewer-ui-config --config config/container/reviewer_ui.yaml
+
+lint-dockerfiles:
+	$(PYTHON) -m medical_imaging_platform inspect-container-security --config $(CONTAINER_CONFIG)
+
+scan-secrets:
+	$(PYTHON) -m medical_imaging_platform scan-release-secrets --config $(CONTAINER_CONFIG)
+
+scan-dependencies:
+	$(PYTHON) -m medical_imaging_platform scan-release-dependencies --config $(CONTAINER_CONFIG)
+
+build-images:
+	docker compose build --pull=false
+
+scan-images:
+	$(PYTHON) -m medical_imaging_platform scan-release-images --config $(CONTAINER_CONFIG)
+
+generate-sbom:
+	$(PYTHON) -m medical_imaging_platform generate-release-sbom --config $(CONTAINER_CONFIG)
+
+container-smoke:
+	$(PYTHON) -m medical_imaging_platform run-container-smoke-tests --config $(CONTAINER_CONFIG)
+
+build-release-evidence:
+	$(PYTHON) -m medical_imaging_platform build-release-manifest --config $(CONTAINER_CONFIG) --overwrite
+
+validate-release-evidence:
+	$(PYTHON) -m medical_imaging_platform validate-release-evidence $(if $(RELEASE_EVIDENCE_DIR),--release-dir $(RELEASE_EVIDENCE_DIR),)
+
+verify-release: quality validate-containers lint-dockerfiles scan-secrets scan-dependencies build-images generate-sbom scan-images container-smoke build-release-evidence validate-release-evidence
+	git check-ignore -q reports/generated/releases/example/release_manifest.json
 
 quality: format-check lint type-check validate-config validate-docs test security
 

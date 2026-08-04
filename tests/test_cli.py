@@ -13,7 +13,7 @@ def test_cli_configuration_validation_command(capsys) -> None:  # type: ignore[n
     exit_code = main(["validate-config"])
 
     assert exit_code == 0
-    assert "Validated 13 configuration files." in capsys.readouterr().out
+    assert "Validated 14 configuration files." in capsys.readouterr().out
 
 
 def test_cli_configuration_validation_failure(capsys) -> None:  # type: ignore[no-untyped-def]

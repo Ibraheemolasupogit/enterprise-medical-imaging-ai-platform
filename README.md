@@ -4,10 +4,11 @@
 
 Enterprise Medical Imaging AI Platform is a planned production-oriented medical-imaging AI platform for abdominal CT research workflows. The long-term goal is to demonstrate how DICOM ingestion, de-identification, quality control, image standardisation, longitudinal registration, adrenal-region localisation, lesion analysis, governed review, MLOps, cloud architecture, and clinical AI assurance fit together as one engineered system.
 
-Milestones 1-12 establish repository foundations, synthetic data, DICOM ingestion, quality control,
+Milestones 1-13 establish repository foundations, synthetic data, DICOM ingestion, quality control,
 preprocessing, registration, localisation, synthetic segmentation, and binary synthetic
 lesion-presence classification with calibration, governed synthetic longitudinal lesion-change
-analysis, a governed local FastAPI research interface, and a local Streamlit reviewer UI. Cloud deployment, containers, monitoring, advanced classification, and
+analysis, a governed local FastAPI research interface, a local Streamlit reviewer UI, and local
+container release-assurance controls. Cloud deployment, monitoring, advanced classification, and
 clinical deployment are **Planned - not yet implemented**.
 
 ## Clinical And Engineering Problem

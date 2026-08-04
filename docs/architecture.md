@@ -1,11 +1,11 @@
 # Architecture
 
-Milestones 1-12 provide repository foundation, synthetic fixtures, local DICOM ingestion,
+Milestones 1-13 provide repository foundation, synthetic fixtures, local DICOM ingestion,
 metadata-focused de-identification, technical DICOM quality control, and deterministic CT
 preprocessing to NumPy volumes, SimpleITK registration baselines, and deterministic adrenal-region
 placeholder localisation, plus small synthetic lesion segmentation and lesion-presence
 classification baselines, governed synthetic longitudinal lesion-change analysis, a local
-FastAPI research interface, and a local Streamlit reviewer UI.
+FastAPI research interface, a local Streamlit reviewer UI, and local container release assurance.
 
 Implemented foundation components:
 
@@ -34,6 +34,9 @@ Implemented foundation components:
 - Reviewer UI foundation with typed config, no direct model execution, governed API client, overview
   status, synthetic review pages, read-only evidence inspection, human-review decisions, session
   state controls, upload validation, and local review export.
+- Container release-assurance foundation with separate API and reviewer UI images, Docker Compose
+  local orchestration, non-root runtime users, read-only root filesystems, static policy checks,
+  optional scanner evidence, smoke-test orchestration, SBOM hooks, and ignored release manifests.
 
 Planned - not yet implemented:
 
@@ -44,7 +47,7 @@ Planned - not yet implemented:
 - Advanced lesion segmentation and clinical classification.
 - Clinical longitudinal change measurement, RECIST, and treatment-response assessment.
 - Production-grade human-review dashboard with authentication and persistent audit logging.
-- Monitoring, audit, registry, and retraining workflows.
+- MLOps monitoring, audit, registry, retraining workflows, and cloud deployment.
 
 The intended architecture will be added incrementally by milestone so each component has tests,
 documentation, and governance boundaries before adjacent capabilities depend on it.

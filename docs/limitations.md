@@ -41,3 +41,8 @@ Current limitations:
 - Missing slices are inferred only when spacing evidence is reliable; metadata may be incomplete or inaccurate.
 
 The platform is a portfolio and research demonstrator, not an approved medical device.
+## Container Release Limitations
+
+Milestone 13 container images and release evidence are local engineering artefacts only. They do not
+represent production deployment readiness, internet-facing security, clinical operational approval,
+cloud certification, high availability, disaster recovery, or Kubernetes readiness.

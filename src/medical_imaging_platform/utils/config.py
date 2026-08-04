@@ -16,6 +16,7 @@ from medical_imaging_platform.longitudinal.models import LongitudinalConfig
 from medical_imaging_platform.preprocessing.models import PreprocessingConfig
 from medical_imaging_platform.quality_control.models import QualityControlConfig
 from medical_imaging_platform.registration.models import RegistrationConfig
+from medical_imaging_platform.release.models import ContainerReleaseConfig
 from medical_imaging_platform.reviewer_ui.models import ReviewerUIConfig
 from medical_imaging_platform.segmentation.models import SegmentationConfig
 from medical_imaging_platform.utils.exceptions import MedicalImagingPlatformError
@@ -63,6 +64,7 @@ class RepositoryConfigSet(BaseModel):
         "platform.yaml",
         "api.yaml",
         "reviewer_ui.yaml",
+        "container.yaml",
         "data.yaml",
         "preprocessing.yaml",
         "registration.yaml",
@@ -234,3 +236,15 @@ def load_reviewer_ui_config(path: Path) -> ReviewerUIConfig:
         return ReviewerUIConfig.model_validate(settings["reviewer_ui"])
     except ValidationError as exc:
         raise ConfigError(f"Invalid reviewer UI configuration in {path}: {exc}") from exc
+
+
+def load_container_config(path: Path) -> ContainerReleaseConfig:
+    """Load typed Milestone 13 container release-assurance settings."""
+    data = load_yaml_file(path)
+    settings = data.get("settings")
+    if not isinstance(settings, dict) or "container" not in settings:
+        raise ConfigError(f"Missing settings.container in {path}")
+    try:
+        return ContainerReleaseConfig.model_validate(settings["container"])
+    except ValidationError as exc:
+        raise ConfigError(f"Invalid container configuration in {path}: {exc}") from exc
