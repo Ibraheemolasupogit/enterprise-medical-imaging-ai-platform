@@ -50,3 +50,4 @@ ml/experiments/
 *.key
 *.tfstate
 *.tfstate.*
+**/.terraform/

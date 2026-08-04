@@ -95,3 +95,27 @@ not be described as clinical-performance monitoring, diagnostic safety surveilla
 device post-market monitoring. CloudTrail records AWS control-plane activity and remains separate
 from application audit evidence, reviewer actions, registry lifecycle events, and monitoring drift
 evidence.
+
+## Operations Observability Requirements
+
+Milestone 17 records production-style engineering observability controls while remaining a local
+demonstrator. Required signals include:
+
+- API liveness, startup and readiness status, including degraded readiness when model artefacts or
+  quality gates require investigation.
+- Request volume, latency, status codes, API error rates, inference failures, preprocessing
+  failures, image-quality failures, abstentions and degraded responses.
+- Model/checkpoint integrity failures, configuration checksum mismatches, path-security violations
+  and filesystem containment blocks.
+- Reviewer UI dependency failures, retries, circuit-breaker openings, upload validation failures and
+  export failures.
+- Kubernetes readiness, probe, resource, NetworkPolicy and security-context evidence when local
+  runtime checks are executed.
+- AWS target-state mappings for CloudWatch logs, metric filters, alarms and dashboards without
+  deploying AWS resources.
+
+Metrics must use bounded engineering labels only. Structured logs and evidence must not include raw
+arrays, DICOM pixel data, model weights, sensitive payloads, reviewer notes, credentials, direct
+identifiers, unredacted local secret paths, or free-text PHI. `WARN` and `ALERT` statuses require
+human investigation and documented disposition; they must not be described as clinical performance
+deterioration or diagnostic safety surveillance.

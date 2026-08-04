@@ -17,13 +17,15 @@
 15. Secure Kubernetes and Helm deployment foundation. Complete for local chart and static assurance only.
 16. AWS deployment blueprint. Complete for static Terraform target architecture and evidence only;
     no AWS resources are deployed.
-17. Clinical AI assurance.
-18. Final portfolio packaging.
+17. Production observability, resilience and incident response. Complete for deterministic local
+    operations evidence only; no live monitoring deployment or automated rollback.
+18. Clinical AI assurance and final portfolio packaging. Planned.
 
-Milestones 1-16 are implemented in the current repository state. Milestone 16 does not implement
+Milestones 1-17 are implemented in the current repository state. Milestone 17 does not implement
 deformable registration, NIfTI export, general preprocessing resampling, learned localisation beyond
 the baseline, advanced segmentation, benign-versus-malignant classification, clinical lesion
 detection, RECIST, treatment-response assessment, authentication, persistent dashboard workflows, cloud
 deployment, image publication to AWS, Terraform apply, GPU scheduling, service mesh, production
 authentication, production DNS, real TLS certificates, automated retraining, automated rollback,
-automatic model promotion, or clinical decision support.
+automatic model promotion, production alert routing, live incident-management integration, or
+clinical decision support.

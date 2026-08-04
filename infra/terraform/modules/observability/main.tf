@@ -90,6 +90,67 @@ resource "aws_cloudwatch_metric_alarm" "node_pressure" {
   tags                = var.tags
 }
 
+resource "aws_cloudwatch_log_metric_filter" "api_5xx" {
+  name           = "${var.name_prefix}-api-5xx-filter"
+  log_group_name = aws_cloudwatch_log_group.application["api"].name
+  pattern        = "{ $.status_code = 5* }"
+
+  metric_transformation {
+    name      = "Api5xxCount"
+    namespace = "MedicalImagingPlatform"
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_log_metric_filter" "failed_inference" {
+  name           = "${var.name_prefix}-failed-inference-filter"
+  log_group_name = aws_cloudwatch_log_group.application["api"].name
+  pattern        = "{ $.event_type = \"inference_failed\" }"
+
+  metric_transformation {
+    name      = "FailedInferenceCount"
+    namespace = "MedicalImagingPlatform"
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "failed_inference_rate" {
+  alarm_name          = "${var.name_prefix}-failed-inference-rate"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "FailedInferenceRate"
+  namespace           = "MedicalImagingPlatform"
+  period              = 300
+  statistic           = "Average"
+  threshold           = 0.02
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = local.alarm_actions
+  tags                = var.tags
+}
+
+resource "aws_cloudwatch_dashboard" "operations" {
+  dashboard_name = "${var.name_prefix}-operations"
+  dashboard_body = jsonencode({
+    widgets = [
+      {
+        type = "metric"
+        properties = {
+          metrics = [
+            ["MedicalImagingPlatform", "ApiErrorRate"],
+            ["MedicalImagingPlatform", "P95LatencyMilliseconds"],
+            ["MedicalImagingPlatform", "FailedInferenceRate"],
+            ["MedicalImagingPlatform", "ReadinessFailures"],
+          ]
+          period = 300
+          stat   = "Average"
+          region = "eu-west-2"
+          title  = "Engineering operations signals"
+        }
+      }
+    ]
+  })
+}
+
 resource "aws_cloudtrail" "control_plane" {
   name                          = "${var.name_prefix}-control-plane"
   s3_bucket_name                = var.audit_bucket_name

@@ -4,13 +4,14 @@
 
 Enterprise Medical Imaging AI Platform is a planned production-oriented medical-imaging AI platform for abdominal CT research workflows. The long-term goal is to demonstrate how DICOM ingestion, de-identification, quality control, image standardisation, longitudinal registration, adrenal-region localisation, lesion analysis, governed review, MLOps, cloud architecture, and clinical AI assurance fit together as one engineered system.
 
-Milestones 1-16 establish repository foundations, synthetic data, DICOM ingestion, quality control,
+Milestones 1-17 establish repository foundations, synthetic data, DICOM ingestion, quality control,
 preprocessing, registration, localisation, synthetic segmentation, and binary synthetic
 lesion-presence classification with calibration, governed synthetic longitudinal lesion-change
 analysis, a governed local FastAPI research interface, a local Streamlit reviewer UI, and local
 container release-assurance controls, plus local synthetic registry, monitoring, drift, and audit
 evidence, plus secure Helm/Kubernetes packaging, static deployment assurance, and static AWS
-Terraform target architecture. Live cloud deployment, advanced classification, and clinical
+Terraform target architecture, plus production-style observability, resilience, incident-response,
+rollback and recovery evidence. Live cloud deployment, advanced classification, and clinical
 deployment are **Planned - not yet implemented**.
 
 ## Clinical And Engineering Problem
@@ -183,12 +184,25 @@ Complete in Milestone 16:
 - No AWS resources are deployed, no `terraform apply` target is provided, and AWS credentials are
   not required for static evidence generation.
 
+Complete in Milestone 17:
+
+- Protected opt-in API Prometheus metrics, structured JSON-compatible log events, redaction helpers,
+  startup/liveness/readiness/degraded-readiness semantics, and bounded reviewer UI API retries with
+  a simple circuit breaker.
+- Helm resilience and observability annotations, startup probes, topology spread, anti-affinity,
+  revision-history settings, and matching checkout-safe Kubernetes policy checks.
+- Terraform CloudWatch metric filters, alarms, and dashboard target-state mappings for engineering
+  operations signals without deploying AWS resources.
+- Deterministic SLO/error-budget evaluation, incident simulation, runbook validation, rollback and
+  recovery evidence, checksums, reports, CLI commands, Make targets, and tests under
+  `reports/generated/operations/`.
+
 Planned - not yet implemented:
 
 - Deformable registration, learned localisation beyond the baseline, advanced segmentation,
   benign-versus-malignant or clinical classification, and RECIST or treatment-response assessment.
 - MLflow, live AWS deployment, image publication to AWS, automated retraining, automated rollback,
-  and automated model promotion.
+  and automated model promotion. Milestone 17 simulates rollback evidence only.
 - Any diagnostic or clinical decision support behavior.
 
 ## Architecture
@@ -220,6 +234,8 @@ Milestone 1 uses a deliberately small Python 3.12 stack:
   foundation.
 - Terraform plus checkout-safe Python validation are used for the Milestone 16 AWS target
   architecture foundation.
+- Prometheus-format text, structured JSON evidence, and deterministic local simulations are used for
+  the Milestone 17 operations, SLO, incident, rollback, and recovery foundation.
 
 Planned - not yet implemented:
 
@@ -393,6 +409,25 @@ synthetic review inputs, read-only evidence inspection, explicit human-review de
 review-session export. It does not execute model inference directly, authenticate users, persist to a
 database, or integrate with clinical workflow systems.
 
+Operations evidence commands:
+
+```bash
+make validate-observability
+make build-observability-evidence
+make evaluate-slos
+make simulate-incidents
+make build-incident-evidence
+make validate-runbooks
+make simulate-rollback
+make validate-recovery
+make build-operations-evidence
+make validate-operations-evidence
+```
+
+Operations evidence is deterministic and synthetic. It validates engineering observability,
+resilience, SLO, incident, rollback, and recovery controls only; it is not clinical safety
+monitoring and does not deploy cloud resources.
+
 ## Data Safety
 
 Only synthetic data or publicly available de-identified data may be used. Do not commit real patient data, model weights derived from restricted patient data, credentials, cloud account identifiers, DICOM studies with identifying metadata, or screenshots containing protected health information.
@@ -401,7 +436,7 @@ Only synthetic data or publicly available de-identified data may be used. Do not
 
 This repository is not an approved medical device, is not validated for NHS deployment, and must not be used for diagnosis or patient-management decisions. Human review is mandatory for any future outputs.
 
-## 16-Milestone Roadmap
+## Milestone Roadmap
 
 1. Repository foundation.
 2. Synthetic and public-data foundation. Complete for synthetic-data foundation and public-data selection criteria only; no public data is downloaded.
@@ -415,11 +450,16 @@ This repository is not an approved medical device, is not validated for NHS depl
 10. Longitudinal analysis. Complete for governed synthetic engineering labels only.
 11. API foundation. Complete for governed local FastAPI service only; review dashboard remains planned.
 12. Reviewer UI foundation. Complete for local Streamlit API-consuming reviewer interface only.
-13. MLOps platform.
-14. Docker and Kubernetes.
-15. AWS deployment blueprint.
-16. Clinical AI assurance.
-17. Final portfolio packaging.
+13. Local containerisation and release assurance. Complete for local containers and evidence only.
+14. Governed model registry, monitoring and audit foundation. Complete for local synthetic evidence
+    only.
+15. Secure Kubernetes and Helm deployment foundation. Complete for local chart, kind smoke, and
+    static assurance only.
+16. AWS deployment blueprint. Complete for static Terraform target architecture only; no AWS
+    resources are deployed.
+17. Production observability, resilience and incident response. Complete for deterministic local
+    operations evidence only.
+18. Final portfolio packaging. Planned.
 
 ## Attribution
 
@@ -427,7 +467,8 @@ The project was informed by research review of earlier CT alignment and adrenal 
 
 ## Limitations
 
-The current repository serves local research API summaries and a local reviewer UI only. It does not perform clinical diagnosis, implement RECIST, provide production monitoring, or
-deploy infrastructure. Current modelling and analysis are limited to synthetic segmentation, binary
+The current repository serves local research API summaries and a local reviewer UI only. It does not
+perform clinical diagnosis, implement RECIST, provide live production monitoring, or deploy
+infrastructure. Current modelling and analysis are limited to synthetic segmentation, binary
 synthetic lesion-presence classification, and synthetic longitudinal engineering labels. See
 [docs/limitations.md](docs/limitations.md) and [governance/limitations.md](governance/limitations.md).

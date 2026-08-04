@@ -117,3 +117,17 @@ cost-driver classifications, checksums, and a Markdown evidence report.
 No generated repository artefacts are uploaded during Terraform validation. AWS evidence is target
 architecture evidence only and is not a live clinical deployment, diagnostic service, or approval to
 use patient data.
+
+## Operations Evidence Flow
+
+Milestone 17 adds ignored operations evidence under `reports/generated/operations/`. The API may
+render Prometheus-format metrics only when the metrics endpoint is explicitly enabled and, when
+configured, protected by a metrics access token. Structured log evidence records request ID,
+correlation ID, route, status code, latency and redacted error context; it must not include raw
+arrays, model weights, direct identifiers, credentials, local secrets, DICOM contents, or sensitive
+payloads.
+
+SLO, incident, rollback and recovery artefacts are deterministic synthetic evidence. They consume
+static control summaries, generated metrics text, synthetic incident scenarios and runbook files.
+They do not ingest patient data, send alerts, page operators, publish images, deploy AWS resources,
+promote models, retrain models, or perform automated rollback.

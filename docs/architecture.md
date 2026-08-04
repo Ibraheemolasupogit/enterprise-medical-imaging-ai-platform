@@ -1,6 +1,6 @@
 # Architecture
 
-Milestones 1-15 provide repository foundation, synthetic fixtures, local DICOM ingestion,
+Milestones 1-17 provide repository foundation, synthetic fixtures, local DICOM ingestion,
 metadata-focused de-identification, technical DICOM quality control, and deterministic CT
 preprocessing to NumPy volumes, SimpleITK registration baselines, and deterministic adrenal-region
 placeholder localisation, plus small synthetic lesion segmentation and lesion-presence
@@ -11,7 +11,9 @@ evidence, and append-only JSONL audit evidence. Milestone 15 adds secure Helm/Ku
 and checkout-safe static deployment assurance for the API and reviewer UI. Milestone 16 adds a
 controlled AWS target-state architecture and Terraform static assurance for ECR, EKS, S3, KMS,
 Secrets Manager references, CloudWatch, CloudTrail, VPC networking, IAM boundaries, and cost-aware
-validation defaults without deploying AWS resources.
+validation defaults without deploying AWS resources. Milestone 17 adds opt-in application metrics,
+structured log redaction, resilience controls, operations SLOs, incident simulations, rollback and
+recovery evidence, and runbook validation without deploying production monitoring infrastructure.
 
 Implemented foundation components:
 
@@ -55,6 +57,11 @@ Implemented foundation components:
   ECR repositories, private-by-default EKS design, governed S3 buckets, customer-managed KMS keys,
   explicit Secrets Manager references, CloudWatch/CloudTrail architecture, custom static policy
   checks, cost-driver evidence, and ignored evidence under `reports/generated/aws/`.
+- Operations foundation with protected opt-in Prometheus-format API metrics, structured log-event
+  redaction, degraded-readiness signalling, bounded reviewer UI retries and circuit breaking, Helm
+  observability/resilience settings, CloudWatch target mappings, deterministic SLO/error-budget
+  evaluation, incident simulations, rollback/recovery evidence, runbook validation, checksums, and
+  ignored evidence under `reports/generated/operations/`.
 
 Planned - not yet implemented:
 
@@ -66,7 +73,8 @@ Planned - not yet implemented:
 - Clinical longitudinal change measurement, RECIST, and treatment-response assessment.
 - Production-grade human-review dashboard with authentication and persistent audit logging.
 - Automated retraining, automated rollback, model auto-promotion, service mesh, GPU scheduling,
-  public inference exposure, Terraform apply workflows, and live cloud deployment.
+  public inference exposure, Terraform apply workflows, live cloud deployment, production alert
+  routing, and production incident-management integrations.
 
 The intended architecture will be added incrementally by milestone so each component has tests,
 documentation, and governance boundaries before adjacent capabilities depend on it.

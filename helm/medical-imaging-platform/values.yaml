@@ -7,6 +7,24 @@ global:
     create: true
     name: ""
     automountServiceAccountToken: false
+  observability:
+    structuredLogging: true
+    prometheusAnnotations: false
+    serviceMonitor:
+      enabled: false
+    podMonitor:
+      enabled: false
+    metricsPath: "/metrics"
+    metricsPortName: "http"
+  resilience:
+    revisionHistoryLimit: 3
+    priorityClassName: ""
+    topologySpread:
+      enabled: true
+      maxSkew: 1
+    podAntiAffinity:
+      enabled: true
+      type: preferred
 
 api:
   enabled: true

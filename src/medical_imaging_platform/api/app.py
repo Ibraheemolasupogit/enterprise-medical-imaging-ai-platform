@@ -16,6 +16,7 @@ from medical_imaging_platform.api.errors import (
 )
 from medical_imaging_platform.api.middleware import RequestContextMiddleware
 from medical_imaging_platform.api.models import DISCLAIMER
+from medical_imaging_platform.api.observability import MetricsRegistry, structured_log_event
 from medical_imaging_platform.api.routes import (
     classification,
     health,
@@ -37,6 +38,24 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         openapi_url="/openapi.json" if config.enable_openapi else None,
     )
     app.state.api_config = config
+    app.state.metrics_registry = MetricsRegistry()
+    app.state.startup_status = {
+        "status": "initialised",
+        "model_configured": any(
+            [
+                config.segmentation_checkpoint,
+                config.classification_checkpoint,
+                config.classification_calibration,
+                config.classification_threshold_policy,
+            ]
+        ),
+        "event": structured_log_event(
+            service="api",
+            event_type="startup",
+            severity="INFO",
+            details={"environment": config.environment, "raw_payload": "not logged"},
+        ),
+    }
     app.add_middleware(RequestContextMiddleware, config=config)
     app.add_exception_handler(APIError, api_error_handler)
     app.add_exception_handler(Exception, unhandled_error_handler)

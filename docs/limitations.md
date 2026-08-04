@@ -52,6 +52,10 @@ Current limitations:
   deploy AWS resources, run `terraform apply`, publish images, configure production DNS, install real
   TLS certificates, establish high availability, prove cloud operational readiness, or create a live
   clinical service.
+- Milestone 17 observability, SLO, incident, rollback and recovery evidence is deterministic local
+  engineering evidence only. It does not create a production monitoring stack, send real alerts,
+  page operators, prove high availability, satisfy clinical safety surveillance, deploy AWS
+  resources, run Terraform apply, automate rollback, automate retraining, or promote model versions.
 - Missing slices are inferred only when spacing evidence is reliable; metadata may be incomplete or inaccurate.
 
 The platform is a portfolio and research demonstrator, not an approved medical device.
@@ -74,3 +78,11 @@ Milestone 16 Terraform artefacts are static, validation-safe design artefacts. T
 paid resources unless an operator separately chooses to run Terraform outside the repository's normal
 checks. No AWS credentials are required for evidence generation, and missing optional scanners are
 recorded as `UNAVAILABLE` rather than treated as security approval.
+
+## Operations Limitations
+
+Milestone 17 operations artefacts validate local control design and deterministic evidence
+generation only. Prometheus metrics are opt-in and local, CloudWatch resources remain target-state
+Terraform definitions only, and incident simulations are scripted engineering scenarios rather than
+live operational incidents. All rollback and recovery decisions remain manual change-control
+activities.

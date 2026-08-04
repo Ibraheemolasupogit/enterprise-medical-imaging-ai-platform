@@ -28,3 +28,10 @@ Investigation and rollback are manual. A failed readiness check, policy violatio
 must open human review of the Helm values, rendered manifests, image versions, model registry state,
 and monitoring evidence. Automated retraining, automatic model promotion, automated rollback, AWS
 deployment and public inference exposure are out of scope.
+
+Milestone 17 extends the chart and validation checks with production-style local operations controls:
+structured-logging annotations, optional Prometheus scrape annotations, API startup probes, revision
+history, topology spread, preferred anti-affinity, resource checks, and degraded-readiness evidence.
+These controls support local engineering review only. ServiceMonitor/PodMonitor integration, public
+Ingress, service mesh, external alert routing and automated rollback remain disabled or out of
+scope unless a future milestone explicitly implements them.

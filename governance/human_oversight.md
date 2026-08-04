@@ -63,3 +63,9 @@ Milestone 16 AWS evidence also requires human interpretation. Terraform validati
 scanner output, CloudWatch alarm definitions, and CloudTrail architecture can support infrastructure
 review, but they do not approve clinical use, deploy AWS resources, promote models, publish images,
 or replace reviewer accountability.
+
+Milestone 17 operations evidence also requires human interpretation. SLO breaches, incident
+simulations, degraded readiness, rollback simulations, recovery evidence, runbook checks, and
+CloudWatch target mappings are engineering governance signals only. They do not prove clinical
+safety, authorize diagnosis, deploy production monitoring, page a live on-call rota, approve
+automated rollback, or replace accountable reviewer and change-control decisions.

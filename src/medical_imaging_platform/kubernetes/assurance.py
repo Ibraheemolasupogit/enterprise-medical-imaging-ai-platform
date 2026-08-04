@@ -185,6 +185,9 @@ def validate_kubernetes_policy(
 
     for deployment in deployments:
         name = deployment["metadata"]["name"]
+        component_label = (
+            deployment.get("metadata", {}).get("labels", {}).get("app.kubernetes.io/component", "")
+        )
         pod_spec = deployment["spec"]["template"]["spec"]
         pod_security = pod_spec.get("securityContext", {})
         containers = pod_spec.get("containers", [])
@@ -227,6 +230,21 @@ def validate_kubernetes_policy(
                     f"K8S-{name}-WRITABLE-EMPTYDIR",
                     all("emptyDir" in volume for volume in pod_spec.get("volumes", [])),
                     "Writable mounts are emptyDir only.",
+                ),
+                _check(
+                    f"K8S-{name}-TOPOLOGY-SPREAD",
+                    bool(pod_spec.get("topologySpreadConstraints")),
+                    "Topology spread constraints are configured.",
+                ),
+                _check(
+                    f"K8S-{name}-ANTI-AFFINITY",
+                    "podAntiAffinity" in pod_spec.get("affinity", {}),
+                    "Pod anti-affinity is configured.",
+                ),
+                _check(
+                    f"K8S-{name}-REVISION-HISTORY",
+                    0 < int(deployment.get("spec", {}).get("revisionHistoryLimit", 0)) <= 10,
+                    "Revision history is bounded.",
                 ),
             ]
         )
@@ -272,6 +290,14 @@ def validate_kubernetes_policy(
                     ),
                 ]
             )
+            if component_label == "api":
+                checks.append(
+                    _check(
+                        f"K8S-{name}-{cname}-API-STARTUP-PROBE",
+                        "startupProbe" in container,
+                        "API startup probe is configured.",
+                    )
+                )
     checks.extend(
         [
             _check(
@@ -1388,6 +1414,7 @@ def _deployment(
         },
         "spec": {
             "replicas": cfg["replicaCount"],
+            "revisionHistoryLimit": values["global"]["resilience"]["revisionHistoryLimit"],
             "selector": {
                 "matchLabels": {
                     "app.kubernetes.io/instance": RELEASE_NAME,
@@ -1395,12 +1422,50 @@ def _deployment(
                 }
             },
             "template": {
-                "metadata": {"labels": {**APP_LABELS, "app.kubernetes.io/component": component}},
+                "metadata": {
+                    "annotations": {
+                        "structured-logging.medical-imaging-platform.openai.com/enabled": str(
+                            values["global"]["observability"]["structuredLogging"]
+                        ).lower()
+                    },
+                    "labels": {**APP_LABELS, "app.kubernetes.io/component": component},
+                },
                 "spec": {
                     "serviceAccountName": service_account,
                     "automountServiceAccountToken": False,
                     "securityContext": values["podSecurityContext"],
                     "terminationGracePeriodSeconds": values["terminationGracePeriodSeconds"],
+                    "topologySpreadConstraints": [
+                        {
+                            "maxSkew": values["global"]["resilience"]["topologySpread"]["maxSkew"],
+                            "topologyKey": "kubernetes.io/hostname",
+                            "whenUnsatisfiable": "ScheduleAnyway",
+                            "labelSelector": {
+                                "matchLabels": {
+                                    "app.kubernetes.io/instance": RELEASE_NAME,
+                                    "app.kubernetes.io/component": component,
+                                }
+                            },
+                        }
+                    ],
+                    "affinity": {
+                        "podAntiAffinity": {
+                            "preferredDuringSchedulingIgnoredDuringExecution": [
+                                {
+                                    "weight": 50,
+                                    "podAffinityTerm": {
+                                        "topologyKey": "kubernetes.io/hostname",
+                                        "labelSelector": {
+                                            "matchLabels": {
+                                                "app.kubernetes.io/instance": RELEASE_NAME,
+                                                "app.kubernetes.io/component": component,
+                                            }
+                                        },
+                                    },
+                                }
+                            ]
+                        }
+                    },
                     "containers": [container],
                     "volumes": [
                         {"name": mount["name"], "emptyDir": {"sizeLimit": mount["sizeLimit"]}}

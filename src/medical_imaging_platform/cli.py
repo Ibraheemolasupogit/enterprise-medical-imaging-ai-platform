@@ -617,6 +617,22 @@ def build_parser() -> argparse.ArgumentParser:
         command_parser = subparsers.add_parser(command_name, help=help_text)
         command_parser.add_argument("--json", action="store_true")
 
+    operations_commands = {
+        "validate-observability": "Validate operations observability controls.",
+        "build-observability-evidence": "Build deterministic observability evidence.",
+        "evaluate-slos": "Evaluate demonstrator SLOs and error budgets.",
+        "simulate-incidents": "Simulate deterministic incident scenarios.",
+        "build-incident-evidence": "Build incident lifecycle evidence.",
+        "validate-runbooks": "Validate operations runbooks.",
+        "simulate-rollback": "Simulate rollback planning evidence.",
+        "validate-recovery": "Validate recovery evidence.",
+        "build-operations-evidence": "Build complete operations evidence.",
+        "validate-operations-evidence": "Validate generated operations evidence.",
+    }
+    for command_name, help_text in operations_commands.items():
+        command_parser = subparsers.add_parser(command_name, help=help_text)
+        command_parser.add_argument("--json", action="store_true")
+
     longitudinal_parser = subparsers.add_parser(
         "analyse-longitudinal-pair",
         help="Analyse synthetic previous/current lesion masks for engineering change labels.",
@@ -2255,6 +2271,121 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(f"AWS evidence validation status={status}.")
         return 0 if status == "PASS" else 2
+
+    if args.command in {
+        "validate-observability",
+        "build-observability-evidence",
+        "evaluate-slos",
+        "simulate-incidents",
+        "build-incident-evidence",
+        "validate-runbooks",
+        "simulate-rollback",
+        "validate-recovery",
+        "build-operations-evidence",
+        "validate-operations-evidence",
+    }:
+        from medical_imaging_platform.operations.assurance import (
+            build_incident_evidence,
+            build_observability_evidence,
+            build_operations_evidence,
+            evaluate_slos,
+            simulate_incidents,
+            simulate_rollback,
+            validate_observability,
+            validate_operations_evidence,
+            validate_recovery,
+            validate_runbooks,
+        )
+
+        if args.command == "build-observability-evidence":
+            payload = build_observability_evidence()
+            print(
+                json.dumps(payload, indent=2, sort_keys=True)
+                if args.json
+                else "Built observability evidence."
+            )
+            return 0
+        if args.command == "evaluate-slos":
+            operations_slo_checks = evaluate_slos()
+            operations_slo_status = (
+                "PASS"
+                if all(check.status == "PASS" for check in operations_slo_checks)
+                else "ALERT"
+            )
+            print(
+                json.dumps(
+                    [check.model_dump(mode="json") for check in operations_slo_checks], indent=2
+                )
+                if args.json
+                else f"SLO evaluation status={operations_slo_status}."
+            )
+            return 0 if operations_slo_status == "PASS" else 2
+        if args.command == "simulate-incidents":
+            incidents = simulate_incidents()
+            print(
+                json.dumps([incident.model_dump(mode="json") for incident in incidents], indent=2)
+                if args.json
+                else f"Simulated {len(incidents)} incidents."
+            )
+            return 0
+        if args.command == "build-incident-evidence":
+            records = build_incident_evidence()
+            print(
+                json.dumps(records, indent=2, sort_keys=True)
+                if args.json
+                else f"Built {len(records)} incident lifecycle records."
+            )
+            return 0
+        if args.command == "simulate-rollback":
+            rollback = simulate_rollback()
+            print(
+                json.dumps(rollback, indent=2, sort_keys=True)
+                if args.json
+                else f"Rollback simulation status={rollback['status']}."
+            )
+            return 0
+        if args.command in {"validate-observability", "validate-runbooks", "validate-recovery"}:
+            operations_validation_checks = {
+                "validate-observability": validate_observability,
+                "validate-runbooks": validate_runbooks,
+                "validate-recovery": validate_recovery,
+            }[args.command]()
+            operations_validation_status = (
+                "PASS"
+                if all(check.status == "PASS" for check in operations_validation_checks)
+                else "FAIL"
+            )
+            print(
+                json.dumps(
+                    [check.model_dump(mode="json") for check in operations_validation_checks],
+                    indent=2,
+                )
+                if args.json
+                else f"{args.command} status={operations_validation_status}."
+            )
+            return 0 if operations_validation_status == "PASS" else 2
+        if args.command == "build-operations-evidence":
+            operations_manifest = build_operations_evidence()
+            print(
+                json.dumps(operations_manifest.model_dump(mode="json"), indent=2, sort_keys=True)
+                if args.json
+                else f"Built operations evidence status={operations_manifest.overall_status}."
+            )
+            return 0 if operations_manifest.overall_status == "PASS" else 2
+        operations_evidence_checks = validate_operations_evidence()
+        operations_evidence_status = (
+            "PASS"
+            if all(check.status == "PASS" for check in operations_evidence_checks)
+            else "FAIL"
+        )
+        print(
+            json.dumps(
+                [check.model_dump(mode="json") for check in operations_evidence_checks], indent=2
+            )
+            if args.json
+            else f"Operations evidence validation status={operations_evidence_status}."
+        )
+        return 0 if operations_evidence_status == "PASS" else 2
 
     if args.command == "analyse-longitudinal-pair":
         from medical_imaging_platform.longitudinal.pipeline import (

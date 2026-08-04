@@ -11,6 +11,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from medical_imaging_platform.api.errors import APIError, error_payload
 from medical_imaging_platform.api.models import APIConfig
+from medical_imaging_platform.api.observability import structured_log_event
 
 
 class RequestContextMiddleware(BaseHTTPMiddleware):
@@ -43,8 +44,25 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
             return JSONResponse(status_code=413, content=error_payload(error, rid))
         start = time.perf_counter()
         response = await call_next(request)
+        latency = time.perf_counter() - start
+        registry = getattr(request.app.state, "metrics_registry", None)
+        if registry is not None:
+            registry.record_request(request.method, request.url.path, response.status_code, latency)
         response.headers["X-Request-ID"] = rid
-        response.headers["X-Process-Time-Ms"] = f"{(time.perf_counter() - start) * 1000:.3f}"
+        response.headers["X-Correlation-ID"] = request.headers.get("X-Correlation-ID", rid)
+        response.headers["X-Process-Time-Ms"] = f"{latency * 1000:.3f}"
+        request.app.state.last_structured_log = structured_log_event(
+            service="api",
+            event_type="request_completed",
+            request_id=rid,
+            correlation_id=response.headers["X-Correlation-ID"],
+            details={
+                "method": request.method,
+                "route": request.url.path,
+                "status_code": response.status_code,
+                "latency_ms": round(latency * 1000, 3),
+            },
+        )
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Cache-Control"] = "no-store"

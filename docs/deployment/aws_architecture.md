@@ -28,3 +28,9 @@ and are not enabled by default.
 Milestone 14 monitoring evidence maps to CloudWatch application metrics and alarms for engineering
 operations only. It must not be interpreted as clinical-performance monitoring or diagnostic safety
 surveillance.
+
+Milestone 17 extends the target-state observability mapping with CloudWatch metric filters, alarms
+and dashboard entries for API error rates, failed inference, readiness failures and latency. These
+Terraform definitions remain static architecture evidence only. The repository does not create
+alarms, send notifications, deploy dashboards, expose inference publicly, run `terraform apply`, or
+connect to production incident-management systems.

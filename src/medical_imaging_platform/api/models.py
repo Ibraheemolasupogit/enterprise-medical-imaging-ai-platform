@@ -32,6 +32,8 @@ class APIConfig(BaseModel):
     maximum_array_bytes: int = Field(gt=0)
     maximum_batch_size: int = Field(gt=0)
     request_timeout_seconds: int = Field(gt=0)
+    enable_metrics_endpoint: bool = False
+    metrics_access_token: str | None = None
     enable_docs: bool = True
     enable_openapi: bool = True
     require_model_checksums: bool = True

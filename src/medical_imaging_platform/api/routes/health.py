@@ -6,12 +6,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Header, Request
+from fastapi.responses import PlainTextResponse
 
 from medical_imaging_platform import __version__
 from medical_imaging_platform.api.dependencies import get_api_config
 from medical_imaging_platform.api.errors import APIError
 from medical_imaging_platform.api.models import DISCLAIMER, APIConfig
+from medical_imaging_platform.api.observability import metric_labels_safe
 from medical_imaging_platform.synthetic.manifest import sha256_file
 
 router = APIRouter()
@@ -19,7 +21,13 @@ router = APIRouter()
 
 @router.get("/health")
 def health(request: Request) -> dict[str, object]:
-    return {"status": "healthy", "request_id": request.state.request_id, "disclaimer": DISCLAIMER}
+    return {
+        "status": "alive",
+        "liveness": "process_alive",
+        "request_id": request.state.request_id,
+        "startup_status": getattr(request.app.state, "startup_status", {}),
+        "disclaimer": DISCLAIMER,
+    }
 
 
 @router.get("/version")
@@ -30,6 +38,7 @@ def version() -> dict[str, str]:
 @router.get("/ready")
 def ready(config: Annotated[APIConfig, Depends(get_api_config)]) -> dict[str, object]:
     findings = readiness_findings(config)
+    degraded = any(item["severity"] == "WARN" for item in findings)
     if any(not item["passed"] for item in findings):
         raise APIError(
             "API-NOTREADY-503",
@@ -41,7 +50,35 @@ def ready(config: Annotated[APIConfig, Depends(get_api_config)]) -> dict[str, ob
                 if not item["passed"]
             },
         )
-    return {"status": "ready", "quality_findings": findings, "disclaimer": DISCLAIMER}
+    return {
+        "status": "degraded" if degraded else "ready",
+        "readiness": "dependencies_available",
+        "degraded": degraded,
+        "quality_findings": findings,
+        "disclaimer": DISCLAIMER,
+    }
+
+
+@router.get("/metrics", response_class=PlainTextResponse)
+def metrics(
+    request: Request,
+    config: Annotated[APIConfig, Depends(get_api_config)],
+    x_metrics_token: Annotated[str | None, Header(alias="X-Metrics-Token")] = None,
+) -> PlainTextResponse:
+    if not config.enable_metrics_endpoint:
+        raise APIError("API-METRICS-404", "Metrics endpoint is disabled.", status_code=404)
+    if config.metrics_access_token and x_metrics_token != config.metrics_access_token:
+        raise APIError("API-METRICS-403", "Metrics endpoint token is invalid.", status_code=403)
+    registry = request.app.state.metrics_registry
+    findings = readiness_findings(config)
+    registry.set_readiness(
+        ready=not any(not item["passed"] for item in findings),
+        degraded=any(item["severity"] == "WARN" for item in findings),
+    )
+    payload = registry.render_prometheus()
+    if not metric_labels_safe(payload):
+        raise APIError("API-METRICS-500", "Unsafe metric labels detected.", status_code=500)
+    return PlainTextResponse(payload, media_type="text/plain; version=0.0.4")
 
 
 def readiness_findings(config: APIConfig) -> list[dict[str, object]]:
@@ -62,13 +99,38 @@ def readiness_findings(config: APIConfig) -> list[dict[str, object]]:
             exists = Path(path).exists()
             checksum = sha256_file(path) if exists and Path(path).is_file() else None
             findings.append(_finding("API-QC-MODEL-001", exists, f"{name} exists.", checksum))
+    if not any(
+        [
+            config.segmentation_checkpoint,
+            config.classification_checkpoint,
+            config.classification_calibration,
+            config.classification_threshold_policy,
+        ]
+    ):
+        findings.append(
+            _finding(
+                "API-QC-DEGRADED-001",
+                True,
+                "No model artefacts configured; governed inference readiness is degraded.",
+                severity="WARN",
+            )
+        )
     return findings
 
 
 def _finding(
-    rule_id: str, passed: bool, message: str, checksum: str | None = None
+    rule_id: str,
+    passed: bool,
+    message: str,
+    checksum: str | None = None,
+    severity: str | None = None,
 ) -> dict[str, object]:
-    payload: dict[str, object] = {"rule_id": rule_id, "passed": passed, "message": message}
+    payload: dict[str, object] = {
+        "rule_id": rule_id,
+        "passed": passed,
+        "message": message,
+        "severity": severity or ("INFO" if passed else "ERROR"),
+    }
     if checksum is not None:
         payload["checksum"] = checksum
     return payload

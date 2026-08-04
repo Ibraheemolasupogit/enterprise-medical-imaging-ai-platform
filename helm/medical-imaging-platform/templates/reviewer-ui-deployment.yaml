@@ -8,21 +8,54 @@ metadata:
     app.kubernetes.io/component: reviewer-ui
 spec:
   replicas: {{ .Values.reviewerUi.replicaCount }}
+  revisionHistoryLimit: {{ .Values.global.resilience.revisionHistoryLimit }}
   selector:
     matchLabels:
       app.kubernetes.io/instance: {{ .Release.Name }}
       app.kubernetes.io/component: reviewer-ui
   template:
     metadata:
+      annotations:
+        structured-logging.medical-imaging-platform.openai.com/enabled: {{ .Values.global.observability.structuredLogging | quote }}
+        {{- if .Values.global.observability.prometheusAnnotations }}
+        prometheus.io/scrape: "true"
+        prometheus.io/path: {{ .Values.global.observability.metricsPath | quote }}
+        prometheus.io/port: {{ .Values.reviewerUi.service.port | quote }}
+        {{- end }}
       labels:
         {{- include "medical-imaging-platform.labels" . | nindent 8 }}
         app.kubernetes.io/component: reviewer-ui
     spec:
       serviceAccountName: {{ include "medical-imaging-platform.serviceAccountName" . }}
+      {{- if .Values.global.resilience.priorityClassName }}
+      priorityClassName: {{ .Values.global.resilience.priorityClassName | quote }}
+      {{- end }}
       automountServiceAccountToken: {{ .Values.global.serviceAccount.automountServiceAccountToken }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- if .Values.global.resilience.topologySpread.enabled }}
+      topologySpreadConstraints:
+        - maxSkew: {{ .Values.global.resilience.topologySpread.maxSkew }}
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/instance: {{ .Release.Name }}
+              app.kubernetes.io/component: reviewer-ui
+      {{- end }}
+      {{- if .Values.global.resilience.podAntiAffinity.enabled }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 50
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/instance: {{ .Release.Name }}
+                    app.kubernetes.io/component: reviewer-ui
+      {{- end }}
       containers:
         - name: reviewer-ui
           image: {{ include "medical-imaging-platform.image" (dict "root" . "image" .Values.reviewerUi.image) | quote }}

@@ -56,3 +56,15 @@ AWS infrastructure does not change the model-governance rule. Terraform can defi
 KMS, IAM, Secrets Manager references, CloudWatch and CloudTrail boundaries, but it must not promote
 models, select new checkpoints, trigger retraining, expose inference publicly, or automatically roll
 back model versions without explicit human change-control approval.
+
+## Operations Change Control
+
+Milestone 17 incident, SLO, rollback and recovery evidence can recommend investigation but cannot
+change model lifecycle state. A readiness failure, drift alert, SLO breach, circuit-breaker opening,
+checksum mismatch or rollback simulation must be reviewed by a human owner before any model,
+configuration, container image, Helm values or Terraform change is accepted.
+
+Rollback remains a manual change-control action. The repository records the candidate rollback
+target, approval reference, evidence checksums and recovery verification status, but it does not
+automatically redeploy workloads, alter registry state, retrain models, promote replacement models
+or run Terraform apply.

@@ -83,3 +83,20 @@ Milestone 16 adds AWS target-state controls in Terraform without deploying resou
 - Secrets Manager uses explicitly named secret references only; no secret values are committed.
 - CloudWatch log retention and alarms are defined, and CloudTrail remains distinct from application
   audit evidence.
+
+## Operations Controls
+
+Milestone 17 adds production-style observability and resilience controls for local demonstration:
+
+- The API `/metrics` endpoint is disabled by default and must be explicitly enabled in
+  configuration. If a metrics token is configured, requests without the matching
+  `X-Metrics-Token` header are rejected.
+- Metrics use bounded engineering labels such as method, route, status and outcome. Patient
+  identifiers, free-text payloads, array values, local secret paths and model contents are not valid
+  metric labels.
+- Structured log events include request and correlation identifiers, route, status, latency, actor
+  type and event name while redacting sensitive keys and refusing raw array or payload logging.
+- Reviewer UI API calls use bounded retries, short backoff, timeouts and a simple circuit breaker so
+  dependency failures degrade safely rather than looping indefinitely.
+- Incident, rollback and recovery evidence is synthetic and manual. No automated model promotion,
+  retraining, rollback, production paging, public exposure or AWS deployment is implemented.
