@@ -1744,6 +1744,20 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(payload, indent=2, sort_keys=True))
         else:
             print(f"Container smoke-test status={smoke_result.status}.")
+            failed_steps = [step for step in smoke_result.steps if step.status == "FAIL"]
+            if failed_steps:
+                print("Failed smoke steps:")
+                for step in failed_steps:
+                    command = step.details.get("command", [])
+                    command_text = " ".join(str(part) for part in command)
+                    exit_code = step.details.get("exit_code", "unknown")
+                    stderr = str(step.details.get("stderr", "")).strip()
+                    print(
+                        f"- {step.check_id}: status={step.status} "
+                        f"exit_code={exit_code} command={command_text}"
+                    )
+                    if stderr:
+                        print(f"  stderr={stderr[:1000]}")
         if smoke_result.status == "UNAVAILABLE":
             return 7
         return 0 if smoke_result.status in {"PASS", "SKIPPED"} else 2

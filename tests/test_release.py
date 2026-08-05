@@ -677,6 +677,10 @@ def test_smoke_tests_execute_success_and_cleanup_failure(
     failure = run_container_smoke_tests(config)
 
     assert failure.status == "FAIL"
+    failed_step = next(step for step in failure.steps if step.status == "FAIL")
+    assert failed_step.details["command"][:3] == ["docker", "compose", "up"]
+    assert failed_step.details["exit_code"] == 1
+    assert "stderr" in failed_step.details
     assert any(command[:3] == ["docker", "compose", "down"] for command in calls)
 
 
@@ -778,10 +782,45 @@ def test_smoke_run_command_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr("medical_imaging_platform.release.smoke.subprocess.run", fake_run)
 
-    returncode, output = _run_command(["docker"], 1)
+    result = _run_command(["docker"], 1)
 
-    assert returncode == 124
-    assert "partial" in output
+    assert result.returncode == 124
+    assert "partial" in result.output
+    assert "late" in result.stderr
+
+
+def test_container_smoke_cli_prints_failed_step_diagnostics(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    config_path = _write_temp_container_config(tmp_path)
+
+    class Completed:
+        def __init__(self, returncode: int, stderr: str = "") -> None:
+            self.returncode = returncode
+            self.stdout = ""
+            self.stderr = stderr
+
+    def fake_run(command: list[str], **_: object) -> Completed:
+        if command[:3] == ["docker", "compose", "build"]:
+            return Completed(1, "build failed clearly")
+        return Completed(0)
+
+    monkeypatch.setattr(
+        "medical_imaging_platform.release.smoke.shutil.which",
+        lambda _: "/bin/docker",
+    )
+    monkeypatch.setattr("medical_imaging_platform.release.smoke.subprocess.run", fake_run)
+
+    assert main(["run-container-smoke-tests", "--config", str(config_path)]) == 2
+    output = capsys.readouterr().out
+
+    assert "Container smoke-test status=FAIL" in output
+    assert "Failed smoke steps:" in output
+    assert "SMOKE-COMPOSE-BUILD" in output
+    assert "exit_code=1" in output
+    assert "build failed clearly" in output
 
 
 def test_release_scanner_cli_branches(

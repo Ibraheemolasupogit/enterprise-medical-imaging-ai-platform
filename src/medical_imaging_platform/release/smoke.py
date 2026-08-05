@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess  # nosec B404 - Docker smoke commands use shell=False and fixed args.
+from dataclasses import dataclass
 
 from medical_imaging_platform.release.models import (
     ContainerReleaseConfig,
@@ -12,6 +13,19 @@ from medical_imaging_platform.release.models import (
     Status,
 )
 from medical_imaging_platform.release.scanners import sanitize_output
+
+
+@dataclass(frozen=True)
+class SmokeCommandResult:
+    """Bounded smoke command output for evidence and CLI diagnostics."""
+
+    returncode: int
+    stdout: str
+    stderr: str
+
+    @property
+    def output(self) -> str:
+        return sanitize_output(f"{self.stdout}{self.stderr}")
 
 
 def docker_available() -> bool:
@@ -52,16 +66,22 @@ def run_container_smoke_tests(
     cleanup_ran = False
     try:
         for check_id, command, degraded_ok in commands:
-            returncode, output = _run_command(command, config.smoke_timeout_seconds)
-            passed = returncode == 0
-            degraded = degraded_ok and returncode == 10
+            command_result = _run_command(command, config.smoke_timeout_seconds)
+            passed = command_result.returncode == 0
+            degraded = degraded_ok and command_result.returncode == 10
             status: Status = "PASS" if passed else "WARN" if degraded else "FAIL"
             steps.append(
                 ReleaseCheckResult(
                     check_id=check_id,
                     status=status,
-                    message=f"{' '.join(command[:3])} returned {returncode}.",
-                    details={"output": output, "expected_degraded_readiness": degraded},
+                    message=f"{' '.join(command[:3])} returned {command_result.returncode}.",
+                    details={
+                        "command": command,
+                        "exit_code": command_result.returncode,
+                        "stderr": command_result.stderr,
+                        "output": command_result.output,
+                        "expected_degraded_readiness": degraded,
+                    },
                 )
             )
             if status == "WARN" and overall == "PASS":
@@ -71,18 +91,24 @@ def run_container_smoke_tests(
                 break
     finally:
         cleanup_ran = True
-        cleanup_code, cleanup_output = _run_command(
+        cleanup_result = _run_command(
             ["docker", "compose", "down", "--volumes", "--remove-orphans"], 60
         )
         steps.append(
             ReleaseCheckResult(
                 check_id="SMOKE-COMPOSE-CLEANUP",
-                status="PASS" if cleanup_code == 0 else "FAIL",
-                message=f"docker compose down returned {cleanup_code}.",
-                details={"output": cleanup_output, "cleanup_executed": cleanup_ran},
+                status="PASS" if cleanup_result.returncode == 0 else "FAIL",
+                message=f"docker compose down returned {cleanup_result.returncode}.",
+                details={
+                    "command": ["docker", "compose", "down", "--volumes", "--remove-orphans"],
+                    "exit_code": cleanup_result.returncode,
+                    "stderr": cleanup_result.stderr,
+                    "output": cleanup_result.output,
+                    "cleanup_executed": cleanup_ran,
+                },
             )
         )
-        if cleanup_code != 0:
+        if cleanup_result.returncode != 0:
             overall = "FAIL"
     return SmokeTestResult(status=overall, executed=True, steps=steps)
 
@@ -197,7 +223,7 @@ def _filesystem_exec(service: str) -> list[str]:
     return ["docker", "compose", "exec", "-T", service, "python", "-c", code]
 
 
-def _run_command(command: list[str], timeout_seconds: int) -> tuple[int, str]:
+def _run_command(command: list[str], timeout_seconds: int) -> SmokeCommandResult:
     try:
         completed = subprocess.run(  # nosec B603 - command list comes from fixed smoke steps.
             command,
@@ -206,7 +232,11 @@ def _run_command(command: list[str], timeout_seconds: int) -> tuple[int, str]:
             timeout=timeout_seconds,
             check=False,
         )
-        return completed.returncode, sanitize_output(completed.stdout + completed.stderr)
+        return SmokeCommandResult(
+            completed.returncode,
+            sanitize_output(completed.stdout),
+            sanitize_output(completed.stderr),
+        )
     except subprocess.TimeoutExpired as exc:
         stdout = (
             exc.stdout.decode("utf-8", errors="replace")
@@ -218,4 +248,8 @@ def _run_command(command: list[str], timeout_seconds: int) -> tuple[int, str]:
             if isinstance(exc.stderr, bytes)
             else exc.stderr
         )
-        return 124, sanitize_output((stdout or "") + (stderr or "Command timed out."))
+        return SmokeCommandResult(
+            124,
+            sanitize_output(stdout or ""),
+            sanitize_output(stderr or "Command timed out."),
+        )

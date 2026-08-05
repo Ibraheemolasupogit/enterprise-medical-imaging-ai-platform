@@ -41,9 +41,11 @@ def select_threshold(
         if config.threshold_method == "youden":
             threshold = max(
                 scored,
-                key=lambda item: _metric_float(item[1], "sensitivity")
-                + _metric_float(item[1], "specificity")
-                - 1.0,
+                key=lambda item: (
+                    _metric_float(item[1], "sensitivity")
+                    + _metric_float(item[1], "specificity")
+                    - 1.0
+                ),
             )[0]
         elif config.threshold_method == "minimum_sensitivity":
             feasible = [
