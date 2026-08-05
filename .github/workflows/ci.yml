@@ -9,6 +9,12 @@ on:
 permissions:
   contents: read
 
+env:
+  GITLEAKS_VERSION: "8.24.3"
+  PIP_AUDIT_VERSION: "2.9.0"
+  SYFT_VERSION: "1.18.1"
+  TRIVY_VERSION: "0.72.0"
+
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -22,12 +28,16 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: pyproject.toml
+          cache-dependency-path: |
+            pyproject.toml
+            requirements/container-runtime.txt
 
       - name: Install project
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev]"
+          python -m pip install -r requirements/container-runtime.txt
+          python -m pip install -e . --no-deps
+          python -m pip install "bandit>=1.7.9,<2" "coverage[toml]>=7.6,<8" "mypy>=1.11,<2" "pytest>=8.3,<9" "pytest-cov>=5,<6" "ruff>=0.6,<1" "types-PyYAML>=6.0.12,<7"
 
       - name: Run quality checks
         run: make quality
@@ -44,12 +54,23 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: pyproject.toml
+          cache-dependency-path: |
+            pyproject.toml
+            requirements/container-runtime.txt
 
       - name: Install project
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev]"
+          python -m pip install -r requirements/container-runtime.txt
+          python -m pip install -e . --no-deps
+          python -m pip install "bandit>=1.7.9,<2" "coverage[toml]>=7.6,<8" "mypy>=1.11,<2" "pytest>=8.3,<9" "pytest-cov>=5,<6" "ruff>=0.6,<1" "types-PyYAML>=6.0.12,<7" "pip-audit==${PIP_AUDIT_VERSION}"
+
+      - name: Install Gitleaks
+        run: |
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" -o /tmp/gitleaks.tar.gz
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          sudo install -m 0755 /tmp/gitleaks /usr/local/bin/gitleaks
+          gitleaks version
 
       - name: Validate container configuration
         run: make validate-containers
@@ -75,12 +96,16 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: pyproject.toml
+          cache-dependency-path: |
+            pyproject.toml
+            requirements/container-runtime.txt
 
       - name: Install project
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev]"
+          python -m pip install -r requirements/container-runtime.txt
+          python -m pip install -e . --no-deps
+          python -m pip install "bandit>=1.7.9,<2" "coverage[toml]>=7.6,<8" "mypy>=1.11,<2" "pytest>=8.3,<9" "pytest-cov>=5,<6" "ruff>=0.6,<1" "types-PyYAML>=6.0.12,<7"
 
       - name: Validate Helm chart and values
         run: make validate-helm
@@ -109,7 +134,9 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: pyproject.toml
+          cache-dependency-path: |
+            pyproject.toml
+            requirements/container-runtime.txt
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
@@ -119,7 +146,9 @@ jobs:
       - name: Install project
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev]"
+          python -m pip install -r requirements/container-runtime.txt
+          python -m pip install -e . --no-deps
+          python -m pip install "bandit>=1.7.9,<2" "coverage[toml]>=7.6,<8" "mypy>=1.11,<2" "pytest>=8.3,<9" "pytest-cov>=5,<6" "ruff>=0.6,<1" "types-PyYAML>=6.0.12,<7"
 
       - name: Check Terraform formatting
         run: make terraform-fmt-check
@@ -154,12 +183,27 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: pyproject.toml
+          cache-dependency-path: |
+            pyproject.toml
+            requirements/container-runtime.txt
 
       - name: Install project
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev]"
+          python -m pip install -r requirements/container-runtime.txt
+          python -m pip install -e . --no-deps
+          python -m pip install "bandit>=1.7.9,<2" "coverage[toml]>=7.6,<8" "mypy>=1.11,<2" "pytest>=8.3,<9" "pytest-cov>=5,<6" "ruff>=0.6,<1" "types-PyYAML>=6.0.12,<7"
+
+      - name: Install Syft and Trivy
+        run: |
+          curl -sSfL "https://github.com/anchore/syft/releases/download/v${SYFT_VERSION}/syft_${SYFT_VERSION}_linux_amd64.tar.gz" -o /tmp/syft.tar.gz
+          tar -xzf /tmp/syft.tar.gz -C /tmp syft
+          sudo install -m 0755 /tmp/syft /usr/local/bin/syft
+          syft version
+          curl -sSfL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" -o /tmp/trivy.tar.gz
+          tar -xzf /tmp/trivy.tar.gz -C /tmp trivy
+          sudo install -m 0755 /tmp/trivy /usr/local/bin/trivy
+          trivy --version
 
       - name: Build local images
         run: make build-images
@@ -198,7 +242,9 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: pyproject.toml
+          cache-dependency-path: |
+            pyproject.toml
+            requirements/container-runtime.txt
 
       - name: Set up Terraform for static checks
         uses: hashicorp/setup-terraform@v3
@@ -208,7 +254,9 @@ jobs:
       - name: Install project
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev]"
+          python -m pip install -r requirements/container-runtime.txt
+          python -m pip install -e . --no-deps
+          python -m pip install "bandit>=1.7.9,<2" "coverage[toml]>=7.6,<8" "mypy>=1.11,<2" "pytest>=8.3,<9" "pytest-cov>=5,<6" "ruff>=0.6,<1" "types-PyYAML>=6.0.12,<7"
 
       - name: Build and validate final portfolio readiness evidence
         run: make portfolio-readiness

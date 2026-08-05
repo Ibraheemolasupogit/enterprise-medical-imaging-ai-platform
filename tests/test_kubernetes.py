@@ -169,6 +169,23 @@ def test_runtime_unavailable_and_no_false_pass(tmp_path: Path, monkeypatch) -> N
     assert manifest.smoke_result.status == "UNAVAILABLE"
 
 
+def test_static_evidence_build_persists_unavailable_smoke_record(
+    tmp_path: Path, monkeypatch
+) -> None:  # type: ignore[no-untyped-def]
+    evidence_dir = _redirect_kubernetes_evidence(monkeypatch, tmp_path)
+    smoke_path = evidence_dir / "deployment_smoke_result.json"
+
+    manifest = build_kubernetes_evidence()
+
+    persisted_smoke = KubernetesSmokeResult.model_validate_json(
+        smoke_path.read_text(encoding="utf-8")
+    )
+    assert persisted_smoke.status == "UNAVAILABLE"
+    assert persisted_smoke.executed is False
+    assert manifest.overall_status == "INCOMPLETE"
+    assert manifest.smoke_result.status == "UNAVAILABLE"
+
+
 def test_evidence_validation_and_cli_commands(capsys, tmp_path: Path, monkeypatch) -> None:  # type: ignore[no-untyped-def]
     evidence_dir = _redirect_kubernetes_evidence(monkeypatch, tmp_path)
     monkeypatch.setattr(

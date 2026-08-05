@@ -1670,7 +1670,7 @@ def _load_smoke_result() -> KubernetesSmokeResult:
         return KubernetesSmokeResult.model_validate_json(
             SMOKE_RESULT_PATH.read_text(encoding="utf-8")
         )
-    return KubernetesSmokeResult(
+    smoke_result = KubernetesSmokeResult(
         status="UNAVAILABLE",
         executed=False,
         cleanup_status="UNAVAILABLE",
@@ -1683,6 +1683,8 @@ def _load_smoke_result() -> KubernetesSmokeResult:
             )
         ],
     )
+    _write_json(SMOKE_RESULT_PATH, smoke_result.model_dump(mode="json"))
+    return smoke_result
 
 
 def _aggregate_status(
