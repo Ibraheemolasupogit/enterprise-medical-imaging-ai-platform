@@ -2552,11 +2552,11 @@ def _resolve_release_dir(path: Path | None) -> Path:
     if path is not None:
         return path
     release_root = Path("reports/generated/releases")
-    candidates = sorted(
+    candidates = [
         item
         for item in release_root.glob("*")
         if item.is_dir() and (item / "release_manifest.json").is_file()
-    )
+    ]
     if not candidates:
         raise ValueError("No generated release evidence directory found.")
-    return candidates[-1]
+    return max(candidates, key=lambda item: (item.stat().st_mtime_ns, item.name))

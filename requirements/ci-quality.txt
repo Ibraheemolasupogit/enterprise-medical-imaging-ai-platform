@@ -11,5 +11,6 @@ mypy==1.16.1
 ruff==0.16.1
 httpx==0.28.1
 types-PyYAML==6.0.12.20260518
+matplotlib==3.10.9
 
 -e .[dev]

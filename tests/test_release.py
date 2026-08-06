@@ -1,10 +1,11 @@
 import json
+import os
 import tomllib
 from pathlib import Path
 
 import pytest
 
-from medical_imaging_platform.cli import main
+from medical_imaging_platform.cli import _resolve_release_dir, main
 from medical_imaging_platform.release.compose import inspect_compose
 from medical_imaging_platform.release.config import load_container_release_config
 from medical_imaging_platform.release.dependencies import (
@@ -958,6 +959,27 @@ def test_release_cli_commands(capsys: pytest.CaptureFixture[str], tmp_path: Path
         "Release evidence validation status=INCOMPLETE" in validation_output
         or "Release evidence validation status=FAIL" in validation_output
     )
+
+
+def test_release_dir_resolution_uses_latest_generated_evidence(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    release_root = tmp_path / "reports" / "generated" / "releases"
+    older = release_root / "m13-container-release-v1-zzzz"
+    newer = release_root / "m13-container-release-v1-aaaa"
+    older.mkdir(parents=True)
+    newer.mkdir(parents=True)
+    (older / "release_manifest.json").write_text("{}", encoding="utf-8")
+    (newer / "release_manifest.json").write_text("{}", encoding="utf-8")
+    older_time = 1_700_000_000
+    newer_time = 1_800_000_000
+    older.touch()
+    newer.touch()
+    os.utime(older, (older_time, older_time))
+    os.utime(newer, (newer_time, newer_time))
+    monkeypatch.chdir(tmp_path)
+
+    assert _resolve_release_dir(None).resolve() == newer.resolve()
 
 
 def test_load_container_release_config_direct() -> None:
