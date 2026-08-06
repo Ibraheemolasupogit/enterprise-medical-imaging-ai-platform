@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import httpx
+import yaml
 from fastapi.testclient import TestClient
 
 import medical_imaging_platform.operations.assurance as ops
@@ -53,6 +54,69 @@ def _redirect_operations_evidence(monkeypatch, tmp_path: Path) -> Path:  # type:
         current = getattr(ops, name)
         monkeypatch.setattr(ops, name, evidence_dir / current.name)
     return evidence_dir
+
+
+def _write_operations_api_config(
+    tmp_path: Path,
+    *,
+    segmentation_checkpoint: Path | None = None,
+    classification_checkpoint: Path | None = None,
+    classification_calibration: Path | None = None,
+    classification_threshold_policy: Path | None = None,
+    output_parent_exists: bool = True,
+) -> Path:
+    inputs = tmp_path / "inputs"
+    evidence = tmp_path / "evidence"
+    outputs = tmp_path / "outputs"
+    for path in (inputs, evidence):
+        path.mkdir(parents=True, exist_ok=True)
+    if output_parent_exists:
+        outputs.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "settings": {
+            "api": {
+                "policy_version": "test-ops-api-v1",
+                "service_name": "test-ops-api",
+                "service_version": "0.1.0",
+                "environment": "test",
+                "host": "127.0.0.1",
+                "port": 8001,
+                "log_level": "INFO",
+                "allowed_input_roots": [str(inputs), str(outputs)],
+                "allowed_evidence_roots": [str(evidence), str(outputs)],
+                "maximum_request_bytes": 1_000_000,
+                "maximum_array_bytes": 2_000_000,
+                "maximum_batch_size": 1,
+                "request_timeout_seconds": 30,
+                "enable_docs": False,
+                "enable_openapi": False,
+                "require_model_checksums": True,
+                "require_quality_pass": True,
+                "allow_degraded_review": True,
+                "allow_external_bind": False,
+                "allow_threshold_override": False,
+                "segmentation_checkpoint": (
+                    str(segmentation_checkpoint) if segmentation_checkpoint else None
+                ),
+                "classification_checkpoint": (
+                    str(classification_checkpoint) if classification_checkpoint else None
+                ),
+                "classification_calibration": (
+                    str(classification_calibration) if classification_calibration else None
+                ),
+                "classification_threshold_policy": (
+                    str(classification_threshold_policy)
+                    if classification_threshold_policy
+                    else None
+                ),
+                "longitudinal_config": "config/longitudinal.yaml",
+                "output_directory": str(outputs / "api"),
+            }
+        }
+    }
+    config_path = tmp_path / "api.yaml"
+    config_path.write_text(yaml.safe_dump(payload, sort_keys=True), encoding="utf-8")
+    return config_path
 
 
 def test_metrics_registry_prometheus_format_and_bounded_labels() -> None:
@@ -116,14 +180,57 @@ def test_structured_logging_redaction_and_correlation_ids() -> None:
     assert redact({"raw_payload": [1, 2, 3]})["raw_payload"] == "[REDACTED]"
 
 
-def test_readiness_degradation_for_missing_models() -> None:
-    client = TestClient(create_app())
+def test_readiness_ready_when_runtime_dependencies_available(tmp_path: Path) -> None:
+    artifacts = {
+        "segmentation_checkpoint": tmp_path / "segmentation.pt",
+        "classification_checkpoint": tmp_path / "classification.pt",
+        "classification_calibration": tmp_path / "calibration.json",
+        "classification_threshold_policy": tmp_path / "threshold_policy.json",
+    }
+    for path in artifacts.values():
+        path.write_text("synthetic test artefact", encoding="utf-8")
+    client = TestClient(create_app(_write_operations_api_config(tmp_path, **artifacts)))
 
     response = client.get("/ready")
+    payload = response.json()
 
     assert response.status_code == 200
-    assert response.json()["status"] == "degraded"
-    assert response.json()["degraded"] is True
+    assert payload["status"] == "ready"
+    assert payload["degraded"] is False
+    assert all(item["passed"] for item in payload["quality_findings"])
+
+
+def test_readiness_degradation_for_missing_models(tmp_path: Path) -> None:
+    client = TestClient(create_app(_write_operations_api_config(tmp_path)))
+
+    response = client.get("/ready")
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert payload["status"] == "degraded"
+    assert payload["degraded"] is True
+    assert any(
+        item["rule_id"] == "API-QC-DEGRADED-001"
+        and item["passed"] is True
+        and item["severity"] == "WARN"
+        for item in payload["quality_findings"]
+    )
+
+
+def test_readiness_not_ready_for_configured_missing_model(tmp_path: Path) -> None:
+    missing_checkpoint = tmp_path / "missing-segmentation.pt"
+    client = TestClient(
+        create_app(
+            _write_operations_api_config(tmp_path, segmentation_checkpoint=missing_checkpoint)
+        )
+    )
+
+    response = client.get("/ready")
+    payload = response.json()
+
+    assert response.status_code == 503
+    assert payload["error_code"] == "API-NOTREADY-503"
+    assert payload["details"] == {"API-QC-MODEL-001": "segmentation_checkpoint exists."}
 
 
 class TimeoutTransport(httpx.BaseTransport):
