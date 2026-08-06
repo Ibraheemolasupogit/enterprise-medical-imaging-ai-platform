@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 import re
 import shutil
-import subprocess  # nosec B404 - fixed command lists, shell=False, bounded timeouts.
+
+# AWS assurance commands use fixed argument lists and bounded timeouts.
+import subprocess  # nosec B404
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -502,7 +504,8 @@ def build_encryption_summary() -> dict[str, Any]:
         "kms_rotation": True,
         "s3_encryption": "aws:kms",
         "ecr_encryption": "KMS",
-        "eks_secret_encryption": True,
+        # Policy flag, not a secret value.
+        "eks_secret_encryption": True,  # nosec B105
         "cloudtrail_log_file_validation": True,
         "secrets_plaintext_committed": False,
     }
@@ -666,7 +669,8 @@ def _aggregate_status(
 
 
 def _run_command(args: list[str], timeout_seconds: int = COMMAND_TIMEOUT_SECONDS) -> CommandResult:
-    result = subprocess.run(  # nosec B603 - command lists are fixed internal invocations.
+    # Fixed internal command lists.
+    result = subprocess.run(  # nosec B603
         args,
         check=False,
         capture_output=True,

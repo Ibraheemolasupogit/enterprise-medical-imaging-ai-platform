@@ -5,7 +5,9 @@ from __future__ import annotations
 import importlib.metadata
 import json
 import platform
-import subprocess  # nosec B404 - fixed git commands use shell=False and bounded timeouts.
+
+# Git and Docker inspection commands use fixed argument lists and bounded timeouts.
+import subprocess  # nosec B404
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -101,7 +103,8 @@ def build_release_manifest(
 
 
 def _git(command: list[str]) -> str:
-    completed = subprocess.run(  # nosec B603 - command lists are fixed internal git invocations.
+    # Fixed internal git command lists.
+    completed = subprocess.run(  # nosec B603
         command, capture_output=True, text=True, timeout=15, check=False
     )
     return completed.stdout.strip() if completed.returncode == 0 else ""
@@ -121,7 +124,8 @@ def _image_metadata(image_ref: str) -> dict[str, str | int | None]:
 
 
 def _docker_inspect(image_ref: str) -> dict[str, str]:
-    completed = subprocess.run(  # nosec B603 B607 - fixed docker image inspect command.
+    # Fixed Docker image inspect command.
+    completed = subprocess.run(  # nosec B603 B607
         ["docker", "image", "inspect", image_ref, "--format", "{{json .}}"],
         capture_output=True,
         text=True,

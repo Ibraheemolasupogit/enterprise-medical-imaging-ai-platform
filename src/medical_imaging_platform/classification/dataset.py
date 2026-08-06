@@ -185,7 +185,8 @@ def _classification_case_splits(
             "Classification split cannot contain both labels in every split."
         )
     all_cases = sorted(case_label_sets)
-    rng = random.Random(seed)  # nosec B311 - deterministic engineering split only.
+    # Deterministic engineering split only.
+    rng = random.Random(seed)  # nosec B311
     rng.shuffle(mixed)
     remaining = [case_id for case_id in all_cases if case_id not in set(mixed)]
     rng.shuffle(remaining)

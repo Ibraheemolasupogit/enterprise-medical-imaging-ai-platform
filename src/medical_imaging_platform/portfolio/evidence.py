@@ -755,7 +755,8 @@ def repository_reference() -> dict[str, str]:
 
 def status_semantics() -> dict[str, str]:
     return {
-        "PASS": "Mandatory evidence is present and internally consistent.",
+        # Status label, not a password.
+        "PASS": "Mandatory evidence is present and internally consistent.",  # nosec B105
         "WARN": "Evidence is present with a limitation requiring human review.",
         "FAIL": "A mandatory validation failed.",
         "INCOMPLETE": "Mandatory evidence is missing or not generated.",

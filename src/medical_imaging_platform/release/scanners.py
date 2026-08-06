@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import shutil
-import subprocess  # nosec B404 - scanner wrappers use shell=False and bounded timeouts.
+
+# Scanner wrappers use fixed argument lists and bounded timeouts.
+import subprocess  # nosec B404
 import sys
 from pathlib import Path
 from typing import Any
@@ -192,7 +194,8 @@ def _pip_audit_command() -> list[str]:
 
 def _run(command: list[str], timeout_seconds: int) -> subprocess.CompletedProcess[str]:
     try:
-        return subprocess.run(  # nosec B603 - command is constructed from fixed scanner args.
+        # Command is constructed from fixed scanner arguments.
+        return subprocess.run(  # nosec B603
             command, capture_output=True, text=True, timeout=timeout_seconds, check=False
         )
     except subprocess.TimeoutExpired as exc:

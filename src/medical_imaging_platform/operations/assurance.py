@@ -77,7 +77,12 @@ def validate_observability() -> list[OperationsCheck]:
         event_type="validation_failure",
         request_id="req-001",
         correlation_id="corr-001",
-        details={"patient_id": "123", "token": "secret", "status": "rejected"},
+        # Synthetic redaction fixture, not a credential.
+        details={  # nosec B105
+            "patient_id": "123",
+            "token": "secret",
+            "status": "rejected",
+        },
     )
     checks = [
         _check(

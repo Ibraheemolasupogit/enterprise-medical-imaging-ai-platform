@@ -9,6 +9,7 @@ torch==2.13.0; platform_system != "Linux"
 numpy==2.4.6
 mypy==1.16.1
 ruff==0.16.1
+bandit==1.9.4
 httpx==0.28.1
 types-PyYAML==6.0.12.20260518
 matplotlib==3.10.9

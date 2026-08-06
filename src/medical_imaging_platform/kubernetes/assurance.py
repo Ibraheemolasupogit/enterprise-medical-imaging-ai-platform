@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 import shutil
 import socket
-import subprocess  # nosec B404 - optional helm lint uses shell=False and bounded timeout.
+
+# Optional helm lint uses fixed command lists, no shell, and bounded timeouts.
+import subprocess  # nosec B404
 import time
 import urllib.error
 import urllib.parse
@@ -103,7 +105,8 @@ def validate_helm_chart(chart_dir: Path = CHART_DIR) -> KubernetesCheckResult:
                 "bootstrap": "Install Helm locally, then run `make validate-helm`.",
             },
         )
-    result = subprocess.run(  # nosec B603 - command list is fixed internal helm lint invocation.
+    # Fixed internal helm lint command list.
+    result = subprocess.run(  # nosec B603
         [helm, "lint", chart_dir.as_posix()],
         check=False,
         capture_output=True,
@@ -855,7 +858,8 @@ def validate_kubernetes_evidence() -> list[KubernetesCheckResult]:
 
 
 def _run_command(args: list[str], timeout_seconds: int = COMMAND_TIMEOUT_SECONDS) -> CommandResult:
-    completed = subprocess.run(  # nosec B603 - command lists are fixed internal invocations.
+    # Fixed internal command lists.
+    completed = subprocess.run(  # nosec B603
         args,
         check=False,
         capture_output=True,
@@ -1216,7 +1220,8 @@ def _start_port_forward(resource: str, local_port: int, remote_port: int) -> sub
         resource,
         f"{local_port}:{remote_port}",
     ]
-    process = subprocess.Popen(  # nosec B603 - fixed kubectl port-forward command list.
+    # Fixed kubectl port-forward command list.
+    process = subprocess.Popen(  # nosec B603
         args,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

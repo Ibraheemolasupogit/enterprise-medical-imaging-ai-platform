@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import shutil
-import subprocess  # nosec B404 - Docker smoke commands use shell=False and fixed args.
+
+# Docker smoke commands use fixed argument lists and no shell.
+import subprocess  # nosec B404
 from dataclasses import dataclass
 
 from medical_imaging_platform.release.models import (
@@ -225,7 +227,8 @@ def _filesystem_exec(service: str) -> list[str]:
 
 def _run_command(command: list[str], timeout_seconds: int) -> SmokeCommandResult:
     try:
-        completed = subprocess.run(  # nosec B603 - command list comes from fixed smoke steps.
+        # Command list comes from fixed smoke steps.
+        completed = subprocess.run(  # nosec B603
             command,
             capture_output=True,
             text=True,
