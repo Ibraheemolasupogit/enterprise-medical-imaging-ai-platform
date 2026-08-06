@@ -1,0 +1,15 @@
+--index-url https://pypi.org/simple
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# Canonical CI quality environment.
+# The Linux +cpu pin forces PyTorch to resolve from the official CPU wheel index
+# and prevents CUDA/NVIDIA dependency packages from satisfying the torch pin.
+torch==2.13.0+cpu; platform_system == "Linux"
+torch==2.13.0; platform_system != "Linux"
+numpy==2.4.6
+mypy==1.16.1
+ruff==0.16.1
+httpx==0.28.1
+types-PyYAML==6.0.12.20260518
+
+-e .[dev]

@@ -117,6 +117,11 @@ def _service_checks(
             f"{name} does not mount the Docker socket.",
         ),
         _result(
+            f"COMPOSE-{name}-OUTPUT-NAMED-VOLUME",
+            _has_named_output_volume(volumes, config),
+            f"{name} uses a named writable output volume.",
+        ),
+        _result(
             f"COMPOSE-{name}-RESOURCE-LIMITS",
             "mem_limit" in service and "cpus" in service,
             f"{name} has CPU and memory limits.",
@@ -138,6 +143,18 @@ def _service_checks(
             )
         )
     return checks
+
+
+def _has_named_output_volume(volumes: Any, config: ContainerReleaseConfig) -> bool:
+    if not isinstance(volumes, list):
+        return False
+    for volume in volumes:
+        if not isinstance(volume, dict):
+            continue
+        if volume.get("target") != config.output_mount.as_posix():
+            continue
+        return volume.get("type") == "volume" and bool(volume.get("source"))
+    return False
 
 
 def _result(check_id: str, passed: bool, message: str) -> ReleaseCheckResult:

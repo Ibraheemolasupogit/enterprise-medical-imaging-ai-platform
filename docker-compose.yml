@@ -40,8 +40,8 @@ services:
         source: ./ml/experiments
         target: /app/checkpoints
         read_only: true
-      - type: bind
-        source: ./reports/generated/container-api
+      - type: volume
+        source: api-outputs
         target: /app/outputs
         read_only: false
     healthcheck:
@@ -87,8 +87,8 @@ services:
         source: ./config/container/reviewer_ui.yaml
         target: /app/config/reviewer_ui.yaml
         read_only: true
-      - type: bind
-        source: ./reports/generated/reviewer-sessions
+      - type: volume
+        source: reviewer-ui-outputs
         target: /app/outputs
         read_only: false
     healthcheck:
@@ -106,3 +106,7 @@ networks:
   medical-imaging-local:
     name: medical-imaging-local
     driver: bridge
+
+volumes:
+  api-outputs:
+  reviewer-ui-outputs:

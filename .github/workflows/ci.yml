@@ -30,14 +30,12 @@ jobs:
           cache: pip
           cache-dependency-path: |
             pyproject.toml
-            requirements/container-runtime.txt
+            requirements/ci-quality.txt
 
       - name: Install project
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements/container-runtime.txt
-          python -m pip install -e . --no-deps
-          python -m pip install "bandit>=1.7.9,<2" "coverage[toml]>=7.6,<8" "mypy>=1.11,<2" "pytest>=8.3,<9" "pytest-cov>=5,<6" "ruff==0.16.1" "types-PyYAML>=6.0.12,<7"
+          python -m pip install -r requirements/ci-quality.txt
 
       - name: Run quality checks
         run: make quality
@@ -56,14 +54,13 @@ jobs:
           cache: pip
           cache-dependency-path: |
             pyproject.toml
-            requirements/container-runtime.txt
+            requirements/ci-quality.txt
 
       - name: Install project
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements/container-runtime.txt
-          python -m pip install -e . --no-deps
-          python -m pip install "bandit>=1.7.9,<2" "coverage[toml]>=7.6,<8" "mypy>=1.11,<2" "pytest>=8.3,<9" "pytest-cov>=5,<6" "ruff==0.16.1" "types-PyYAML>=6.0.12,<7" "pip-audit==${PIP_AUDIT_VERSION}"
+          python -m pip install -r requirements/ci-quality.txt
+          python -m pip install "pip-audit==${PIP_AUDIT_VERSION}"
 
       - name: Install Gitleaks
         run: |
@@ -98,14 +95,12 @@ jobs:
           cache: pip
           cache-dependency-path: |
             pyproject.toml
-            requirements/container-runtime.txt
+            requirements/ci-quality.txt
 
       - name: Install project
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements/container-runtime.txt
-          python -m pip install -e . --no-deps
-          python -m pip install "bandit>=1.7.9,<2" "coverage[toml]>=7.6,<8" "mypy>=1.11,<2" "pytest>=8.3,<9" "pytest-cov>=5,<6" "ruff==0.16.1" "types-PyYAML>=6.0.12,<7"
+          python -m pip install -r requirements/ci-quality.txt
 
       - name: Validate Helm chart and values
         run: make validate-helm
@@ -136,7 +131,7 @@ jobs:
           cache: pip
           cache-dependency-path: |
             pyproject.toml
-            requirements/container-runtime.txt
+            requirements/ci-quality.txt
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
@@ -146,9 +141,7 @@ jobs:
       - name: Install project
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements/container-runtime.txt
-          python -m pip install -e . --no-deps
-          python -m pip install "bandit>=1.7.9,<2" "coverage[toml]>=7.6,<8" "mypy>=1.11,<2" "pytest>=8.3,<9" "pytest-cov>=5,<6" "ruff==0.16.1" "types-PyYAML>=6.0.12,<7"
+          python -m pip install -r requirements/ci-quality.txt
 
       - name: Check Terraform formatting
         run: make terraform-fmt-check
@@ -185,14 +178,12 @@ jobs:
           cache: pip
           cache-dependency-path: |
             pyproject.toml
-            requirements/container-runtime.txt
+            requirements/ci-quality.txt
 
       - name: Install project
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements/container-runtime.txt
-          python -m pip install -e . --no-deps
-          python -m pip install "bandit>=1.7.9,<2" "coverage[toml]>=7.6,<8" "mypy>=1.11,<2" "pytest>=8.3,<9" "pytest-cov>=5,<6" "ruff==0.16.1" "types-PyYAML>=6.0.12,<7"
+          python -m pip install -r requirements/ci-quality.txt
 
       - name: Install Syft and Trivy
         run: |
@@ -245,7 +236,7 @@ jobs:
           cache: pip
           cache-dependency-path: |
             pyproject.toml
-            requirements/container-runtime.txt
+            requirements/ci-quality.txt
 
       - name: Set up Terraform for static checks
         uses: hashicorp/setup-terraform@v3
@@ -255,9 +246,7 @@ jobs:
       - name: Install project
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements/container-runtime.txt
-          python -m pip install -e . --no-deps
-          python -m pip install "bandit>=1.7.9,<2" "coverage[toml]>=7.6,<8" "mypy>=1.11,<2" "pytest>=8.3,<9" "pytest-cov>=5,<6" "ruff==0.16.1" "types-PyYAML>=6.0.12,<7"
+          python -m pip install -r requirements/ci-quality.txt
 
       - name: Build and validate final portfolio readiness evidence
         run: make portfolio-readiness

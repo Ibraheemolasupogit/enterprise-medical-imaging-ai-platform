@@ -204,6 +204,8 @@ def test_compose_security_controls() -> None:
 
     assert all(check.status == "PASS" for check in checks)
     assert any(check.check_id == "COMPOSE-api-CAPDROP" for check in checks)
+    assert any(check.check_id == "COMPOSE-api-OUTPUT-NAMED-VOLUME" for check in checks)
+    assert any(check.check_id == "COMPOSE-reviewer-ui-OUTPUT-NAMED-VOLUME" for check in checks)
     assert any(check.check_id == "COMPOSE-reviewer-ui-NO-CHECKPOINTS" for check in checks)
 
 
@@ -240,6 +242,59 @@ networks:
     )
     assert any(
         check.check_id == "COMPOSE-api-NO-DOCKER-SOCKET" and check.status == "FAIL"
+        for check in checks
+    )
+
+
+def test_compose_rejects_host_bind_for_writable_output(tmp_path: Path) -> None:
+    config = load_container_config(Path("config/container.yaml"))
+    compose = tmp_path / "docker-compose.yml"
+    compose.write_text(
+        """
+services:
+  api:
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    user: "10001:10001"
+    ports: ["127.0.0.1:8000:8000"]
+    tmpfs: ["/tmp:size=128m,mode=1777"]
+    healthcheck: {}
+    mem_limit: 2g
+    cpus: 2.0
+    volumes:
+      - type: bind
+        source: ./reports/generated/container-api
+        target: /app/outputs
+  reviewer-ui:
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    user: "10001:10001"
+    ports: ["127.0.0.1:8501:8501"]
+    tmpfs: ["/tmp:size=128m,mode=1777"]
+    healthcheck: {}
+    mem_limit: 1g
+    cpus: 1.0
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - type: volume
+        source: reviewer-ui-outputs
+        target: /app/outputs
+networks:
+  medical-imaging-local: {}
+volumes:
+  reviewer-ui-outputs: {}
+""",
+        encoding="utf-8",
+    )
+
+    checks = inspect_compose(config, compose)
+
+    assert any(
+        check.check_id == "COMPOSE-api-OUTPUT-NAMED-VOLUME" and check.status == "FAIL"
         for check in checks
     )
 
