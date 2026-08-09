@@ -19,7 +19,7 @@
     no AWS resources are deployed.
 17. Production observability, resilience and incident response. Complete for deterministic local
     operations evidence only; no live monitoring deployment or automated rollback.
-18. Portfolio evidence, demonstration workflow and interview readiness. Complete for final
+18. Project evidence, demonstration workflow and evidence readiness. Complete for final
     consolidation evidence only; no new clinical or deployment claims.
 
 Milestones 1-18 are implemented in the current repository state. Milestone 18 does not implement
@@ -29,5 +29,5 @@ detection, RECIST, treatment-response assessment, authentication, persistent das
 deployment, image publication to AWS, Terraform apply, GPU scheduling, service mesh, production
 authentication, production DNS, real TLS certificates, automated retraining, automated rollback,
 automatic model promotion, production alert routing, live incident-management integration, or
-clinical decision support. Final portfolio evidence documents what is implemented, locally
+clinical decision support. Final project evidence documents what is implemented, locally
 executed, statically validated, simulated, or target-state only.

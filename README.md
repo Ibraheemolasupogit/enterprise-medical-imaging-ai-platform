@@ -4,7 +4,7 @@
 
 ## Project Summary
 
-Enterprise Medical Imaging AI Platform is a portfolio-scale medical-imaging AI engineering
+Enterprise Medical Imaging AI Platform is a medical-imaging AI engineering
 demonstrator for abdominal CT research workflows. It shows how governed imaging data pipelines,
 PyTorch/MONAI modelling, human review, MLOps evidence, secure deployment packaging, AWS target-state
 architecture, observability and clinical-AI governance boundaries can fit together in one
@@ -42,7 +42,7 @@ High-level flow:
 11. Helm/Kubernetes assurance.
 12. AWS target-state Terraform evidence.
 13. Observability, resilience, incident, rollback and recovery evidence.
-14. Final portfolio evidence pack.
+14. Consolidated project evidence pack.
 
 ## Implemented Capabilities
 
@@ -63,7 +63,7 @@ High-level flow:
   and CloudTrail.
 - Structured logging, opt-in protected metrics, SLOs, incidents, rollback/recovery simulations and
   operations runbooks.
-- Final portfolio matrix, evidence report and interview materials.
+- Consolidated project evidence matrix and evidence report.
 
 ## End-To-End Workflow
 
@@ -77,7 +77,7 @@ make demo
 data, DICOM/QC, preprocessing, registration, localisation, small model workflows, monitoring,
 deployment assurance and portfolio evidence.
 
-Short interview workflow:
+Fast demo workflow:
 
 ```bash
 make demo-fast
@@ -86,7 +86,7 @@ make demo-fast
 `make demo-fast` is deterministic and uses synthetic evidence. It avoids AWS credentials, paid cloud
 deployment and persistent Kubernetes requirements.
 
-Final portfolio readiness:
+Project readiness:
 
 ```bash
 make portfolio-readiness
@@ -179,9 +179,6 @@ make portfolio-readiness
 make clean-demo
 ```
 
-Optional runtime commands are documented in
-[docs/portfolio/demonstration_script.md](docs/portfolio/demonstration_script.md).
-
 ## Evidence Locations
 
 Generated artefacts are ignored by Git.
@@ -228,17 +225,6 @@ git diff --check
   availability.
 
 See [docs/limitations.md](docs/limitations.md).
-
-## Interview Talking Points
-
-Use these files for recruiter and technical-review preparation:
-
-- [docs/portfolio/project_summary.md](docs/portfolio/project_summary.md)
-- [docs/portfolio/cv_project_entry.md](docs/portfolio/cv_project_entry.md)
-- [docs/portfolio/interview_talking_points.md](docs/portfolio/interview_talking_points.md)
-- [docs/portfolio/demonstration_script.md](docs/portfolio/demonstration_script.md)
-- [docs/portfolio/technical_deep_dive.md](docs/portfolio/technical_deep_dive.md)
-- [docs/portfolio/recruiter_faq.md](docs/portfolio/recruiter_faq.md)
 
 ## Attribution
 

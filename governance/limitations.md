@@ -88,6 +88,6 @@ deterministic local engineering evidence only. It does not create a production m
 send real alerts, page operators, prove disaster recovery, automate rollback, automate retraining,
 or promote model versions.
 
-Milestone 18 portfolio evidence summarises the repository and supports interview demonstration. It
+Milestone 18 project evidence summarises the repository and supports engineering demonstration. It
 does not add clinical capability, clinical validation, deployment approval, regulatory approval, NHS
 approval, or medical-device approval.

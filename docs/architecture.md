@@ -14,7 +14,7 @@ Secrets Manager references, CloudWatch, CloudTrail, VPC networking, IAM boundari
 validation defaults without deploying AWS resources. Milestone 17 adds opt-in application metrics,
 structured log redaction, resilience controls, operations SLOs, incident simulations, rollback and
 recovery evidence, and runbook validation without deploying production monitoring infrastructure.
-Milestone 18 consolidates these capabilities into final portfolio, demo and interview-readiness
+Milestone 18 consolidates these capabilities into final project, demo and evidence-readiness
 evidence under `reports/generated/portfolio/`; the final end-to-end architecture is documented in
 `docs/architecture/final_end_to_end_architecture.md`.
 
@@ -65,9 +65,10 @@ Implemented foundation components:
   observability/resilience settings, CloudWatch target mappings, deterministic SLO/error-budget
   evaluation, incident simulations, rollback/recovery evidence, runbook validation, checksums, and
   ignored evidence under `reports/generated/operations/`.
-- Portfolio foundation with milestone completion matrix, capability inventory, final architecture
-  manifest, validation summaries, governance/security/deployment/operations summaries, evidence
-  provenance, checksums, interview material, and ignored evidence under `reports/generated/portfolio/`.
+- Project evidence foundation with milestone completion matrix, capability inventory, final
+  architecture manifest, validation summaries, governance/security/deployment/operations summaries,
+  evidence provenance, checksums, technical demonstration material, and ignored evidence under
+  `reports/generated/portfolio/`.
 
 Planned - not yet implemented:
 

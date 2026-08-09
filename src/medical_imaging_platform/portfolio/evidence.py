@@ -43,11 +43,8 @@ DETERMINISTIC_SEED = "portfolio-m18-seed-v1"
 
 MANDATORY_PORTFOLIO_DOCS = [
     Path("docs/portfolio/project_summary.md"),
-    Path("docs/portfolio/cv_project_entry.md"),
-    Path("docs/portfolio/interview_talking_points.md"),
     Path("docs/portfolio/demonstration_script.md"),
     Path("docs/portfolio/technical_deep_dive.md"),
-    Path("docs/portfolio/recruiter_faq.md"),
     Path("docs/architecture/final_end_to_end_architecture.md"),
 ]
 
@@ -67,7 +64,6 @@ README_REQUIRED_SECTIONS = [
     "Evidence Locations",
     "Test And Quality Status",
     "Limitations",
-    "Interview Talking Points",
 ]
 
 PROHIBITED_CLAIMS = [
@@ -234,7 +230,7 @@ def validate_portfolio_evidence() -> list[PortfolioCheck]:
 
 
 def run_demo_fast() -> dict[str, Any]:
-    """Write a deterministic interview-demo status record."""
+    """Write a deterministic fast-demo status record."""
     PORTFOLIO_EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
     stages = [
         ("environment_validation", "make validate-config", "PASS"),
@@ -250,7 +246,7 @@ def run_demo_fast() -> dict[str, Any]:
         "demo_id": "m18-demo-fast-v1",
         "generated_timestamp": GENERATED_TIMESTAMP,
         "executed": True,
-        "mode": "interview-demo",
+        "mode": "fast-demo",
         "duration_guidance": "5-10 minutes after dependencies are installed.",
         "mandatory_runtime_tools": ["python3"],
         "optional_runtime_tools": ["docker", "helm", "kubectl", "kind", "terraform"],
@@ -447,12 +443,12 @@ def milestone_completion_matrix() -> list[MilestoneEntry]:
         ),
         (
             18,
-            "Portfolio evidence and interview readiness",
-            "Final evidence pack and demo workflow",
+            "Project evidence and demonstration readiness",
+            "Final evidence pack and engineering demo workflow",
             "reports/generated/portfolio/final_portfolio_readiness_manifest.json",
             "make validate-portfolio-evidence",
             "implemented",
-            ["Portfolio evidence only, not clinical approval."],
+            ["Project evidence only, not clinical approval."],
         ),
     ]
     return [
@@ -562,7 +558,7 @@ def build_validation_summary() -> list[PortfolioCheck]:
         (
             "PORTFOLIO-README",
             _readme_has_required_sections(),
-            "README contains recruiter and reviewer sections.",
+            "README contains required project sections.",
         ),
         (
             "PORTFOLIO-GENERATED-IGNORED",

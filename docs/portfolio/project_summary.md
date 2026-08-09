@@ -4,7 +4,7 @@ This platform is a research and engineering demonstrator. Outputs are intended f
 evaluation and human review only and must not be used for clinical diagnosis or patient-management
 decisions.
 
-Enterprise Medical Imaging AI Platform is a portfolio-scale medical-imaging AI engineering project
+Enterprise Medical Imaging AI Platform is a medical-imaging AI engineering demonstrator
 for abdominal CT research workflows. It demonstrates synthetic CT generation, governed DICOM
 ingestion and de-identification, technical image quality control, preprocessing, longitudinal
 registration, adrenal-region localisation, synthetic lesion segmentation, calibrated synthetic

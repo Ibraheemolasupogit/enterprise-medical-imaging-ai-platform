@@ -1,4 +1,4 @@
-# Demonstration Script
+# Engineering Demonstration Workflow
 
 This platform is a research and engineering demonstrator. Outputs are intended for technical
 evaluation and human review only and must not be used for clinical diagnosis or patient-management
@@ -11,7 +11,7 @@ decisions.
 - No AWS credentials are required for checkout-safe evidence.
 - Do not run `terraform apply`.
 
-## Five-Minute Version
+## Fast Version
 
 ```bash
 make demo-fast
@@ -28,7 +28,7 @@ Explain:
 
 Fallback: open `reports/generated/portfolio/portfolio_report.md`.
 
-## Ten-Minute Version
+## Standard Version
 
 ```bash
 make validate-config
@@ -44,7 +44,7 @@ make validate-portfolio-evidence
 Expected outputs: each target reports `PASS` or completes without error. Discuss the status
 semantics: `PASS`, `WARN`, `FAIL`, `INCOMPLETE`, `UNAVAILABLE` and `ERROR`.
 
-## Twenty-Minute Technical Version
+## Detailed Technical Version
 
 ```bash
 make verify-dicom-quality
@@ -66,7 +66,7 @@ make validate-portfolio-evidence
 ```
 
 Timing depends on local CPU performance because the model milestones run small CPU-compatible
-training flows. Use `make demo-fast` if the interview slot is short.
+training flows. Use `make demo-fast` for a concise checkout-safe engineering demonstration.
 
 ## Cleanup
 

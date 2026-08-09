@@ -634,7 +634,7 @@ def build_parser() -> argparse.ArgumentParser:
         command_parser.add_argument("--json", action="store_true")
 
     portfolio_commands = {
-        "run-demo-fast": "Record deterministic interview-demo workflow evidence.",
+        "run-demo-fast": "Record deterministic fast engineering demo workflow evidence.",
         "build-portfolio-evidence": "Build final deterministic portfolio evidence.",
         "validate-portfolio-evidence": "Validate final portfolio evidence.",
         "clean-demo": "Record safe local demo cleanup evidence.",

@@ -37,11 +37,8 @@ REQUIRED_MARKDOWN_FILES = (
     Path("docs/operations/runbooks.md"),
     Path("docs/operations/slo_error_budget.md"),
     Path("docs/portfolio/project_summary.md"),
-    Path("docs/portfolio/cv_project_entry.md"),
-    Path("docs/portfolio/interview_talking_points.md"),
     Path("docs/portfolio/demonstration_script.md"),
     Path("docs/portfolio/technical_deep_dive.md"),
-    Path("docs/portfolio/recruiter_faq.md"),
     Path("docs/roadmap.md"),
     Path("docs/registration_design.md"),
     Path("docs/release_evidence.md"),
@@ -87,7 +84,6 @@ README_REQUIRED_SECTIONS = (
     "Evidence Locations",
     "Test And Quality Status",
     "Limitations",
-    "Interview Talking Points",
 )
 
 PROHIBITED_UNQUALIFIED_CLAIMS = (

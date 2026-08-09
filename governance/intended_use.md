@@ -12,7 +12,7 @@ Milestone 11 API functions are intended for local research engineering evaluatio
 publicly available de-identified artefacts only. They are not intended for internet-facing
 deployment, clinical workflow integration, diagnosis, triage, or patient-management decisions.
 
-Milestone 12 reviewer UI functions are intended for local portfolio demonstration of human-review
+Milestone 12 reviewer UI functions are intended for local engineering demonstration of human-review
 workflow patterns over governed API outputs. They are not intended for radiology reporting, clinical
 approval, patient management, production deployment, or replacement of trained clinical staff.
 ## Containerisation Boundary
@@ -25,7 +25,7 @@ operation, or medical-device approval.
 
 Milestones 14-18 add governed registry, synthetic monitoring, audit, Kubernetes assurance, AWS
 target-state infrastructure, operations evidence, incident simulations, rollback/recovery
-simulations and portfolio evidence. These capabilities are intended to demonstrate engineering,
+simulations and project evidence. These capabilities are intended to demonstrate engineering,
 MLOps, deployment-assurance and governance patterns only. They are not intended for clinical
 deployment, NHS approval, medical-device approval, autonomous clinical decisions, automated model
 promotion, automated retraining or automated rollback.
