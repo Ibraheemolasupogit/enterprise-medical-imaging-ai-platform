@@ -1,0 +1,49 @@
+config_name: preprocessing_baseline
+milestone: 19
+status: foundation
+purpose: Classical image-content preprocessing and QC baseline for existing preprocessed volumes.
+owner: imaging-engineering
+settings:
+  preprocessing_baseline:
+    policy_version: m19-preprocessing-baseline-v1
+    baseline_name: classical-image-content-baseline
+    denoise:
+      enabled: true
+      method: mean
+      kernel_size: 3
+    enhancement:
+      enabled: true
+      method: percentile_stretch
+      lower_percentile: 1.0
+      upper_percentile: 99.0
+      histogram_bins: 128
+      clahe_tiles:
+        - 4
+        - 4
+      clahe_clip_limit: 0.02
+    metrics:
+      percentiles:
+        - 1.0
+        - 5.0
+        - 50.0
+        - 95.0
+        - 99.0
+      histogram_bins: 128
+      edge_percentile: 90.0
+      local_contrast_kernel_size: 3
+    thresholds:
+      minimum_sharpness: null
+      minimum_edge_density: null
+      maximum_noise_estimate: null
+    preview:
+      enabled: true
+      axial_slice_index: null
+    output_directory: reports/preprocessing_baseline
+    overwrite: false
+safeguards:
+  - Operates only on existing validated preprocessed NumPy volumes.
+  - Does not modify canonical preprocessing outputs or source DICOM-derived evidence.
+  - Metrics and transforms are engineering baselines, not diagnostic image-quality assessment.
+future_capabilities:
+  - Additional public-dataset benchmark cohorts after dataset governance review.
+  - Reviewer UI display of preprocessing baseline evidence.

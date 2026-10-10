@@ -32,6 +32,8 @@ from medical_imaging_platform.preprocessing.export import (
     validate_preprocessed_volume,
 )
 from medical_imaging_platform.preprocessing.pipeline import preprocess_dicom_series
+from medical_imaging_platform.preprocessing_baseline.export import PreprocessingBaselineOutputError
+from medical_imaging_platform.preprocessing_baseline.runner import run_preprocessing_baseline
 from medical_imaging_platform.quality_control.pipeline import run_quality_control
 from medical_imaging_platform.registration.export import (
     RegistrationOutputError,
@@ -50,6 +52,7 @@ from medical_imaging_platform.utils.config import (
     load_dicom_ingestion_config,
     load_localisation_config,
     load_longitudinal_config,
+    load_preprocessing_baseline_config,
     load_preprocessing_config,
     load_quality_control_config,
     load_registration_config,
@@ -215,6 +218,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_volume_parser.add_argument("output_dir")
     validate_volume_parser.add_argument("--json", action="store_true")
+
+    baseline_parser = subparsers.add_parser(
+        "run-preprocessing-baseline",
+        help="Run M19 image-content baseline evidence on preprocessed volumes.",
+    )
+    baseline_parser.add_argument("preprocessed_output_dirs", nargs="+")
+    baseline_parser.add_argument("--config", default="config/preprocessing_baseline.yaml")
+    baseline_parser.add_argument("--output-dir", default=None)
+    baseline_parser.add_argument("--overwrite", action="store_true")
+    baseline_parser.add_argument("--json", action="store_true")
 
     registration_fixture_parser = subparsers.add_parser(
         "generate-registration-fixtures",
@@ -991,6 +1004,35 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(validation_result.model_dump(mode="json"), indent=2, sort_keys=True))
         else:
             print(f"Validated preprocessed volume {validation_result.run_id}.")
+        return 0
+
+    if args.command == "run-preprocessing-baseline":
+        try:
+            baseline_config = load_preprocessing_baseline_config(Path(args.config))
+            output_root = (
+                Path(args.output_dir)
+                if args.output_dir is not None
+                else baseline_config.output_directory
+            )
+            baseline_result = run_preprocessing_baseline(
+                [Path(item) for item in args.preprocessed_output_dirs],
+                output_root=output_root,
+                config=baseline_config,
+                overwrite=args.overwrite,
+            )
+        except (ConfigError, PreprocessingOutputError, PreprocessingBaselineOutputError) as exc:
+            print(f"Preprocessing baseline failed: {exc}")
+            return 4
+        except (MedicalImagingPlatformError, ValueError) as exc:
+            print(f"Preprocessing baseline failed: {exc}")
+            return 1
+        if args.json:
+            print(json.dumps(baseline_result.model_dump(mode="json"), indent=2, sort_keys=True))
+        else:
+            print(
+                f"Preprocessing baseline {baseline_result.baseline_run_id} completed for "
+                f"{baseline_result.source_count} source volume(s)."
+            )
         return 0
 
     if args.command == "generate-registration-fixtures":

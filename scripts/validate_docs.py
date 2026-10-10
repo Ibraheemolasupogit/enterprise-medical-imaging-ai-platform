@@ -39,6 +39,7 @@ REQUIRED_MARKDOWN_FILES = (
     Path("docs/portfolio/project_summary.md"),
     Path("docs/portfolio/demonstration_script.md"),
     Path("docs/portfolio/technical_deep_dive.md"),
+    Path("docs/preprocessing_baseline.md"),
     Path("docs/roadmap.md"),
     Path("docs/registration_design.md"),
     Path("docs/release_evidence.md"),

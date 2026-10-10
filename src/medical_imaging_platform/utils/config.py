@@ -14,6 +14,7 @@ from medical_imaging_platform.ingestion.models import DicomIngestionConfig
 from medical_imaging_platform.localisation.models import LocalisationConfig
 from medical_imaging_platform.longitudinal.models import LongitudinalConfig
 from medical_imaging_platform.preprocessing.models import PreprocessingConfig
+from medical_imaging_platform.preprocessing_baseline.models import PreprocessingBaselineConfig
 from medical_imaging_platform.quality_control.models import QualityControlConfig
 from medical_imaging_platform.registration.models import RegistrationConfig
 from medical_imaging_platform.release.models import ContainerReleaseConfig
@@ -67,6 +68,7 @@ class RepositoryConfigSet(BaseModel):
         "container.yaml",
         "data.yaml",
         "preprocessing.yaml",
+        "preprocessing_baseline.yaml",
         "registration.yaml",
         "localisation.yaml",
         "segmentation.yaml",
@@ -152,6 +154,18 @@ def load_preprocessing_config(path: Path) -> PreprocessingConfig:
         return PreprocessingConfig.model_validate(settings["preprocessing"])
     except ValidationError as exc:
         raise ConfigError(f"Invalid preprocessing configuration in {path}: {exc}") from exc
+
+
+def load_preprocessing_baseline_config(path: Path) -> PreprocessingBaselineConfig:
+    """Load typed Milestone 19 preprocessing baseline settings."""
+    data = load_yaml_file(path)
+    settings = data.get("settings")
+    if not isinstance(settings, dict) or "preprocessing_baseline" not in settings:
+        raise ConfigError(f"Missing settings.preprocessing_baseline in {path}")
+    try:
+        return PreprocessingBaselineConfig.model_validate(settings["preprocessing_baseline"])
+    except ValidationError as exc:
+        raise ConfigError(f"Invalid preprocessing baseline configuration in {path}: {exc}") from exc
 
 
 def load_registration_config(path: Path) -> RegistrationConfig:
