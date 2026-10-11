@@ -12,6 +12,7 @@ SplitName = Literal["train", "validation", "test"]
 EngineeringLabel = Literal[
     "no_visible_synthetic_lesion", "synthetic_lesion_present", "indeterminate"
 ]
+ModelFamily = Literal["small_3d_cnn", "tiny_3d_vit"]
 
 
 class ClassificationConfig(BaseModel):
@@ -29,8 +30,15 @@ class ClassificationConfig(BaseModel):
     learning_rate: float = Field(gt=0)
     weight_decay: float = Field(ge=0)
     optimizer: Literal["adam", "adamw"] = "adam"
+    model_family: ModelFamily = "small_3d_cnn"
     channels: tuple[int, ...]
     dropout: float = Field(ge=0.0, lt=1.0)
+    patch_size: tuple[int, int, int] = (4, 4, 4)
+    embedding_dim: int = Field(default=32, gt=0)
+    transformer_depth: int = Field(default=1, gt=0)
+    num_heads: int = Field(default=4, gt=0)
+    mlp_ratio: float = Field(default=2.0, gt=0.0)
+    transformer_dropout: float = Field(default=0.0, ge=0.0, lt=1.0)
     positive_class_weight: float | None = Field(default=None, gt=0)
     early_stopping_patience: int = Field(ge=0)
     calibration_method: Literal["none", "platt", "isotonic"] = "platt"
@@ -58,6 +66,13 @@ class ClassificationConfig(BaseModel):
             raise ValueError("input_shape must contain three dimensions of at least 8")
         return value
 
+    @field_validator("patch_size")
+    @classmethod
+    def patch_size_valid(cls, value: tuple[int, int, int]) -> tuple[int, int, int]:
+        if len(value) != 3 or any(axis <= 0 for axis in value):
+            raise ValueError("patch_size must contain three positive dimensions")
+        return value
+
     @field_validator("channels")
     @classmethod
     def channels_valid(cls, value: tuple[int, ...]) -> tuple[int, ...]:
@@ -69,6 +84,12 @@ class ClassificationConfig(BaseModel):
     def relationships_valid(self) -> ClassificationConfig:
         if self.abstention_lower > self.abstention_upper:
             raise ValueError("abstention_lower must be <= abstention_upper")
+        if self.model_family == "tiny_3d_vit":
+            for axis, patch in zip(self.input_shape, self.patch_size, strict=True):
+                if axis % patch != 0:
+                    raise ValueError("ViT patch_size must evenly divide input_shape")
+            if self.embedding_dim % self.num_heads != 0:
+                raise ValueError("embedding_dim must be divisible by num_heads")
         return self
 
 

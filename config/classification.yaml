@@ -15,8 +15,15 @@ settings:
     learning_rate: 0.001
     weight_decay: 0.0
     optimizer: adam
+    model_family: small_3d_cnn
     channels: [4, 8, 16]
     dropout: 0.1
+    patch_size: [4, 4, 4]
+    embedding_dim: 32
+    transformer_depth: 1
+    num_heads: 4
+    mlp_ratio: 2.0
+    transformer_dropout: 0.0
     positive_class_weight: null
     early_stopping_patience: 2
     calibration_method: platt

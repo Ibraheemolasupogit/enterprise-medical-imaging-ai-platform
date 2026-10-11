@@ -34,15 +34,22 @@ test metrics are evidence only and are not clinical-performance evidence.
 
 ## Architecture
 
-The baseline is an original compact 3D CNN with configurable convolution blocks, instance
+The default baseline is an original compact 3D CNN with configurable convolution blocks, instance
 normalisation, ReLU activations, max pooling, global average pooling, dropout, and one binary logit.
 The default verification configuration is deliberately small for CPU execution.
+
+Milestone 20 adds a benchmark-only `tiny_3d_vit` alternative. It uses native PyTorch 3D patch
+embedding, a learnable class token, learnable positional embedding, a small transformer encoder,
+layer normalisation, and one binary logit. The benchmark trains the CNN and ViT through the same
+classification trainer on the same prepared synthetic/de-identified manifest, splits, labels,
+preprocessing, transforms, seed, calibration, threshold policy, and quality gates.
 
 ## Metrics
 
 Evidence includes loss, AUROC, AUPRC, sensitivity/recall, specificity, precision, negative
 predictive value, F1, accuracy, Brier score, expected calibration error, calibration slope and
-intercept, confusion counts, false positives, and false negatives.
+intercept, confusion counts, false positives, and false negatives. Benchmark evidence also records
+parameter counts, checkpoint size, training duration, and a bounded inference latency summary.
 
 ## Calibration And Thresholding
 
@@ -55,7 +62,8 @@ falls inside the configured abstention interval.
 The model is expected to overfit or underfit synthetic patterns. It does not represent scanner
 diversity, contrast phases, acquisition protocols, real adrenal anatomy, pathology diversity,
 radiologist labels, clinical prevalence, or external validation. Exact floating-point results may
-vary across hardware and PyTorch builds.
+vary across hardware and PyTorch builds. CNN-versus-ViT benchmark deltas are specific to the
+synthetic/de-identified benchmark configuration and do not establish a universally better model.
 
 ## Safety And Ethics
 

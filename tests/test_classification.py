@@ -1,10 +1,12 @@
 import json
 from pathlib import Path
+from typing import Any, cast
 
 import numpy as np
 import pytest
 import torch
 
+from medical_imaging_platform.classification.benchmark import run_classification_benchmark
 from medical_imaging_platform.classification.calibration import apply_calibration, fit_calibration
 from medical_imaging_platform.classification.checkpoint import (
     ClassificationCheckpointError,
@@ -24,7 +26,11 @@ from medical_imaging_platform.classification.export import (
 from medical_imaging_platform.classification.inference import apply_abstention, classify_volume
 from medical_imaging_platform.classification.losses import classification_loss
 from medical_imaging_platform.classification.metrics import compute_classification_metrics
-from medical_imaging_platform.classification.model_factory import build_classifier, parameter_count
+from medical_imaging_platform.classification.model_factory import (
+    architecture_metadata,
+    build_classifier,
+    parameter_count,
+)
 from medical_imaging_platform.classification.models import ClassificationConfig
 from medical_imaging_platform.classification.pipeline import (
     configuration_checksum,
@@ -101,13 +107,21 @@ def test_classification_config_loader_and_validation(tmp_path: Path) -> None:
     config = load_classification_config(Path("config/classification.yaml"))
 
     assert config.device == "cpu"
+    assert config.model_family == "small_3d_cnn"
     assert config.fixed_threshold == pytest.approx(0.5)
+    assert cls_config(tmp_path, model_family="tiny_3d_vit").model_family == "tiny_3d_vit"
     with pytest.raises(ValueError):
         cls_config(tmp_path, input_shape=(4, 16, 16))
     with pytest.raises(ValueError):
         cls_config(tmp_path, channels=())
     with pytest.raises(ValueError):
         cls_config(tmp_path, abstention_lower=0.8, abstention_upper=0.2)
+    with pytest.raises(ValueError):
+        cls_config(tmp_path, model_family="missing")
+    with pytest.raises(ValueError):
+        cls_config(tmp_path, model_family="tiny_3d_vit", patch_size=(3, 4, 4))
+    with pytest.raises(ValueError):
+        cls_config(tmp_path, model_family="tiny_3d_vit", embedding_dim=30, num_heads=4)
 
 
 def test_prepare_classification_dataset_manifest_and_split_isolation(tmp_path: Path) -> None:
@@ -181,6 +195,31 @@ def test_torch_dataset_transforms_and_model_reproducibility(tmp_path: Path) -> N
         ClassificationTorchDataset(dataset_dir, manifest, "missing")
 
 
+def test_model_factory_supports_cnn_and_tiny_vit(tmp_path: Path) -> None:
+    cnn_config = cls_config(tmp_path)
+    vit_config = cls_config(
+        tmp_path,
+        model_family="tiny_3d_vit",
+        embedding_dim=16,
+        transformer_depth=1,
+        num_heads=4,
+        mlp_ratio=1.0,
+    )
+    set_reproducibility(cnn_config.random_seed)
+    cnn = build_classifier(cnn_config)
+    set_reproducibility(vit_config.random_seed)
+    vit = build_classifier(vit_config)
+    image = torch.zeros((2, 1, 16, 16, 16), dtype=torch.float32)
+
+    assert cnn(image).shape == torch.Size([2])
+    assert vit(image).shape == torch.Size([2])
+    assert parameter_count(cnn) > 0
+    assert parameter_count(vit) > 0
+    assert architecture_metadata(cnn_config)["family"] == "small_3d_cnn"
+    assert architecture_metadata(vit_config)["family"] == "tiny_3d_vit"
+    assert architecture_metadata(cnn_config) != architecture_metadata(vit_config)
+
+
 def test_loss_metrics_calibration_thresholds_and_abstention(tmp_path: Path) -> None:
     config = cls_config(tmp_path)
     logits = torch.tensor([-2.0, 2.0], dtype=torch.float32)
@@ -211,32 +250,24 @@ def test_calibration_threshold_policy_and_failure_branches(tmp_path: Path) -> No
     assert none["status"] == "fallback_insufficient_validation_data"
     assert 0.0 <= apply_calibration(0.25, isotonic) <= 1.0
     assert fit_calibration([0.1, 0.2], [1, 1], cls_config(tmp_path))["method"] == "none"
-    assert (
-        select_threshold(
-            labels,
-            probabilities,
-            cls_config(tmp_path, threshold_method="minimum_sensitivity", minimum_sensitivity=1.0),
-        )["selected_threshold"]
-        <= 0.65
+    minimum_sensitivity = select_threshold(
+        labels,
+        probabilities,
+        cls_config(tmp_path, threshold_method="minimum_sensitivity", minimum_sensitivity=1.0),
     )
-    assert (
-        select_threshold(
-            labels,
-            probabilities,
-            cls_config(tmp_path, threshold_method="minimum_npv"),
-        )["selected_threshold"]
-        >= 0.0
+    minimum_npv = select_threshold(
+        labels,
+        probabilities,
+        cls_config(tmp_path, threshold_method="minimum_npv"),
     )
-    assert (
-        select_threshold(
-            labels,
-            probabilities,
-            cls_config(
-                tmp_path, threshold_method="maximum_false_positives", maximum_false_positives=0
-            ),
-        )["selected_threshold"]
-        >= 0.0
+    maximum_false_positives = select_threshold(
+        labels,
+        probabilities,
+        cls_config(tmp_path, threshold_method="maximum_false_positives", maximum_false_positives=0),
     )
+    assert float(cast(float, minimum_sensitivity["selected_threshold"])) <= 0.65
+    assert float(cast(float, minimum_npv["selected_threshold"])) >= 0.0
+    assert float(cast(float, maximum_false_positives["selected_threshold"])) >= 0.0
     with pytest.raises(ValueError):
         apply_calibration(0.0, {"method": "platt", "parameters": {"coef": []}})
     with pytest.raises(ValueError):
@@ -268,8 +299,110 @@ def test_training_exports_inference_and_validation_are_valid(tmp_path: Path) -> 
     assert manifest["status"] in {"PASS", "PASS_WITH_WARNINGS"}
     assert inspect_classification_experiment(experiment_dir)["status"] == manifest["status"]
     assert Path(experiment_dir / "best_model.pt").exists()
-    assert 0.0 <= inference["prediction"]["calibrated_probability"] <= 1.0
+    prediction = cast(dict[str, Any], inference["prediction"])
+    assert 0.0 <= float(cast(float, prediction["calibrated_probability"])) <= 1.0
     assert (tmp_path / "inference" / "prediction.json").exists()
+
+
+def test_tiny_vit_training_and_inference_use_existing_contract(tmp_path: Path) -> None:
+    config = cls_config(
+        tmp_path,
+        model_family="tiny_3d_vit",
+        embedding_dim=16,
+        transformer_depth=1,
+        num_heads=4,
+        mlp_ratio=1.0,
+    )
+    dataset_dir = prepared_dataset(tmp_path, config)
+    payload = train_classification_experiment(
+        dataset_dir,
+        output_root=tmp_path / "vit-experiments",
+        config=config,
+        overwrite=True,
+    )
+    experiment_dir = tmp_path / "vit-experiments" / payload["experiment_id"]
+    sample = validate_classification_dataset(dataset_dir).samples[0]
+    inference = classify_volume(
+        dataset_dir / sample.image,
+        checkpoint_path=experiment_dir / "best_model.pt",
+        calibration_path=experiment_dir / "calibration.json",
+        threshold_policy_path=experiment_dir / "threshold_policy.json",
+        output_dir=tmp_path / "vit-inference",
+        config=config,
+        overwrite=True,
+    )
+
+    assert payload["model_family"] == "tiny_3d_vit"
+    assert payload["model_architecture"]["family"] == "tiny_3d_vit"
+    assert payload["experiment_id"].endswith("-tiny_3d_vit")
+    prediction = cast(dict[str, Any], inference["prediction"])
+    assert 0.0 <= float(cast(float, prediction["raw_probability"])) <= 1.0
+
+
+def test_classification_benchmark_evidence_and_cli(tmp_path: Path) -> None:
+    config = cls_config(
+        tmp_path,
+        embedding_dim=16,
+        transformer_depth=1,
+        num_heads=4,
+        mlp_ratio=1.0,
+    )
+    dataset_dir = prepared_dataset(tmp_path, config)
+    payload = run_classification_benchmark(
+        dataset_dir,
+        output_root=tmp_path / "benchmark",
+        config=config,
+        overwrite=True,
+    )
+    benchmark_dir = tmp_path / "benchmark" / payload["benchmark_id"]
+    fairness = payload["benchmark_fairness_attestation"]
+
+    assert set(payload["models"]) == {"small_3d_cnn", "tiny_3d_vit"}
+    assert (
+        payload["models"]["small_3d_cnn"]["dataset_manifest_checksum"]
+        == payload["models"]["tiny_3d_vit"]["dataset_manifest_checksum"]
+    )
+    assert fairness["split_counts"] == validate_classification_dataset(dataset_dir).split_counts
+    assert payload["models"]["small_3d_cnn"]["random_seed"] == config.random_seed
+    assert payload["models"]["tiny_3d_vit"]["checkpoint_size_bytes"] > 0
+    assert payload["models"]["small_3d_cnn"]["latency_summary"]["repeat_count"] == 3
+    assert (benchmark_dir / "classification_benchmark_manifest.json").exists()
+    assert (benchmark_dir / "classification_benchmark_comparison.json").exists()
+    assert (benchmark_dir / "classification_benchmark_report.md").exists()
+    assert (benchmark_dir / "evidence" / "checksum_manifest.json").exists()
+    with pytest.raises(FileExistsError):
+        run_classification_benchmark(
+            dataset_dir,
+            output_root=tmp_path / "benchmark",
+            config=config,
+            overwrite=False,
+        )
+
+    config_path = tmp_path / "classification.yaml"
+    config_payload = {
+        "settings": {
+            "classification": config.model_dump(mode="json")
+            | {"output_directory": str(tmp_path / "cli-exp")}
+        }
+    }
+    config_path.write_text(json.dumps(config_payload), encoding="utf-8")
+    assert (
+        main(
+            [
+                "run-classification-benchmark",
+                str(dataset_dir),
+                "--config",
+                str(config_path),
+                "--output-dir",
+                str(tmp_path / "cli-benchmark"),
+                "--epochs",
+                "1",
+                "--overwrite",
+                "--json",
+            ]
+        )
+        == 0
+    )
 
 
 def test_checkpoint_quality_and_checksum_failures(tmp_path: Path) -> None:

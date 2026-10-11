@@ -394,6 +394,21 @@ def build_parser() -> argparse.ArgumentParser:
     train_classification_parser.add_argument("--overwrite", action="store_true")
     train_classification_parser.add_argument("--json", action="store_true")
 
+    benchmark_classification_parser = subparsers.add_parser(
+        "run-classification-benchmark",
+        help="Run a fair CNN versus tiny 3D ViT benchmark on a prepared classification dataset.",
+    )
+    benchmark_classification_parser.add_argument("dataset_dir")
+    benchmark_classification_parser.add_argument("--config", default="config/classification.yaml")
+    benchmark_classification_parser.add_argument(
+        "--output-dir", default="ml/experiments/classification-benchmark"
+    )
+    benchmark_classification_parser.add_argument("--seed", type=int, default=None)
+    benchmark_classification_parser.add_argument("--epochs", type=int, default=None)
+    benchmark_classification_parser.add_argument("--device", default=None)
+    benchmark_classification_parser.add_argument("--overwrite", action="store_true")
+    benchmark_classification_parser.add_argument("--json", action="store_true")
+
     evaluate_classification_parser = subparsers.add_parser(
         "evaluate-classification",
         help="Validate and inspect a classification experiment.",
@@ -1415,6 +1430,45 @@ def main(argv: list[str] | None = None) -> int:
             return 3
         if classification_payload["status"] == "FAIL":
             return 2
+        return 0
+
+    if args.command == "run-classification-benchmark":
+        from medical_imaging_platform.classification.benchmark import (
+            run_classification_benchmark,
+        )
+
+        try:
+            classification_config = load_classification_config(Path(args.config))
+            classification_config = classification_config.model_copy(
+                update={
+                    key: value
+                    for key, value in {
+                        "random_seed": args.seed,
+                        "epochs": args.epochs,
+                        "device": args.device,
+                    }.items()
+                    if value is not None
+                }
+            )
+            benchmark_payload = run_classification_benchmark(
+                Path(args.dataset_dir),
+                output_root=Path(args.output_dir),
+                config=classification_config,
+                overwrite=args.overwrite,
+            )
+        except ValueError as exc:
+            print(f"Classification benchmark rejected: {exc}")
+            return 3
+        except (ConfigError, MedicalImagingPlatformError, FileExistsError) as exc:
+            print(f"Classification benchmark failed: {exc}")
+            return 1
+        if args.json:
+            print(json.dumps(benchmark_payload, indent=2, sort_keys=True))
+        else:
+            print(
+                f"Ran classification benchmark {benchmark_payload['benchmark_id']} "
+                f"on dataset {benchmark_payload['dataset_id']}."
+            )
         return 0
 
     if args.command in {

@@ -1,6 +1,8 @@
-"""Small 3D lesion-presence classifier."""
+"""Classification model factory."""
 
 from __future__ import annotations
+
+from typing import Any
 
 import torch
 
@@ -35,10 +37,99 @@ class Small3DClassifier(torch.nn.Module):  # type: ignore[misc]
         return self.head(self.dropout(pooled)).squeeze(1)
 
 
+class Tiny3DViTClassifier(torch.nn.Module):  # type: ignore[misc]
+    """Tiny native PyTorch 3D Vision Transformer for ROI-like volumes."""
+
+    def __init__(
+        self,
+        *,
+        input_shape: tuple[int, int, int],
+        patch_size: tuple[int, int, int],
+        embedding_dim: int,
+        transformer_depth: int,
+        num_heads: int,
+        mlp_ratio: float,
+        dropout: float,
+    ) -> None:
+        super().__init__()
+        self.patch_embed = torch.nn.Conv3d(
+            1, embedding_dim, kernel_size=patch_size, stride=patch_size
+        )
+        patch_grid = tuple(
+            axis // patch for axis, patch in zip(input_shape, patch_size, strict=True)
+        )
+        token_count = patch_grid[0] * patch_grid[1] * patch_grid[2]
+        self.class_token = torch.nn.Parameter(torch.zeros(1, 1, embedding_dim))
+        self.position_embedding = torch.nn.Parameter(torch.zeros(1, token_count + 1, embedding_dim))
+        hidden_dim = max(1, int(round(embedding_dim * mlp_ratio)))
+        encoder_layer = torch.nn.TransformerEncoderLayer(
+            d_model=embedding_dim,
+            nhead=num_heads,
+            dim_feedforward=hidden_dim,
+            dropout=dropout,
+            activation="gelu",
+            batch_first=True,
+            norm_first=True,
+        )
+        self.encoder = torch.nn.TransformerEncoder(encoder_layer, num_layers=transformer_depth)
+        self.norm = torch.nn.LayerNorm(embedding_dim)
+        self.head = torch.nn.Linear(embedding_dim, 1)
+        self._reset_parameters()
+
+    def _reset_parameters(self) -> None:
+        torch.nn.init.trunc_normal_(self.position_embedding, std=0.02)
+        torch.nn.init.trunc_normal_(self.class_token, std=0.02)
+
+    def forward(self, image: torch.Tensor) -> torch.Tensor:
+        patches = self.patch_embed(image).flatten(2).transpose(1, 2)
+        class_tokens = self.class_token.expand(image.shape[0], -1, -1)
+        tokens = torch.cat((class_tokens, patches), dim=1)
+        encoded = self.encoder(tokens + self.position_embedding)
+        return self.head(self.norm(encoded[:, 0])).squeeze(1)
+
+
 def build_classifier(config: ClassificationConfig) -> torch.nn.Module:
-    """Build deterministic small 3D classifier."""
+    """Build a deterministic classifier for the configured model family."""
     torch.manual_seed(config.random_seed)
-    return Small3DClassifier(config.channels, config.dropout)
+    if config.model_family == "small_3d_cnn":
+        return Small3DClassifier(config.channels, config.dropout)
+    if config.model_family == "tiny_3d_vit":
+        return Tiny3DViTClassifier(
+            input_shape=config.input_shape,
+            patch_size=config.patch_size,
+            embedding_dim=config.embedding_dim,
+            transformer_depth=config.transformer_depth,
+            num_heads=config.num_heads,
+            mlp_ratio=config.mlp_ratio,
+            dropout=config.transformer_dropout,
+        )
+    raise ValueError(f"Unsupported classification model family: {config.model_family}")
+
+
+def architecture_metadata(config: ClassificationConfig) -> dict[str, Any]:
+    """Return JSON-safe architecture metadata for evidence manifests."""
+    if config.model_family == "small_3d_cnn":
+        return {
+            "family": "small_3d_cnn",
+            "channels": list(config.channels),
+            "dropout": config.dropout,
+            "output_logits": 1,
+        }
+    patch_grid = [
+        axis // patch for axis, patch in zip(config.input_shape, config.patch_size, strict=True)
+    ]
+    return {
+        "family": "tiny_3d_vit",
+        "patch_size": list(config.patch_size),
+        "patch_grid": patch_grid,
+        "token_count": int(patch_grid[0] * patch_grid[1] * patch_grid[2] + 1),
+        "embedding_dim": config.embedding_dim,
+        "transformer_depth": config.transformer_depth,
+        "num_heads": config.num_heads,
+        "mlp_ratio": config.mlp_ratio,
+        "transformer_dropout": config.transformer_dropout,
+        "output_logits": 1,
+    }
 
 
 def parameter_count(model: torch.nn.Module) -> int:

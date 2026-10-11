@@ -32,6 +32,13 @@ uses one image channel, configurable convolution blocks, global average pooling,
 single fully connected logit. No pretrained weights, external model downloads, or public datasets
 are used.
 
+Milestone 20 keeps `small_3d_cnn` as the default model family and adds an optional
+`tiny_3d_vit` family for benchmark experiments. The tiny 3D Vision Transformer is implemented
+directly in PyTorch with a 3D convolutional patch embedding, learnable class token, learnable
+positional embedding for the configured input shape and patch size, a small
+`TransformerEncoder`, layer normalisation, and one binary logit. It is intentionally small for
+deterministic CPU smoke tests and does not use pretrained weights or model downloads.
+
 ## Training
 
 Training is CPU-compatible by default and records:
@@ -73,6 +80,27 @@ Generated artefacts are ignored by Git:
 Experiment outputs include best and last checkpoints, calibration evidence, threshold policy,
 configuration, training history, evaluation metrics, per-sample predictions, a model manifest, and
 `classification_report.md`.
+
+The `run-classification-benchmark` command writes benchmark evidence under
+`ml/experiments/classification-benchmark/<benchmark_id>/`, including
+`classification_benchmark_manifest.json`, `classification_benchmark_comparison.json`,
+`classification_benchmark_report.md`, and `evidence/checksum_manifest.json`. Each model is trained
+through the same classification trainer and keeps its own experiment directory below the benchmark
+output.
+
+## CNN Versus Vision Transformer Benchmark
+
+The M20 benchmark compares the existing compact CNN against the tiny 3D ViT on one already prepared
+classification dataset. It validates the existing `classification_manifest.json` once, then trains
+both model families with the same manifest, subject splits, image arrays, labels, training
+transforms, random seed, optimizer policy, learning rate, batch size, calibration method,
+threshold-selection method, and quality gates.
+
+Benchmark metrics reuse the existing classification metrics: AUROC, AUPRC, sensitivity/recall,
+specificity, precision, F1, Brier score, expected calibration error, and confusion counts. The
+benchmark also records parameter count, best-checkpoint size, training duration, and a bounded
+single-sample inference latency summary for each model. The comparison artifact reports deltas but
+does not declare a universally better architecture.
 
 ## Quality Gates
 

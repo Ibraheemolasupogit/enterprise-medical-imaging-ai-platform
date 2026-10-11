@@ -16,6 +16,7 @@ def render_classification_report(payload: dict[str, Any]) -> str:
         f"- Status: `{payload['status']}`",
         f"- Device: `{payload['device']}`",
         f"- Seed: `{payload['random_seed']}`",
+        f"- Model family: `{payload.get('model_family', payload['model_architecture']['family'])}`",
         f"- Model parameters: `{payload['model_parameter_count']}`",
         f"- Best epoch: `{payload['best_epoch']}`",
         f"- Calibration: `{payload['calibration']['method']}`",

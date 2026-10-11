@@ -19,7 +19,11 @@ from medical_imaging_platform.classification.dataset import (
 from medical_imaging_platform.classification.export import write_experiment_evidence
 from medical_imaging_platform.classification.losses import classification_loss
 from medical_imaging_platform.classification.metrics import compute_classification_metrics
-from medical_imaging_platform.classification.model_factory import build_classifier, parameter_count
+from medical_imaging_platform.classification.model_factory import (
+    architecture_metadata,
+    build_classifier,
+    parameter_count,
+)
 from medical_imaging_platform.classification.models import ClassificationConfig
 from medical_imaging_platform.classification.pipeline import (
     configuration_checksum,
@@ -55,7 +59,7 @@ def train_classification_experiment(
     )
     set_reproducibility(effective.random_seed)
     manifest = validate_classification_dataset(dataset_dir)
-    experiment_id = f"classification-{manifest.dataset_id}-{effective.policy_version}"
+    experiment_id = _experiment_id(manifest.dataset_id, effective)
     output_dir = safe_output_dir(output_root, experiment_id)
     if output_dir.exists() and any(output_dir.iterdir()) and not overwrite:
         raise FileExistsError(f"Classification experiment already exists: {output_dir}")
@@ -164,12 +168,8 @@ def train_classification_experiment(
         "device": str(device),
         "random_seed": effective.random_seed,
         "dependency_versions": dependency_versions(),
-        "model_architecture": {
-            "family": "small_3d_cnn",
-            "channels": list(effective.channels),
-            "dropout": effective.dropout,
-            "output_logits": 1,
-        },
+        "model_family": effective.model_family,
+        "model_architecture": architecture_metadata(effective),
         "model_parameter_count": parameter_count(best_model),
         "class_counts": manifest.class_counts,
         "class_weight": positive_weight,
@@ -322,6 +322,13 @@ def _recommended_next_action(status: str) -> str:
     if status == "PASS_WITH_WARNINGS":
         return "Review classification warnings before downstream research use."
     return "Do not use this classifier downstream without remediation."
+
+
+def _experiment_id(dataset_id: str, config: ClassificationConfig) -> str:
+    base = f"classification-{dataset_id}-{config.policy_version}"
+    if config.model_family == "small_3d_cnn":
+        return base
+    return f"{base}-{config.model_family}"
 
 
 def _threshold_value(threshold_policy: dict[str, object]) -> float:
