@@ -1,3 +1,4 @@
+# mypy: disable-error-code="misc"
 """Classification model factory."""
 
 from __future__ import annotations
@@ -9,7 +10,7 @@ import torch
 from medical_imaging_platform.classification.models import ClassificationConfig
 
 
-class Small3DClassifier(torch.nn.Module):  # type: ignore[misc]
+class Small3DClassifier(torch.nn.Module):
     """Configurable compact 3D CNN with global average pooling."""
 
     def __init__(self, channels: tuple[int, ...], dropout: float) -> None:
@@ -20,29 +21,33 @@ class Small3DClassifier(torch.nn.Module):  # type: ignore[misc]
             layers.extend(
                 [
                     torch.nn.Conv3d(in_channels, out_channels, kernel_size=3, padding=1),
-                    torch.nn.InstanceNorm3d(out_channels),
-                    torch.nn.ReLU(inplace=True),
-                    torch.nn.MaxPool3d(kernel_size=2),
+                    torch.nn.BatchNorm3d(out_channels),
+                    torch.nn.GELU(),
+                    torch.nn.MaxPool3d(kernel_size=2, stride=2),
                 ]
             )
             in_channels = out_channels
         self.features = torch.nn.Sequential(*layers)
-        self.pool = torch.nn.AdaptiveAvgPool3d(1)
         self.dropout = torch.nn.Dropout(dropout)
         self.head = torch.nn.Linear(channels[-1], 1)
 
-    def forward(self, image: torch.Tensor) -> torch.Tensor:
+    @property
+    def feature_dim(self) -> int:
+        return int(self.head.in_features)
+
+    def extract_features(self, image: torch.Tensor) -> torch.Tensor:
         features = self.features(image)
-        pooled = self.pool(features).flatten(1)
-        return self.head(self.dropout(pooled)).squeeze(1)
+        return torch.nn.functional.adaptive_avg_pool3d(features, output_size=1).flatten(1)
+
+    def forward(self, image: torch.Tensor) -> torch.Tensor:
+        return self.head(self.dropout(self.extract_features(image))).squeeze(1)
 
 
-class Tiny3DViTClassifier(torch.nn.Module):  # type: ignore[misc]
-    """Tiny native PyTorch 3D Vision Transformer for ROI-like volumes."""
+class Tiny3DViTClassifier(torch.nn.Module):
+    """Small native 3D ViT for deterministic engineering benchmarks."""
 
     def __init__(
         self,
-        *,
         input_shape: tuple[int, int, int],
         patch_size: tuple[int, int, int],
         embedding_dim: int,
@@ -52,20 +57,21 @@ class Tiny3DViTClassifier(torch.nn.Module):  # type: ignore[misc]
         dropout: float,
     ) -> None:
         super().__init__()
+        self.input_shape = input_shape
+        self.patch_size = patch_size
+        self.grid_size = tuple(
+            axis // patch for axis, patch in zip(input_shape, patch_size, strict=True)
+        )
+        token_count = self.grid_size[0] * self.grid_size[1] * self.grid_size[2]
         self.patch_embed = torch.nn.Conv3d(
             1, embedding_dim, kernel_size=patch_size, stride=patch_size
         )
-        patch_grid = tuple(
-            axis // patch for axis, patch in zip(input_shape, patch_size, strict=True)
-        )
-        token_count = patch_grid[0] * patch_grid[1] * patch_grid[2]
         self.class_token = torch.nn.Parameter(torch.zeros(1, 1, embedding_dim))
         self.position_embedding = torch.nn.Parameter(torch.zeros(1, token_count + 1, embedding_dim))
-        hidden_dim = max(1, int(round(embedding_dim * mlp_ratio)))
         encoder_layer = torch.nn.TransformerEncoderLayer(
             d_model=embedding_dim,
             nhead=num_heads,
-            dim_feedforward=hidden_dim,
+            dim_feedforward=int(embedding_dim * mlp_ratio),
             dropout=dropout,
             activation="gelu",
             batch_first=True,
@@ -80,12 +86,18 @@ class Tiny3DViTClassifier(torch.nn.Module):  # type: ignore[misc]
         torch.nn.init.trunc_normal_(self.position_embedding, std=0.02)
         torch.nn.init.trunc_normal_(self.class_token, std=0.02)
 
+    @property
+    def feature_dim(self) -> int:
+        return int(self.head.in_features)
+
+    def extract_features(self, image: torch.Tensor) -> torch.Tensor:
+        tokens = self.patch_embed(image).flatten(2).transpose(1, 2)
+        class_token = self.class_token.expand(tokens.shape[0], -1, -1)
+        encoded = self.encoder(torch.cat((class_token, tokens), dim=1) + self.position_embedding)
+        return self.norm(encoded[:, 0])
+
     def forward(self, image: torch.Tensor) -> torch.Tensor:
-        patches = self.patch_embed(image).flatten(2).transpose(1, 2)
-        class_tokens = self.class_token.expand(image.shape[0], -1, -1)
-        tokens = torch.cat((class_tokens, patches), dim=1)
-        encoded = self.encoder(tokens + self.position_embedding)
-        return self.head(self.norm(encoded[:, 0])).squeeze(1)
+        return self.head(self.extract_features(image)).squeeze(1)
 
 
 def build_classifier(config: ClassificationConfig) -> torch.nn.Module:
@@ -103,16 +115,16 @@ def build_classifier(config: ClassificationConfig) -> torch.nn.Module:
             mlp_ratio=config.mlp_ratio,
             dropout=config.transformer_dropout,
         )
-    raise ValueError(f"Unsupported classification model family: {config.model_family}")
+    raise ValueError(f"Unsupported model family: {config.model_family}")
 
 
 def architecture_metadata(config: ClassificationConfig) -> dict[str, Any]:
-    """Return JSON-safe architecture metadata for evidence manifests."""
     if config.model_family == "small_3d_cnn":
         return {
             "family": "small_3d_cnn",
             "channels": list(config.channels),
             "dropout": config.dropout,
+            "embedding_dim": config.channels[-1],
             "output_logits": 1,
         }
     patch_grid = [

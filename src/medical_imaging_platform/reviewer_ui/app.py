@@ -10,6 +10,7 @@ from medical_imaging_platform.reviewer_ui.config import load_reviewer_ui_config
 from medical_imaging_platform.reviewer_ui.pages import (
     classification,
     detection,
+    embeddings,
     evidence,
     governance,
     longitudinal,
@@ -58,6 +59,8 @@ def run_reviewer_app(config_path: Path | None = None) -> None:
         detection.render(st, config, client)
     elif selected == "Longitudinal":
         longitudinal.render(st, config, client)
+    elif selected == "Embeddings":
+        embeddings.render(st, None)
     elif selected == "Evidence":
         evidence.render(st, config, client)
     else:

@@ -1,0 +1,9 @@
+policy_version: M22-v1
+normalization: l2
+gallery_splits: [train, validation]
+query_splits: [test]
+top_k: [1, 5]
+relevance: scenario
+exclude_self: true
+exclude_same_source: false
+output_directory: ml/embeddings

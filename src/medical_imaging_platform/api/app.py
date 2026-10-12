@@ -20,6 +20,7 @@ from medical_imaging_platform.api.observability import MetricsRegistry, structur
 from medical_imaging_platform.api.routes import (
     classification,
     detection,
+    embeddings,
     health,
     longitudinal,
     review,
@@ -68,6 +69,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     app.include_router(detection.router)
     app.include_router(longitudinal.router)
     app.include_router(review.router)
+    app.include_router(embeddings.router)
     return app
 
 
