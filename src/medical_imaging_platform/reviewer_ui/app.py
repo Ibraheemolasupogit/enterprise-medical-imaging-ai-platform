@@ -9,6 +9,7 @@ from medical_imaging_platform.reviewer_ui.components.disclaimers import render_d
 from medical_imaging_platform.reviewer_ui.config import load_reviewer_ui_config
 from medical_imaging_platform.reviewer_ui.pages import (
     classification,
+    detection,
     evidence,
     governance,
     longitudinal,
@@ -38,6 +39,8 @@ def run_reviewer_app(config_path: Path | None = None) -> None:
         pages.append("Segmentation")
     if config.enable_classification_page:
         pages.append("Classification")
+    if config.enable_detection_page:
+        pages.append("Detection")
     if config.enable_longitudinal_page:
         pages.append("Longitudinal")
     if config.enable_evidence_page:
@@ -51,6 +54,8 @@ def run_reviewer_app(config_path: Path | None = None) -> None:
         segmentation.render(st, config, client)
     elif selected == "Classification":
         classification.render(st, config, client)
+    elif selected == "Detection":
+        detection.render(st, config, client)
     elif selected == "Longitudinal":
         longitudinal.render(st, config, client)
     elif selected == "Evidence":

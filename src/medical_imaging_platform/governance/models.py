@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 LifecycleState = Literal["candidate", "approved", "rejected", "retired"]
 MonitoringStatus = Literal["PASS", "WARN", "ALERT"]
-ModelType = Literal["segmentation", "classification"]
+ModelType = Literal["segmentation", "classification", "detection"]
 ReviewerAction = Literal["none", "accepted", "rejected", "corrected", "indeterminate"]
 ActorType = Literal["system", "human_reviewer", "governance_reviewer", "service_account"]
 

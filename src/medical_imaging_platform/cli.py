@@ -49,6 +49,7 @@ from medical_imaging_platform.utils.config import (
     load_api_config,
     load_classification_config,
     load_container_config,
+    load_detection_config,
     load_dicom_ingestion_config,
     load_localisation_config,
     load_longitudinal_config,
@@ -429,6 +430,77 @@ def build_parser() -> argparse.ArgumentParser:
     classify_volume_parser.add_argument("--overwrite", action="store_true")
     classify_volume_parser.add_argument("--json", action="store_true")
 
+    prepare_detection_parser = subparsers.add_parser(
+        "prepare-detection-data",
+        help="Prepare synthetic 2D axial lesion detection samples.",
+    )
+    prepare_detection_parser.add_argument(
+        "--synthetic-dataset-dir", default="data/synthetic/generated"
+    )
+    prepare_detection_parser.add_argument("--config", default="config/detection.yaml")
+    prepare_detection_parser.add_argument("--output-dir", default=None)
+    prepare_detection_parser.add_argument("--overwrite", action="store_true")
+    prepare_detection_parser.add_argument("--json", action="store_true")
+
+    train_detection_parser = subparsers.add_parser(
+        "train-detection",
+        help="Train a synthetic 2D lesion detector.",
+    )
+    train_detection_parser.add_argument("dataset_dir")
+    train_detection_parser.add_argument("--config", default="config/detection.yaml")
+    train_detection_parser.add_argument("--output-dir", default=None)
+    train_detection_parser.add_argument(
+        "--model-family", choices=["faster_rcnn", "tiny_detr"], default=None
+    )
+    train_detection_parser.add_argument("--seed", type=int, default=None)
+    train_detection_parser.add_argument("--epochs", type=int, default=None)
+    train_detection_parser.add_argument("--device", default=None)
+    train_detection_parser.add_argument("--overwrite", action="store_true")
+    train_detection_parser.add_argument("--json", action="store_true")
+
+    benchmark_detection_parser = subparsers.add_parser(
+        "run-detection-benchmark",
+        help="Run a fair Faster R-CNN versus tiny DETR benchmark on a prepared detection dataset.",
+    )
+    benchmark_detection_parser.add_argument("dataset_dir")
+    benchmark_detection_parser.add_argument("--config", default="config/detection.yaml")
+    benchmark_detection_parser.add_argument(
+        "--output-dir", default="ml/experiments/detection-benchmark"
+    )
+    benchmark_detection_parser.add_argument("--seed", type=int, default=None)
+    benchmark_detection_parser.add_argument("--epochs", type=int, default=None)
+    benchmark_detection_parser.add_argument("--device", default=None)
+    benchmark_detection_parser.add_argument("--overwrite", action="store_true")
+    benchmark_detection_parser.add_argument("--json", action="store_true")
+
+    evaluate_detection_parser = subparsers.add_parser(
+        "evaluate-detection",
+        help="Validate and inspect a detection experiment.",
+    )
+    evaluate_detection_parser.add_argument("experiment_dir")
+    evaluate_detection_parser.add_argument("--json", action="store_true")
+
+    validate_detection_parser = subparsers.add_parser(
+        "validate-detection-experiment",
+        help="Validate a detection experiment directory.",
+    )
+    validate_detection_parser.add_argument("experiment_dir")
+    validate_detection_parser.add_argument("--json", action="store_true")
+
+    detect_slice_parser = subparsers.add_parser(
+        "detect-slice",
+        help="Run detection inference for one prepared 2D .npy slice.",
+    )
+    detect_slice_parser.add_argument("input_slice")
+    detect_slice_parser.add_argument("--checkpoint", required=True)
+    detect_slice_parser.add_argument("--config", default="config/detection.yaml")
+    detect_slice_parser.add_argument("--output-dir", required=True)
+    detect_slice_parser.add_argument(
+        "--model-family", choices=["faster_rcnn", "tiny_detr"], default=None
+    )
+    detect_slice_parser.add_argument("--overwrite", action="store_true")
+    detect_slice_parser.add_argument("--json", action="store_true")
+
     inspect_classification_parser = subparsers.add_parser(
         "inspect-classification-experiment",
         help="Inspect a classification experiment directory.",
@@ -559,7 +631,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Register deterministic synthetic model versions in the local governed registry.",
     )
     register_model_parser.add_argument(
-        "--model-type", choices=["segmentation", "classification", "all"], default="all"
+        "--model-type",
+        choices=["segmentation", "classification", "detection", "all"],
+        default="all",
     )
     register_model_parser.add_argument("--registry-path", default=None)
     register_model_parser.add_argument("--json", action="store_true")
@@ -1529,6 +1603,170 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Wrote classification inference outputs to {args.output_dir}.")
         return 0
 
+    if args.command == "prepare-detection-data":
+        from medical_imaging_platform.detection.dataset import (
+            DetectionDataError,
+            prepare_detection_dataset,
+        )
+
+        try:
+            detection_config = load_detection_config(Path(args.config))
+            output_root = (
+                Path(args.output_dir)
+                if args.output_dir is not None
+                else detection_config.dataset_output_directory
+            )
+            detection_manifest = prepare_detection_dataset(
+                Path(args.synthetic_dataset_dir),
+                output_root=output_root,
+                config=detection_config,
+                overwrite=args.overwrite,
+            )
+        except (ConfigError, DetectionDataError, FileExistsError) as exc:
+            print(f"Detection dataset preparation failed: {exc}")
+            return 1
+        if args.json:
+            print(json.dumps(detection_manifest.model_dump(mode="json"), indent=2, sort_keys=True))
+        else:
+            print(
+                f"Prepared detection dataset {detection_manifest.dataset_id} "
+                f"with {len(detection_manifest.samples)} samples."
+            )
+        return 0
+
+    if args.command == "train-detection":
+        from medical_imaging_platform.detection.trainer import train_detection_experiment
+
+        try:
+            detection_config = load_detection_config(Path(args.config))
+            detection_config = detection_config.model_copy(
+                update={
+                    key: value
+                    for key, value in {
+                        "model_family": args.model_family,
+                        "random_seed": args.seed,
+                        "epochs": args.epochs,
+                        "device": args.device,
+                    }.items()
+                    if value is not None
+                }
+            )
+            output_root = (
+                Path(args.output_dir)
+                if args.output_dir is not None
+                else detection_config.output_directory
+            )
+            detection_payload = train_detection_experiment(
+                Path(args.dataset_dir),
+                output_root=output_root,
+                config=detection_config,
+                overwrite=args.overwrite,
+            )
+        except ValueError as exc:
+            print(f"Detection training rejected: {exc}")
+            return 3
+        except (ConfigError, MedicalImagingPlatformError, FileExistsError) as exc:
+            print(f"Detection training failed: {exc}")
+            return 1
+        if args.json:
+            print(json.dumps(detection_payload, indent=2, sort_keys=True))
+        else:
+            print(
+                f"Trained detection experiment {detection_payload['experiment_id']} "
+                f"status={detection_payload['status']}."
+            )
+        return 0 if detection_payload["status"] != "FAIL" else 2
+
+    if args.command == "run-detection-benchmark":
+        from medical_imaging_platform.detection.benchmark import run_detection_benchmark
+
+        try:
+            detection_config = load_detection_config(Path(args.config))
+            detection_config = detection_config.model_copy(
+                update={
+                    key: value
+                    for key, value in {
+                        "random_seed": args.seed,
+                        "epochs": args.epochs,
+                        "device": args.device,
+                    }.items()
+                    if value is not None
+                }
+            )
+            detection_benchmark = run_detection_benchmark(
+                Path(args.dataset_dir),
+                output_root=Path(args.output_dir),
+                config=detection_config,
+                overwrite=args.overwrite,
+            )
+        except ValueError as exc:
+            print(f"Detection benchmark rejected: {exc}")
+            return 3
+        except (ConfigError, MedicalImagingPlatformError, FileExistsError) as exc:
+            print(f"Detection benchmark failed: {exc}")
+            return 1
+        if args.json:
+            print(json.dumps(detection_benchmark, indent=2, sort_keys=True))
+        else:
+            print(
+                f"Ran detection benchmark {detection_benchmark['benchmark_id']} "
+                f"on dataset {detection_benchmark['dataset_id']}."
+            )
+        return 0
+
+    if args.command in {"evaluate-detection", "validate-detection-experiment"}:
+        from medical_imaging_platform.detection.export import (
+            DetectionOutputError,
+            inspect_detection_experiment,
+            validate_detection_experiment,
+        )
+
+        try:
+            detection_summary = (
+                validate_detection_experiment(Path(args.experiment_dir))
+                if args.command == "validate-detection-experiment"
+                else inspect_detection_experiment(Path(args.experiment_dir))
+            )
+        except DetectionOutputError as exc:
+            print(f"Detection experiment validation failed: {exc}")
+            return 4
+        if args.json:
+            print(json.dumps(detection_summary, indent=2, sort_keys=True))
+        else:
+            print(
+                f"Detection experiment {detection_summary['experiment_id']} "
+                f"status={detection_summary['status']}."
+            )
+        return 0
+
+    if args.command == "detect-slice":
+        from medical_imaging_platform.detection.inference import detect_slice
+
+        try:
+            detection_config = load_detection_config(Path(args.config))
+            if args.model_family is not None:
+                detection_config = detection_config.model_copy(
+                    update={"model_family": args.model_family}
+                )
+            detection_metadata = detect_slice(
+                Path(args.input_slice),
+                checkpoint_path=Path(args.checkpoint),
+                output_dir=Path(args.output_dir),
+                config=detection_config,
+                overwrite=args.overwrite,
+            )
+        except ValueError as exc:
+            print(f"Detection inference rejected: {exc}")
+            return 3
+        except (ConfigError, MedicalImagingPlatformError, FileExistsError) as exc:
+            print(f"Detection inference failed: {exc}")
+            return 1
+        if args.json:
+            print(json.dumps(detection_metadata, indent=2, sort_keys=True))
+        else:
+            print(f"Wrote detection inference outputs to {args.output_dir}.")
+        return 0
+
     if args.command == "validate-api-config":
         try:
             api_config = load_api_config(Path(args.config))
@@ -2025,6 +2263,7 @@ def main(argv: list[str] | None = None) -> int:
             model_types: tuple[tuple[ModelType, str, str], ...] = (
                 ("segmentation", "m14-segmentation-synthetic-v1", "config/segmentation.yaml"),
                 ("classification", "m14-classification-synthetic-v1", "config/classification.yaml"),
+                ("detection", "m21-detection-synthetic-v1", "config/detection.yaml"),
             )
             selected = [
                 item

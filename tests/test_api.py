@@ -14,10 +14,15 @@ from medical_imaging_platform.classification.checkpoint import (
 )
 from medical_imaging_platform.classification.model_factory import build_classifier
 from medical_imaging_platform.cli import main
+from medical_imaging_platform.detection.checkpoint import (
+    save_state_dict as save_detector_state,
+)
+from medical_imaging_platform.detection.model_factory import build_detector
 from medical_imaging_platform.segmentation.checkpoint import save_state_dict as save_unet_state
 from medical_imaging_platform.segmentation.model_factory import build_unet
 from medical_imaging_platform.utils.config import (
     load_classification_config,
+    load_detection_config,
     load_segmentation_config,
 )
 
@@ -29,6 +34,7 @@ def _write_api_config(
     maximum_array_bytes: int = 2_000_000,
     segmentation_checkpoint: Path | None = None,
     classification_checkpoint: Path | None = None,
+    detection_checkpoint: Path | None = None,
     calibration: Path | None = None,
     threshold_policy: Path | None = None,
 ) -> Path:
@@ -66,6 +72,8 @@ def _write_api_config(
                 "classification_checkpoint": (
                     str(classification_checkpoint) if classification_checkpoint else None
                 ),
+                "detection_checkpoint": str(detection_checkpoint) if detection_checkpoint else None,
+                "detection_config": "config/detection.yaml",
                 "classification_calibration": str(calibration) if calibration else None,
                 "classification_threshold_policy": (
                     str(threshold_policy) if threshold_policy else None
@@ -84,10 +92,13 @@ def _api_artifacts(tmp_path: Path) -> dict[str, Path]:
     tmp_path.mkdir(parents=True, exist_ok=True)
     seg_config = load_segmentation_config(Path("config/segmentation.yaml"))
     cls_config = load_classification_config(Path("config/classification.yaml"))
+    det_config = load_detection_config(Path("config/detection.yaml"))
     seg_checkpoint = tmp_path / "segmentation.pt"
     cls_checkpoint = tmp_path / "classification.pt"
+    det_checkpoint = tmp_path / "detection.pt"
     save_unet_state(seg_checkpoint, build_unet(seg_config))
     save_classifier_state(cls_checkpoint, build_classifier(cls_config))
+    save_detector_state(det_checkpoint, build_detector(det_config))
     calibration = tmp_path / "calibration.json"
     calibration.write_text(
         json.dumps(
@@ -108,6 +119,7 @@ def _api_artifacts(tmp_path: Path) -> dict[str, Path]:
     return {
         "segmentation": seg_checkpoint,
         "classification": cls_checkpoint,
+        "detection": det_checkpoint,
         "calibration": calibration,
         "threshold_policy": threshold_policy,
     }
@@ -120,6 +132,7 @@ def api_config_path(tmp_path: Path) -> Path:
         tmp_path,
         segmentation_checkpoint=artifacts["segmentation"],
         classification_checkpoint=artifacts["classification"],
+        detection_checkpoint=artifacts["detection"],
         calibration=artifacts["calibration"],
         threshold_policy=artifacts["threshold_policy"],
     )
@@ -184,6 +197,22 @@ def test_classification_prediction_from_array_payload(client: TestClient) -> Non
     assert payload["engineering_label"] == "indeterminate"
     assert payload["abstained"] is True
     assert "calibration_checksum" in payload
+
+
+def test_detection_prediction_from_array_payload(client: TestClient) -> None:
+    values = np.zeros((32, 32), dtype=np.float32).ravel().tolist()
+
+    response = client.post(
+        "/v1/detection/predict",
+        json={"array": {"shape": [32, 32], "values": values}},
+    )
+
+    payload = response.json()
+    assert response.status_code == 200
+    assert payload["status"] == "completed"
+    assert payload["model_family"] == "faster_rcnn"
+    assert payload["box_count"] == len(payload["boxes"])
+    assert "checkpoint_checksum" in payload
 
 
 def test_longitudinal_analysis_and_review_are_read_only(client: TestClient) -> None:

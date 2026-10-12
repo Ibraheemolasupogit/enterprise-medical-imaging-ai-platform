@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from medical_imaging_platform.api.models import APIConfig
 from medical_imaging_platform.classification.models import ClassificationConfig
+from medical_imaging_platform.detection.models import DetectionConfig
 from medical_imaging_platform.ingestion.models import DicomIngestionConfig
 from medical_imaging_platform.localisation.models import LocalisationConfig
 from medical_imaging_platform.longitudinal.models import LongitudinalConfig
@@ -73,6 +74,7 @@ class RepositoryConfigSet(BaseModel):
         "localisation.yaml",
         "segmentation.yaml",
         "classification.yaml",
+        "detection.yaml",
         "longitudinal.yaml",
         "evaluation.yaml",
         "monitoring.yaml",
@@ -214,6 +216,18 @@ def load_classification_config(path: Path) -> ClassificationConfig:
         return ClassificationConfig.model_validate(settings["classification"])
     except ValidationError as exc:
         raise ConfigError(f"Invalid classification configuration in {path}: {exc}") from exc
+
+
+def load_detection_config(path: Path) -> DetectionConfig:
+    """Load typed Milestone 21 detection settings from detection.yaml."""
+    data = load_yaml_file(path)
+    settings = data.get("settings")
+    if not isinstance(settings, dict) or "detection" not in settings:
+        raise ConfigError(f"Missing settings.detection in {path}")
+    try:
+        return DetectionConfig.model_validate(settings["detection"])
+    except ValidationError as exc:
+        raise ConfigError(f"Invalid detection configuration in {path}: {exc}") from exc
 
 
 def load_longitudinal_config(path: Path) -> LongitudinalConfig:

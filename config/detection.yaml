@@ -1,0 +1,48 @@
+config_name: detection
+milestone: 21
+status: foundation
+purpose: Synthetic 2D axial lesion detection engineering baseline.
+owner: medical-imaging-platform
+settings:
+  detection:
+    policy_version: "m21-detection-v1"
+    random_seed: 20261011
+    device: cpu
+    model_family: faster_rcnn
+    image_shape: [32, 32]
+    batch_size: 2
+    num_workers: 0
+    epochs: 1
+    learning_rate: 0.001
+    weight_decay: 0.0
+    optimizer: adam
+    max_positive_slices_per_volume: 2
+    max_negative_slices_per_volume: 1
+    minimum_lesion_pixels: 1
+    score_threshold: 0.05
+    nms_iou_threshold: 0.5
+    evaluation_iou_thresholds: [0.5, 0.75]
+    faster_rcnn_anchor_sizes: [8, 16]
+    faster_rcnn_aspect_ratios: [0.5, 1.0, 2.0]
+    hidden_channels: 8
+    embedding_dim: 16
+    transformer_depth: 1
+    num_heads: 4
+    num_queries: 4
+    mlp_ratio: 2.0
+    no_object_weight: 0.1
+    box_loss_weight: 5.0
+    iou_loss_weight: 2.0
+    minimum_validation_map: 0.0
+    maximum_false_positives_per_image: 100.0
+    dataset_output_directory: ml/datasets/detection
+    output_directory: ml/experiments/detection
+    overwrite: false
+safeguards:
+  - Synthetic/de-identified engineering use only.
+  - 2D axial boxes do not represent full 3D lesion extent.
+  - Detector confidence is not a clinical probability.
+  - No diagnosis, triage, RECIST, patient-management, or medical-device claims.
+future_capabilities:
+  - Public de-identified detection datasets after governance review.
+  - Human-reviewed detection overlays after model-change review.

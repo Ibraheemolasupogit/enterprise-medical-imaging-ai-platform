@@ -35,6 +35,8 @@ settings:
     classification_checkpoint: null
     classification_calibration: null
     classification_threshold_policy: null
+    detection_checkpoint: null
+    detection_config: config/detection.yaml
     longitudinal_config: config/longitudinal.yaml
     output_directory: ml/experiments/api
 safeguards:

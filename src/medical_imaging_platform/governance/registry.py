@@ -62,21 +62,21 @@ def build_model_record(
     training_data_reference: str,
 ) -> ModelVersionRecord:
     """Build a deterministic candidate registry record."""
-    metrics: dict[str, float] = (
-        {"dice": 0.74, "recall": 0.82, "false_positive_voxel_rate": 0.04}
-        if model_type == "segmentation"
-        else {"auroc": 0.86, "brier_score": 0.14, "expected_calibration_error": 0.06}
-    )
-    thresholds: dict[str, float] = (
-        {"mask_probability_threshold": 0.50, "minimum_component_voxels": 8.0}
-        if model_type == "segmentation"
-        else {"positive_threshold": 0.62, "abstain_low": 0.45, "abstain_high": 0.55}
-    )
-    calibration: dict[str, Any] = (
-        {"method": "not_applicable_for_synthetic_segmentation_baseline"}
-        if model_type == "segmentation"
-        else {"method": "validation_only_temperature_scaling", "temperature": 1.15}
-    )
+    metrics: dict[str, float]
+    thresholds: dict[str, float]
+    calibration: dict[str, Any]
+    if model_type == "segmentation":
+        metrics = {"dice": 0.74, "recall": 0.82, "false_positive_voxel_rate": 0.04}
+        thresholds = {"mask_probability_threshold": 0.50, "minimum_component_voxels": 8.0}
+        calibration = {"method": "not_applicable_for_synthetic_segmentation_baseline"}
+    elif model_type == "detection":
+        metrics = {"ap50": 0.50, "ap75": 0.25, "false_positives_per_image": 0.5}
+        thresholds = {"score_threshold": 0.05, "nms_iou_threshold": 0.50}
+        calibration = {"method": "not_applicable_for_synthetic_detection_baseline"}
+    else:
+        metrics = {"auroc": 0.86, "brier_score": 0.14, "expected_calibration_error": 0.06}
+        thresholds = {"positive_threshold": 0.62, "abstain_low": 0.45, "abstain_high": 0.55}
+        calibration = {"method": "validation_only_temperature_scaling", "temperature": 1.15}
     return ModelVersionRecord(
         model_name=f"synthetic-{model_type}-baseline",
         version=version,
@@ -171,6 +171,7 @@ def ensure_demo_registry(path: Path = REGISTRY_PATH) -> RegistryManifest:
     defaults: list[tuple[ModelType, str, str]] = [
         ("segmentation", "m14-segmentation-synthetic-v1", "config/segmentation.yaml"),
         ("classification", "m14-classification-synthetic-v1", "config/classification.yaml"),
+        ("detection", "m21-detection-synthetic-v1", "config/detection.yaml"),
     ]
     for model_type, version, config_ref in defaults:
         if (model_type, version) not in existing:

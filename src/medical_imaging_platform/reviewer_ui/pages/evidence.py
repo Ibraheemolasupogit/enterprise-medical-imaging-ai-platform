@@ -17,7 +17,7 @@ from medical_imaging_platform.reviewer_ui.state import remember_response
 def render(st_module: Any, config: ReviewerUIConfig, client: ReviewerAPIClient) -> None:
     st_module.header("Existing Evidence Inspection")
     evidence_type = st_module.selectbox(
-        "Evidence type", ["segmentation", "classification", "longitudinal"]
+        "Evidence type", ["segmentation", "classification", "detection", "longitudinal"]
     )
     evidence_id = st_module.text_input("Experiment or analysis ID")
     if st_module.button("Inspect evidence"):
@@ -27,6 +27,8 @@ def render(st_module: Any, config: ReviewerUIConfig, client: ReviewerAPIClient) 
                 response = client.review_segmentation(safe_id)
             elif evidence_type == "classification":
                 response = client.review_classification(safe_id)
+            elif evidence_type == "detection":
+                response = client.review_detection(safe_id)
             else:
                 response = client.review_longitudinal(safe_id)
             remember_response(

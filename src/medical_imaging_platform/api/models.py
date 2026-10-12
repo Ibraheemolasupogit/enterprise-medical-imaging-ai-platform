@@ -45,6 +45,8 @@ class APIConfig(BaseModel):
     classification_checkpoint: Path | None = None
     classification_calibration: Path | None = None
     classification_threshold_policy: Path | None = None
+    detection_checkpoint: Path | None = None
+    detection_config: Path = Path("config/detection.yaml")
     longitudinal_config: Path = Path("config/longitudinal.yaml")
     output_directory: Path = Path("ml/experiments/api")
 
@@ -79,6 +81,22 @@ class ArrayPayload(BaseModel):
     def shape_valid(cls, value: tuple[int, int, int]) -> tuple[int, int, int]:
         if len(value) != 3 or any(axis <= 0 for axis in value):
             raise ValueError("shape must contain three positive dimensions")
+        return value
+
+
+class SlicePayload(BaseModel):
+    """Compact JSON 2D array payload."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    shape: tuple[int, int]
+    values: list[float | int]
+
+    @field_validator("shape")
+    @classmethod
+    def shape_valid(cls, value: tuple[int, int]) -> tuple[int, int]:
+        if len(value) != 2 or any(axis <= 0 for axis in value):
+            raise ValueError("shape must contain two positive dimensions")
         return value
 
 
@@ -117,6 +135,22 @@ class ClassificationPredictRequest(BaseModel):
 
     @model_validator(mode="after")
     def exactly_one_input(self) -> ClassificationPredictRequest:
+        if (self.input_path is None) == (self.array is None):
+            raise ValueError("Provide exactly one of input_path or array.")
+        return self
+
+
+class DetectionPredictRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    request_id: str | None = None
+    input_path: str | None = None
+    array: SlicePayload | None = None
+    persist_output: bool = False
+    source_provenance: dict[str, str] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def exactly_one_input(self) -> DetectionPredictRequest:
         if (self.input_path is None) == (self.array is None):
             raise ValueError("Provide exactly one of input_path or array.")
         return self

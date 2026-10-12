@@ -19,6 +19,7 @@ from medical_imaging_platform.api.models import DISCLAIMER
 from medical_imaging_platform.api.observability import MetricsRegistry, structured_log_event
 from medical_imaging_platform.api.routes import (
     classification,
+    detection,
     health,
     longitudinal,
     review,
@@ -47,6 +48,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
                 config.classification_checkpoint,
                 config.classification_calibration,
                 config.classification_threshold_policy,
+                config.detection_checkpoint,
             ]
         ),
         "event": structured_log_event(
@@ -63,6 +65,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     app.include_router(health.router)
     app.include_router(segmentation.router)
     app.include_router(classification.router)
+    app.include_router(detection.router)
     app.include_router(longitudinal.router)
     app.include_router(review.router)
     return app

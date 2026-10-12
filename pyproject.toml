@@ -38,6 +38,7 @@ dependencies = [
   "SimpleITK>=2.5,<3",
   "streamlit>=1.36,<2",
   "torch>=2.4,<3",
+  "torchvision>=0.28,<0.29",
   "uvicorn>=0.30,<1"
 ]
 

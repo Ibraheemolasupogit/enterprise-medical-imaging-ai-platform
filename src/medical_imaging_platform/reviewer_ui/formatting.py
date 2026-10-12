@@ -54,6 +54,23 @@ def format_classification_response(payload: dict[str, Any]) -> dict[str, object]
     }
 
 
+def format_detection_response(payload: dict[str, Any]) -> dict[str, object]:
+    return {
+        "status": payload.get("status", "unknown"),
+        "model_family": payload.get("model_family"),
+        "boxes": payload.get("boxes", []),
+        "labels": payload.get("labels", []),
+        "scores": payload.get("scores", []),
+        "box_count": int(payload.get("box_count", 0)),
+        "checkpoint_checksum": payload.get("checkpoint_checksum"),
+        "source_provenance": payload.get("source_provenance", {}),
+        "output_paths": payload.get("output_paths", {}),
+        "duration_ms": payload.get("duration_ms"),
+        "warnings": payload.get("warnings", []),
+        "disclaimer": payload.get("disclaimer"),
+    }
+
+
 def format_longitudinal_response(payload: dict[str, Any]) -> dict[str, object]:
     labels = payload.get("engineering_label", [])
     if isinstance(labels, str):

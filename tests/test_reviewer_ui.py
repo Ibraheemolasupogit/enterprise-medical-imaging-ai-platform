@@ -21,6 +21,7 @@ from medical_imaging_platform.reviewer_ui.export import export_review_session
 from medical_imaging_platform.reviewer_ui.formatting import (
     format_api_error,
     format_classification_response,
+    format_detection_response,
     format_evidence_response,
     format_health_status,
     format_longitudinal_response,
@@ -35,6 +36,7 @@ from medical_imaging_platform.reviewer_ui.models import (
 )
 from medical_imaging_platform.reviewer_ui.pages import (
     classification,
+    detection,
     evidence,
     governance,
     longitudinal,
@@ -72,6 +74,7 @@ def _config(tmp_path: Path, **updates: object) -> ReviewerUIConfig:
         "maximum_review_items": 5,
         "enable_segmentation_page": True,
         "enable_classification_page": True,
+        "enable_detection_page": True,
         "enable_longitudinal_page": True,
         "enable_evidence_page": True,
         "enable_governance_page": True,
@@ -138,6 +141,23 @@ def _client(config: ReviewerUIConfig) -> ReviewerAPIClient:
                     "calibration_checksum": "cal",
                     "threshold_policy_checksum": "thr",
                     "duration_ms": 2.0,
+                    "disclaimer": "research-only",
+                },
+            )
+        if request.url.path == "/v1/detection/predict":
+            return httpx.Response(
+                200,
+                json={
+                    "status": "completed",
+                    "model_family": "faster_rcnn",
+                    "boxes": [[1.0, 1.0, 3.0, 3.0]],
+                    "labels": [1],
+                    "scores": [0.8],
+                    "box_count": 1,
+                    "checkpoint_checksum": "det",
+                    "source_provenance": {"checksum": "slice"},
+                    "latency": {"duration_ms": 2.5},
+                    "warnings": [],
                     "disclaimer": "research-only",
                 },
             )
@@ -293,6 +313,7 @@ def test_api_client_success_error_and_request_id(tmp_path: Path) -> None:
     health = client.health("rid-1")
     segmentation = client.predict_segmentation({"array": {"shape": [1, 1, 1], "values": [0]}})
     classification = client.predict_classification({"array": {"shape": [1, 1, 1], "values": [0]}})
+    detection = client.predict_detection({"array": {"shape": [2, 2], "values": [0, 0, 0, 0]}})
     longitudinal = client.analyse_longitudinal({"previous_array": {}, "current_array": {}})
     evidence = client.review_longitudinal("analysis-1")
 
@@ -300,6 +321,7 @@ def test_api_client_success_error_and_request_id(tmp_path: Path) -> None:
     assert format_health_status(health, client.ready())["operational"] == "yes"
     assert format_segmentation_response(segmentation)["predicted_voxel_count"] == 4
     assert format_classification_response(classification)["abstained"] is True
+    assert format_detection_response(detection)["box_count"] == 1
     assert format_classification_response(classification)["engineering_label"] == "indeterminate"
     assert format_longitudinal_response(longitudinal)["indeterminate"] is True
     assert format_evidence_response(evidence)["provenance"] == {"source_checksums": {"mask": "123"}}
@@ -522,6 +544,9 @@ def test_streamlit_pages_render_with_fake_streamlit(tmp_path: Path) -> None:
     array_path = tmp_path / "upload.npy"
     np.save(array_path, np.zeros((16, 16, 16), dtype=np.float32))
     upload = _Upload("upload.npy", array_path.read_bytes())
+    slice_path = tmp_path / "slice.npy"
+    np.save(slice_path, np.zeros((16, 16), dtype=np.float32))
+    slice_upload = _Upload("slice.npy", slice_path.read_bytes())
 
     overview_st = _FakeStreamlit()
     overview.render(overview_st, config, client)
@@ -534,6 +559,10 @@ def test_streamlit_pages_render_with_fake_streamlit(tmp_path: Path) -> None:
     classification_st = _FakeStreamlit({"Upload bounded ROI .npy array": upload})
     classification.render(classification_st, config, client)
     assert any("Indeterminate" in str(item) for item in classification_st.rendered)
+
+    detection_st = _FakeStreamlit({"Upload bounded .npy slice": slice_upload})
+    detection.render(detection_st, config, client)
+    assert detection_st.session_state["last_response"] is not None
 
     longitudinal_st = _FakeStreamlit({"previous_mask": upload, "current_mask": upload})
     longitudinal.render(longitudinal_st, config, client)
@@ -557,6 +586,9 @@ def test_components_and_visualisation_render_with_fake_streamlit() -> None:
     quality.render_quality(fake, [])
     provenance.render_provenance(fake, {"checksum": "abc"})
     visualisation.render_axial_slice(fake, np.zeros((3, 4, 4), dtype=np.float32), "Axial")
+    visualisation.render_slice_with_boxes(
+        fake, np.zeros((4, 4), dtype=np.float32), [[1.0, 1.0, 3.0, 3.0]], "Boxes"
+    )
 
     assert visualisation.axial_slice(np.zeros((3, 4, 4), dtype=np.float32)).shape == (4, 4)
     with pytest.raises(ValueError, match="3D"):
@@ -577,6 +609,7 @@ def test_reviewer_app_entrypoint_routes_without_browser(
         "Overview",
         "Segmentation",
         "Classification",
+        "Detection",
         "Longitudinal",
         "Evidence",
         "Governance",

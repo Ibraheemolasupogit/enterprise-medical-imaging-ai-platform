@@ -11,6 +11,7 @@ from medical_imaging_platform.api.dependencies import get_api_config
 from medical_imaging_platform.api.models import APIConfig
 from medical_imaging_platform.api.services.review_service import (
     review_classification,
+    review_detection,
     review_longitudinal,
     review_segmentation,
 )
@@ -30,6 +31,13 @@ def classification(
     experiment_id: str, config: Annotated[APIConfig, Depends(get_api_config)]
 ) -> dict[str, object]:
     return review_classification(experiment_id, config)
+
+
+@router.get("/detection/{experiment_id}")
+def detection(
+    experiment_id: str, config: Annotated[APIConfig, Depends(get_api_config)]
+) -> dict[str, object]:
+    return review_detection(experiment_id, config)
 
 
 @router.get("/longitudinal/{analysis_id}")

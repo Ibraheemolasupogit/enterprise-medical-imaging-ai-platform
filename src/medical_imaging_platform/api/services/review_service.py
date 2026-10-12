@@ -5,6 +5,7 @@ from __future__ import annotations
 from medical_imaging_platform.api.errors import APIError
 from medical_imaging_platform.api.models import APIConfig
 from medical_imaging_platform.classification.export import validate_classification_experiment
+from medical_imaging_platform.detection.export import validate_detection_experiment
 from medical_imaging_platform.longitudinal.export import validate_longitudinal_analysis
 from medical_imaging_platform.segmentation.export import validate_segmentation_experiment
 
@@ -15,6 +16,10 @@ def review_segmentation(experiment_id: str, config: APIConfig) -> dict[str, obje
 
 def review_classification(experiment_id: str, config: APIConfig) -> dict[str, object]:
     return _review(experiment_id, config, "classification", validate_classification_experiment)
+
+
+def review_detection(experiment_id: str, config: APIConfig) -> dict[str, object]:
+    return _review(experiment_id, config, "detection", validate_detection_experiment)
 
 
 def review_longitudinal(analysis_id: str, config: APIConfig) -> dict[str, object]:

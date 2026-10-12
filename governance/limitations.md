@@ -91,3 +91,9 @@ or promote model versions.
 Milestone 18 project evidence summarises the repository and supports engineering demonstration. It
 does not add clinical capability, clinical validation, deployment approval, regulatory approval, NHS
 approval, or medical-device approval.
+
+Milestone 21 detection is a synthetic 2D axial bounding-box engineering baseline derived from
+repository-generated volumes and lesion masks. Boxes are half-open xyxy pixel regions on individual
+slices and do not represent full 3D lesion extent, diagnostic localisation, triage, RECIST
+assessment, patient-management evidence, or medical-device performance. Detector confidence is not a
+clinical probability.

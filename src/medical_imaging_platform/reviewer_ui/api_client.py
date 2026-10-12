@@ -54,6 +54,11 @@ class ReviewerAPIClient:
             "POST", "/v1/classification/predict", json=payload, request_id=request_id
         )
 
+    def predict_detection(
+        self, payload: dict[str, Any], request_id: str | None = None
+    ) -> dict[str, Any]:
+        return self._request("POST", "/v1/detection/predict", json=payload, request_id=request_id)
+
     def analyse_longitudinal(
         self, payload: dict[str, Any], request_id: str | None = None
     ) -> dict[str, Any]:
@@ -74,6 +79,9 @@ class ReviewerAPIClient:
         return self._request(
             "GET", f"/v1/review/classification/{experiment_id}", request_id=request_id
         )
+
+    def review_detection(self, experiment_id: str, request_id: str | None = None) -> dict[str, Any]:
+        return self._request("GET", f"/v1/review/detection/{experiment_id}", request_id=request_id)
 
     def review_longitudinal(
         self, analysis_id: str, request_id: str | None = None

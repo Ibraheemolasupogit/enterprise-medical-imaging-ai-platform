@@ -16,7 +16,7 @@ ReviewerDecisionValue = Literal[
     "rejected_due_to_quality",
     "insufficient_information",
 ]
-EvidenceType = Literal["segmentation", "classification", "longitudinal"]
+EvidenceType = Literal["segmentation", "classification", "detection", "longitudinal"]
 
 
 class ReviewerUIConfig(BaseModel):
@@ -35,6 +35,7 @@ class ReviewerUIConfig(BaseModel):
     maximum_review_items: int = Field(gt=0)
     enable_segmentation_page: bool = True
     enable_classification_page: bool = True
+    enable_detection_page: bool = True
     enable_longitudinal_page: bool = True
     enable_evidence_page: bool = True
     enable_governance_page: bool = True
