@@ -5,7 +5,7 @@
 # The +cpu local version prevents Linux builds from resolving CUDA/NVIDIA PyTorch packages.
 torch==2.13.0+cpu; platform_system == "Linux"
 torch==2.13.0; platform_system != "Linux"
-monai==1.6.0
+monai==1.6.1rc0
 fastapi>=0.115,<1
 numpy==2.4.6
 torchvision==0.28.0+cpu; platform_system == "Linux"

@@ -31,7 +31,7 @@ dependencies = [
   "fastapi>=0.115,<1",
   "httpx==0.28.1",
   "matplotlib==3.10.9",
-  "monai>=1.6,<2",
+  "monai==1.6.1rc0",
   "numpy==2.4.6",
   "pydicom>=3.0,<4",
   "pydantic>=2.8,<3",

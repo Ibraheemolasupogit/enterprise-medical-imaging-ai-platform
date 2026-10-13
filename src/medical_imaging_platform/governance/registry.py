@@ -86,7 +86,7 @@ def build_model_record(
         framework_versions={
             "python": "3.12",
             "torch": "2.13.0+cpu",
-            "monai": "1.6.0",
+            "monai": "1.6.1rc0",
             "numpy": "1.26",
         },
         config_reference=config_reference,

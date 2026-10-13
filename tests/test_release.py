@@ -136,13 +136,13 @@ def test_cpu_only_container_dependency_policy(tmp_path: Path) -> None:
         check for check in checks if check.check_id == "CONTAINER-DEPS-MONAI-PATCHED-PIN"
     )
     assert monai_check.status == "PASS"
-    assert monai_check.details["pinned_version"] == "1.6.0"
+    assert monai_check.details["pinned_version"] == "1.6.1rc0"
 
     bad_requirements = tmp_path / "container-runtime.txt"
     bad_requirements.write_text(
         "--extra-index-url https://download.pytorch.org/whl/cpu\n"
         "torch==2.13.0+cpu\n"
-        "monai==1.6.0\n"
+        "monai==1.6.1rc0\n"
         "nvidia-cublas-cu12==12.1.3.1\n",
         encoding="utf-8",
     )
@@ -155,11 +155,14 @@ def test_cpu_only_container_dependency_policy(tmp_path: Path) -> None:
     )
 
 
-def test_vulnerable_monai_container_pin_is_rejected(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "version", ["1.5.2", "1.6.0", "1.6.1a0", "1.6.1b0", "1.6.1rc0.dev1", "invalid"]
+)
+def test_vulnerable_monai_container_pin_is_rejected(tmp_path: Path, version: str) -> None:
     config = load_container_config(Path("config/container.yaml"))
     vulnerable_requirements = tmp_path / "container-runtime.txt"
     vulnerable_requirements.write_text(
-        "--extra-index-url https://download.pytorch.org/whl/cpu\ntorch==2.13.0+cpu\nmonai==1.5.2\n",
+        f"--extra-index-url https://download.pytorch.org/whl/cpu\ntorch==2.13.0+cpu\nmonai=={version}\n",
         encoding="utf-8",
     )
     vulnerable_config = config.model_copy(
@@ -173,8 +176,8 @@ def test_vulnerable_monai_container_pin_is_rejected(tmp_path: Path) -> None:
 
     assert monai_check.status == "FAIL"
     assert monai_check.details == {
-        "minimum_safe_version": "1.6.0",
-        "pinned_version": "1.5.2",
+        "minimum_safe_version": "1.6.1rc0",
+        "pinned_version": version,
     }
     assert (
         aggregate_release_status(
@@ -190,13 +193,27 @@ def test_vulnerable_monai_container_pin_is_rejected(tmp_path: Path) -> None:
     )
 
 
-def test_pyproject_monai_lower_bound_excludes_vulnerable_range() -> None:
+@pytest.mark.parametrize("version", ["1.6.1rc0", "1.6.1rc1", "1.6.1", "1.6.2"])
+def test_patched_monai_container_pin_is_accepted(tmp_path: Path, version: str) -> None:
+    config = load_container_config(Path("config/container.yaml"))
+    requirements = tmp_path / "container-runtime.txt"
+    requirements.write_text(f"monai=={version}\n", encoding="utf-8")
+    config = config.model_copy(update={"container_runtime_requirements": requirements})
+
+    checks = inspect_container_dependency_policy(config)
+    monai_check = next(
+        check for check in checks if check.check_id == "CONTAINER-DEPS-MONAI-PATCHED-PIN"
+    )
+
+    assert monai_check.status == "PASS"
+
+
+def test_pyproject_monai_pin_excludes_vulnerable_versions() -> None:
     pyproject = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
     dependencies = pyproject["project"]["dependencies"]
     monai_requirement = next(item for item in dependencies if item.startswith("monai"))
 
-    assert monai_requirement == "monai>=1.6,<2"
-    assert "==1.6" not in monai_requirement
+    assert monai_requirement == "monai==1.6.1rc0"
 
 
 def test_compose_security_controls() -> None:
@@ -384,8 +401,8 @@ def test_release_id_manifest_and_evidence_export(tmp_path: Path) -> None:
     assert isinstance(manifest.git_dirty, bool)
     assert manifest.release_status == "INCOMPLETE"
     assert manifest.dependency_strategy["pytorch_version"] == "2.13.0+cpu"
-    assert manifest.dependency_strategy["monai_version"] == "1.6.0"
-    assert manifest.dependency_strategy["minimum_safe_monai_version"] == "1.6.0"
+    assert manifest.dependency_strategy["monai_version"] == "1.6.1rc0"
+    assert manifest.dependency_strategy["minimum_safe_monai_version"] == "1.6.1rc0"
     assert "size_bytes" in manifest.images["api"]
 
     output_dir = export_release_evidence(config, manifest)
@@ -638,8 +655,8 @@ def test_dependency_strategy_records_patched_monai_container_pin() -> None:
     config = load_container_config(Path("config/container.yaml"))
     strategy = dependency_strategy(config)
 
-    assert strategy["monai_version"] == "1.6.0"
-    assert strategy["minimum_safe_monai_version"] == "1.6.0"
+    assert strategy["monai_version"] == "1.6.1rc0"
+    assert strategy["minimum_safe_monai_version"] == "1.6.1rc0"
 
 
 def test_manifest_image_metadata_helpers(monkeypatch: pytest.MonkeyPatch) -> None:

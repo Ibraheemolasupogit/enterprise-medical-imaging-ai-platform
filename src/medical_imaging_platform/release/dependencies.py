@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from medical_imaging_platform.release.models import ContainerReleaseConfig, ReleaseCheckResult
 
 PROHIBITED_CONTAINER_PACKAGES = (
@@ -17,8 +19,8 @@ PROHIBITED_CONTAINER_PACKAGES = (
     "nccl",
     "triton",
 )
-MINIMUM_SAFE_MONAI_VERSION = (1, 6, 0)
-MINIMUM_SAFE_MONAI_VERSION_TEXT = "1.6.0"
+MINIMUM_SAFE_MONAI_VERSION = (1, 6, 1, 0, 0)
+MINIMUM_SAFE_MONAI_VERSION_TEXT = "1.6.1rc0"
 
 
 def inspect_container_dependency_policy(
@@ -121,13 +123,10 @@ def _pinned_version(normalized_requirements: str, package: str) -> str | None:
     return None
 
 
-def _version_tuple(version: str) -> tuple[int, int, int]:
-    parts = version.split("+", maxsplit=1)[0].split(".")
-    parsed: list[int] = []
-    for part in parts[:3]:
-        if not part.isdigit():
-            return (0, 0, 0)
-        parsed.append(int(part))
-    while len(parsed) < 3:
-        parsed.append(0)
-    return (parsed[0], parsed[1], parsed[2])
+def _version_tuple(version: str) -> tuple[int, int, int, int, int]:
+    """Order MONAI release candidates before final releases; reject unsupported versions."""
+    match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)(?:rc(\d+))?(?:\+[a-z0-9.]+)?", version)
+    if match is None:
+        return (0, 0, 0, 0, 0)
+    major, minor, patch, candidate = match.groups()
+    return (int(major), int(minor), int(patch), int(candidate is None), int(candidate or 0))
