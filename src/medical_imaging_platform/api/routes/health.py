@@ -14,6 +14,8 @@ from medical_imaging_platform.api.dependencies import get_api_config
 from medical_imaging_platform.api.errors import APIError
 from medical_imaging_platform.api.models import DISCLAIMER, APIConfig
 from medical_imaging_platform.api.observability import metric_labels_safe
+from medical_imaging_platform.api.routes.embeddings import _under_allowed_root
+from medical_imaging_platform.embeddings.core import EmbeddingIndex
 from medical_imaging_platform.synthetic.manifest import sha256_file
 
 router = APIRouter()
@@ -54,6 +56,7 @@ def ready(config: Annotated[APIConfig, Depends(get_api_config)]) -> dict[str, ob
         "status": "degraded" if degraded else "ready",
         "readiness": "dependencies_available",
         "degraded": degraded,
+        "capabilities": capability_readiness(config),
         "quality_findings": findings,
         "disclaimer": DISCLAIMER,
     }
@@ -94,6 +97,15 @@ def readiness_findings(config: APIConfig) -> list[dict[str, object]]:
         "classification_calibration": config.classification_calibration,
         "classification_threshold_policy": config.classification_threshold_policy,
         "longitudinal_config": config.longitudinal_config,
+        "detection_checkpoint": config.detection_checkpoint,
+        "segmentation_config": config.segmentation_config
+        if config.segmentation_checkpoint
+        else None,
+        "classification_config": config.classification_config
+        if config.classification_checkpoint
+        else None,
+        "detection_config": config.detection_config if config.detection_checkpoint else None,
+        "embedding_policy": config.embedding_policy,
     }.items():
         if path is not None:
             exists = Path(path).exists()
@@ -115,6 +127,17 @@ def readiness_findings(config: APIConfig) -> list[dict[str, object]]:
                 severity="WARN",
             )
         )
+    for directory in config.embedding_indexes:
+        try:
+            if not _under_allowed_root(directory, config.allowed_input_roots):
+                raise ValueError("Outside roots")
+            EmbeddingIndex.load(directory, maximum_bytes=config.maximum_array_bytes)
+            passed = True
+        except (OSError, ValueError, KeyError):
+            passed = False
+        findings.append(
+            _finding("API-QC-INDEX-001", passed, "Configured embedding index integrity.")
+        )
     return findings
 
 
@@ -134,3 +157,23 @@ def _finding(
     if checksum is not None:
         payload["checksum"] = checksum
     return payload
+
+
+def capability_readiness(config: APIConfig) -> dict[str, str]:
+    paths: dict[str, list[Path | None]] = {
+        "segmentation": [config.segmentation_checkpoint],
+        "classification": [
+            config.classification_checkpoint,
+            config.classification_calibration,
+            config.classification_threshold_policy,
+        ],
+        "detection": [config.detection_checkpoint],
+        "embeddings": list(config.embedding_indexes),
+    }
+    return {
+        name: "available"
+        if values and all(path is not None and path.is_file() for path in values)
+        else "unavailable"
+        for name, values in paths.items()
+        if name != "embeddings"
+    } | {"embeddings": "available" if config.embedding_indexes else "unavailable"}

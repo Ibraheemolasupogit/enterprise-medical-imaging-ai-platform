@@ -17,10 +17,10 @@ def _redirect_portfolio_evidence(monkeypatch, tmp_path: Path) -> None:  # type: 
             monkeypatch.setattr(portfolio, name, tmp_path / value.name)
 
 
-def test_milestone_matrix_represents_all_18_and_claims_are_bounded() -> None:
+def test_milestone_matrix_represents_current_platform_and_claims_are_bounded() -> None:
     matrix = portfolio.milestone_completion_matrix()
 
-    assert [entry.milestone for entry in matrix] == list(range(1, 19))
+    assert [entry.milestone for entry in matrix] == list(range(1, portfolio.CURRENT_MILESTONE + 1))
     assert {entry.claim_classification for entry in matrix} >= {
         "implemented",
         "locally executed",
@@ -43,7 +43,13 @@ def test_portfolio_evidence_is_deterministic_and_checksummed(tmp_path: Path, mon
     assert first.model_dump(mode="json") == second.model_dump(mode="json")
     assert first.overall_status == "PASS"
     assert all(check.status == "PASS" for check in checks)
-    assert len(first.milestone_completion_matrix) == 18
+    assert len(first.milestone_completion_matrix) == portfolio.CURRENT_MILESTONE
+    assert set(first.architecture_manifest["implemented_locally"]) >= {
+        "preprocessing_baseline",
+        "axial_detection",
+        "image_embeddings_exact_retrieval",
+        "platform_demonstration_review_binding",
+    }
     assert portfolio.CHECKSUMS_PATH.exists()
     checksums = json.loads(portfolio.CHECKSUMS_PATH.read_text(encoding="utf-8"))
     assert portfolio.READINESS_PATH.as_posix() in checksums

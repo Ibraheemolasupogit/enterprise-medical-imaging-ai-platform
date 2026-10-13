@@ -13,3 +13,19 @@ Generated indexes restrict retrieval candidates to their gallery splits. Evaluat
 ## Governance limitations
 
 Embedding-space similarity is not diagnostic similarity. High similarity does not imply the same disease, and low similarity does not exclude clinically related findings. Synthetic/de-identified data do not establish clinical validity. Embeddings may encode acquisition and preprocessing artifacts and representation bias. False or missed similarity, embedding drift, stale indexes, checkpoint/index incompatibility, subject or duplicate leakage, and identifier leakage are explicit risks. Results require human interpretation and are not for diagnosis, triage, RECIST, or patient-management use.
+
+## M23 policy and stored-index contract
+
+The normal installed/module CLI now shares the embeddings registry. Generation accepts
+`--policy-config` separately from its classification `--config`; queries optionally accept a retrieval
+`--config`. Generated indexes persist the policy. Search uses its gallery and exclusion settings;
+evaluation/benchmark use its query splits, relevance field and ordered K collection. API defaults to
+the persisted policy and can apply an explicitly configured `embedding_policy`.
+
+Load/validation verifies stored float32 rank-2 finite matrices, positive dimension, L2 norms within
+absolute tolerance 1e-5, row count/order/unique embedding IDs, encoder/checkpoint/source/config
+metadata and matrix/manifest evidence hashes. It never normalizes stored vectors. Previously generated
+M22 indexes with their complete metadata remain supported; incomplete hand-authored indexes fail.
+Query-vector normalization is separate. Checksums establish integrity relative to local evidence, not
+cryptographic authenticity. Reviewer navigation lists explicitly configured indexes and shows
+provenance, ranked scores, warnings and the non-diagnostic limitation.

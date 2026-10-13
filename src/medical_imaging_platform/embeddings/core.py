@@ -9,6 +9,8 @@ from typing import Any
 
 import numpy as np
 
+from medical_imaging_platform.embeddings.config import EmbeddingConfig
+
 
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
@@ -37,7 +39,9 @@ def l2_normalize(vectors: np.ndarray) -> np.ndarray:
 
 class EmbeddingIndex:
     def __init__(self, matrix: np.ndarray, manifest: dict[str, Any]) -> None:
-        self.matrix = l2_normalize(matrix)
+        # Persisted and in-memory indexes share the same stored-vector contract.
+        validate_matrix(matrix)
+        self.matrix = matrix
         self.manifest = manifest
         self.records: list[dict[str, Any]] = list(manifest.get("records", []))
         if len(self.records) != self.matrix.shape[0]:
@@ -57,15 +61,85 @@ class EmbeddingIndex:
         return int(self.matrix.shape[1])
 
     @classmethod
-    def load(cls, directory: Path) -> EmbeddingIndex:
+    def load(cls, directory: Path, *, maximum_bytes: int | None = None) -> EmbeddingIndex:
+        directory = directory.resolve()
         manifest_path = directory / "embedding_manifest.json"
         matrix_path = directory / "embedding_matrix.npy"
+        for path in (manifest_path, matrix_path, directory / "evidence" / "checksum_manifest.json"):
+            if path.is_symlink() or not path.resolve().is_relative_to(directory):
+                raise ValueError("Embedding artifact escapes index directory")
+            if maximum_bytes is not None and path.exists() and path.stat().st_size > maximum_bytes:
+                raise ValueError("Embedding artifact exceeds configured size limit")
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        matrix = np.load(matrix_path, allow_pickle=False)
+        if not isinstance(manifest, dict):
+            raise ValueError("Embedding manifest must be an object")
         expected = manifest.get("matrix_checksum")
-        if expected and sha256_file(matrix_path) != expected:
+        if not expected or sha256_file(matrix_path) != expected:
             raise ValueError("Embedding matrix checksum mismatch")
-        return cls(matrix, manifest)
+        if not isinstance(manifest, dict):
+            raise ValueError("Embedding manifest must be an object")
+        matrix = np.load(matrix_path, allow_pickle=False)
+        validate_matrix(matrix)
+        if (
+            type(manifest.get("embedding_dimension")) is not int
+            or manifest.get("embedding_dimension") != matrix.shape[1]
+        ):
+            raise ValueError("Embedding dimension does not match manifest")
+        for key in (
+            "encoder_checkpoint_checksum",
+            "config_checksum",
+            "source_dataset_manifest_checksum",
+        ):
+            digest = manifest.get(key)
+            if (
+                not isinstance(digest, str)
+                or len(digest) != 64
+                or any(c not in "0123456789abcdef" for c in digest)
+            ):
+                raise ValueError(f"Invalid compatibility metadata: {key}")
+        if (
+            manifest.get("encoder_family") not in {"small_3d_cnn", "tiny_3d_vit"}
+            or manifest.get("normalization") != "l2"
+        ):
+            raise ValueError("Invalid encoder/normalization compatibility metadata")
+        records = manifest.get("records", [])
+        if not isinstance(records, list) or any(not isinstance(r, dict) for r in records):
+            raise ValueError("Manifest records must be objects")
+        keys = [(r.get("source_sample_id", ""), r.get("embedding_id", "")) for r in records]
+        if any(not isinstance(sid, str) or not isinstance(eid, str) for sid, eid in keys):
+            raise ValueError("Manifest row identifiers must be strings")
+        if (
+            any(not sid or not eid for sid, eid in keys)
+            or keys != sorted(keys)
+            or len({eid for _, eid in keys}) != len(keys)
+        ):
+            raise ValueError("Invalid manifest row ordering or duplicate embedding IDs")
+        for record in records:
+            for key in ("encoder_family", "encoder_checkpoint_checksum"):
+                if key in record and record[key] != manifest[key]:
+                    raise ValueError("Record encoder/checkpoint compatibility mismatch")
+        evidence = directory / "evidence" / "checksum_manifest.json"
+        if not evidence.exists():
+            raise ValueError("Missing evidence/checksum_manifest.json")
+        files = json.loads(evidence.read_text(encoding="utf-8")).get("files", {})
+        if not {"embedding_matrix.npy", "embedding_manifest.json"} <= files.keys():
+            raise ValueError("Incomplete index evidence checksums")
+        for name, digest in files.items():
+            path = directory / name
+            if (
+                path.is_symlink()
+                or not path.resolve().is_relative_to(directory)
+                or sha256_file(path) != digest
+            ):
+                raise ValueError("Index evidence checksum mismatch")
+        index = cls(matrix, manifest)
+        policy = index_policy(index)
+        if "retrieval_policy" in manifest and (
+            manifest.get("gallery_splits", policy.gallery_splits) != policy.gallery_splits
+            or manifest.get("query_splits", policy.query_splits) != policy.query_splits
+        ):
+            raise ValueError("Manifest split metadata contradicts retrieval policy")
+        return index
 
     def search(
         self,
@@ -107,9 +181,16 @@ class EmbeddingIndex:
                     "similarity": float(scores[i]),
                     "scenario": record.get("scenario"),
                     "label": record.get("label"),
-                    "encoder_family": record.get("encoder_family"),
-                    "checkpoint_checksum": record.get("encoder_checkpoint_checksum"),
-                    "source_checksum": record.get("source_volume_checksum"),
+                    "encoder_family": record.get(
+                        "encoder_family", self.manifest.get("encoder_family")
+                    ),
+                    "checkpoint_checksum": record.get(
+                        "encoder_checkpoint_checksum",
+                        self.manifest.get("encoder_checkpoint_checksum"),
+                    ),
+                    "source_checksum": record.get(
+                        "source_checksum", record.get("source_volume_checksum")
+                    ),
                 }
             )
         return results
@@ -127,3 +208,51 @@ def validate_index(directory: Path) -> dict[str, Any]:
         "dtype": str(index.matrix.dtype),
         "normalized": True,
     }
+
+
+def validate_matrix(matrix: np.ndarray) -> None:
+    """Verify the stored bytes' numerical contract without changing the array."""
+    if not np.isfinite(matrix).all():
+        raise ValueError("Embeddings must be finite")
+    if matrix.dtype != np.float32:
+        raise ValueError("Persisted embeddings must have dtype float32")
+    if matrix.ndim != 2 or min(matrix.shape) <= 0:
+        raise ValueError("Persisted embeddings must have positive rank-2 dimensions")
+    if not np.allclose(np.linalg.norm(matrix.astype(np.float64), axis=1), 1.0, atol=1e-5, rtol=0):
+        raise ValueError("Stored embedding L2 normalization tolerance failure")
+
+
+def index_policy(index: EmbeddingIndex) -> EmbeddingConfig:
+    """Use the persisted policy, with explicit legacy defaults."""
+    return EmbeddingConfig.model_validate(
+        index.manifest.get(
+            "retrieval_policy",
+            {
+                "policy_version": "M22-v1",
+                "gallery_splits": index.manifest.get("gallery_splits", ["train", "validation"]),
+                "query_splits": index.manifest.get("query_splits", ["test"]),
+                "top_k": [1, 5],
+                "relevance": "scenario",
+                "exclude_self": True,
+                "exclude_same_source": False,
+                "output_directory": "ml/embeddings",
+            },
+        )
+    )
+
+
+def query_index(
+    index: EmbeddingIndex, sample_id: str, top_k: int, policy: EmbeddingConfig | None = None
+) -> list[dict[str, Any]]:
+    policy = policy or index_policy(index)
+    if sample_id not in index.sample_index:
+        raise ValueError("query sample_id is not present in the embedding index")
+    row = index.sample_index[sample_id]
+    record = index.records[row]
+    return index.search(
+        index.matrix[row],
+        top_k,
+        exclude_embedding_id=record["embedding_id"] if policy.exclude_self else None,
+        exclude_source_sample_id=record["source_sample_id"] if policy.exclude_same_source else None,
+        gallery_splits=tuple(policy.gallery_splits),
+    )

@@ -14,7 +14,9 @@ from medical_imaging_platform.classification.model_factory import (
     build_classifier,
 )
 from medical_imaging_platform.classification.models import ClassificationConfig
+from medical_imaging_platform.embeddings.config import EmbeddingConfig, load_embedding_config
 from medical_imaging_platform.embeddings.core import l2_normalize, sha256_file, sha256_json
+from medical_imaging_platform.evidence import EvidenceEnvelope, write_envelope
 
 
 def generate_embeddings(
@@ -24,7 +26,10 @@ def generate_embeddings(
     encoder_family: str,
     output_dir: Path,
     overwrite: bool = False,
+    *,
+    policy: EmbeddingConfig | None = None,
 ) -> dict[str, object]:
+    policy = policy or load_embedding_config("config/embeddings.yaml")
     dataset_dir = Path(dataset_dir)
     output_dir = Path(output_dir)
     if output_dir.exists() and any(output_dir.iterdir()) and not overwrite:
@@ -72,7 +77,8 @@ def generate_embeddings(
     matrix_path = output_dir / "embedding_matrix.npy"
     np.save(matrix_path, matrix, allow_pickle=False)
     manifest = {
-        "policy_version": "M22-v1",
+        "policy_version": policy.policy_version,
+        "retrieval_policy": policy.model_dump(mode="json"),
         "index_run_id": sha256_json([x["sample_id"] for x in source["samples"]])[:16],
         "dataset_id": source.get("dataset_id", dataset_dir.name),
         "source_dataset_manifest_checksum": sha256_file(mp),
@@ -84,8 +90,8 @@ def generate_embeddings(
         "records": records,
         "matrix_checksum": sha256_file(matrix_path),
         "config_checksum": sha256_file(Path(config_path)),
-        "gallery_splits": ["train", "validation"],
-        "query_splits": ["test"],
+        "gallery_splits": policy.gallery_splits,
+        "query_splits": policy.query_splits,
         "generation_seconds": time.perf_counter() - start,
         "warnings": [
             "Synthetic/de-identified engineering retrieval only; not diagnostic similarity."
@@ -94,13 +100,33 @@ def generate_embeddings(
     (output_dir / "embedding_manifest.json").write_text(
         json.dumps(manifest, indent=2, sort_keys=True) + "\n"
     )
+    write_envelope(
+        output_dir / "evidence_envelope.json",
+        EvidenceEnvelope(
+            artifact_type="embedding_index",
+            run_id=str(manifest["index_run_id"]),
+            artifact_reference="embedding_matrix.npy",
+            artifact_checksum=sha256_file(matrix_path),
+            source_id=str(manifest["dataset_id"]),
+            source_checksum=sha256_file(mp),
+            model_family=encoder_family,
+            checkpoint_checksum=sha256_file(Path(checkpoint)),
+            config_checksum=sha256_file(Path(config_path)),
+            quality_status="PASS",
+            warnings=["Embedding-space similarity is not diagnostic similarity."],
+        ),
+    )
     (output_dir / "evidence").mkdir(exist_ok=True)
     (output_dir / "evidence" / "checksum_manifest.json").write_text(
         json.dumps(
             {
                 "files": {
                     n: sha256_file(output_dir / n)
-                    for n in ("embedding_matrix.npy", "embedding_manifest.json")
+                    for n in (
+                        "embedding_matrix.npy",
+                        "embedding_manifest.json",
+                        "evidence_envelope.json",
+                    )
                 }
             },
             indent=2,

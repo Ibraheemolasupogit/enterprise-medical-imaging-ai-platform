@@ -69,3 +69,13 @@ simulations, degraded readiness, rollback simulations, recovery evidence, runboo
 CloudWatch target mappings are engineering governance signals only. They do not prove clinical
 safety, authorize diagnosis, deploy production monitoring, page a live on-call rota, approve
 automated rollback, or replace accountable reviewer and change-control decisions.
+
+## Consolidated review through M23
+
+Segmentation overlays preserve the original prediction and show a bounded source slice; they do not
+edit masks. Decisions carry exact artifact identity/checksum when supplied by the API. Legacy
+unbound evidence is identified explicitly. Embedding-space similarity is not diagnostic similarity.
+Ranked results require human interpretation; acquisition/preprocessing bias, stale indexes, subject
+leakage and representation drift remain engineering risks. A generated demo secondary-review record
+is not human acceptance. Individual failed quality checks remain visible even when orchestration
+and checksum validation complete successfully.

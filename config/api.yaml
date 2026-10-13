@@ -31,11 +31,15 @@ settings:
     allow_degraded_review: true
     allow_external_bind: false
     allow_threshold_override: false
+    segmentation_config: config/segmentation.yaml
     segmentation_checkpoint: null
+    classification_config: config/classification.yaml
     classification_checkpoint: null
     classification_calibration: null
     classification_threshold_policy: null
     detection_checkpoint: null
+    embedding_indexes: []
+    embedding_policy: null
     detection_config: config/detection.yaml
     longitudinal_config: config/longitudinal.yaml
     output_directory: ml/experiments/api

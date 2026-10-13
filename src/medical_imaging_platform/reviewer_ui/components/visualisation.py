@@ -58,3 +58,30 @@ def render_slice_with_boxes(
     ax.axis("off")
     st_module.pyplot(fig)
     plt.close(fig)
+
+
+def render_segmentation_overlay(
+    st_module: Any, source: np.ndarray, mask: np.ndarray, *, slice_index: int, opacity: float = 0.35
+) -> None:
+    """Display a source slice and binary prediction without changing either array."""
+    import matplotlib
+
+    matplotlib.use("Agg", force=True)
+    import matplotlib.pyplot as plt
+
+    image = axial_slice(source, slice_index)
+    if mask.shape != image.shape or not np.isfinite(mask).all() or not np.isin(mask, [0, 1]).all():
+        raise ValueError("Mask preview must be binary and match the source slice.")
+    if not 0 <= opacity <= 1:
+        raise ValueError("Overlay opacity must be between zero and one.")
+    fig, axes = plt.subplots(1, 2, figsize=(8, 4))
+    for ax in axes:
+        ax.imshow(image, cmap="gray")
+        ax.axis("off")
+    axes[0].set_title(f"Source axial slice {slice_index}")
+    axes[1].imshow(
+        np.ma.masked_where(mask == 0, mask), cmap="autumn", alpha=opacity, vmin=0, vmax=1
+    )
+    axes[1].set_title("Predicted mask overlay — engineering review")
+    st_module.pyplot(fig)
+    plt.close(fig)

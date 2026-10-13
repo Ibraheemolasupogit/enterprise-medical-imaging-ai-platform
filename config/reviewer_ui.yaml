@@ -20,6 +20,7 @@ settings:
     enable_classification_page: true
     enable_detection_page: true
     enable_longitudinal_page: true
+    enable_embeddings_page: true
     enable_evidence_page: true
     enable_governance_page: true
     allow_local_array_upload: true

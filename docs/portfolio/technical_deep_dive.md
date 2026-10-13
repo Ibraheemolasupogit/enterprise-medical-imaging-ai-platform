@@ -43,3 +43,13 @@ and observability boundaries without deploying resources.
 The project favours deterministic evidence, safety boundaries and reviewability over clinical
 realism. It intentionally avoids real patient data, cloud deployment, automatic promotion,
 automatic retraining and automatic rollback.
+
+## M23 consolidated status
+
+The current platform includes M19 classical preprocessing/QC, M20 CNN/ViT classification
+comparison, M21 Faster R-CNN/Tiny DETR detection, M22 embeddings/exact retrieval, and M23
+interface/evidence consolidation. Historical milestone descriptions above describe their original
+scope. The authoritative current flow is [the consolidated architecture](../architecture/final_end_to_end_architecture.md)
+and [the canonical demo](../platform_demo.md). Model datasets retain reference-derived labels;
+the canonical longitudinal demonstration consumes predictions and preserves quality failures.
+Capability status distinguishes implemented, executed/validated, simulated, static design and target state.

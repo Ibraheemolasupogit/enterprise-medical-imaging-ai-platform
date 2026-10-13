@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from medical_imaging_platform.evidence import ArtifactBinding
 from medical_imaging_platform.reviewer_ui.export import export_review_session
 from medical_imaging_platform.reviewer_ui.models import (
+    ReviewerDecision,
     ReviewerUIConfig,
 )
 from medical_imaging_platform.reviewer_ui.review import create_review_decision
@@ -18,8 +20,25 @@ def render(st_module: Any, config: ReviewerUIConfig) -> None:
         "Reviewer decisions are engineering workflow artefacts and do not overwrite model output."
     )
     evidence_type = st_module.selectbox(
-        "Evidence type", ["segmentation", "classification", "longitudinal"]
+        "Evidence type",
+        ["segmentation", "classification", "detection", "longitudinal", "embeddings"],
     )
+    summary = st_module.session_state.get("last_response") or {}
+    artifact = (
+        ArtifactBinding.model_validate(summary["artifact"]) if summary.get("artifact") else None
+    )
+    if artifact is not None:
+        st_module.subheader("Exact reviewed artifact")
+        st_module.json(artifact.model_dump(mode="json"))
+        evidence_type = {"segmentation_mask": "segmentation", "embedding_index": "embeddings"}.get(
+            artifact.artifact_type, evidence_type
+        )
+        st_module.caption(f"Bound evidence type: {evidence_type}")
+    else:
+        st_module.info(
+            "This legacy evidence has no exact artifact binding; "
+            "the decision remains an unbound engineering review."
+        )
     evidence_id = st_module.text_input("Evidence ID", value="unresolved-evidence")
     request_id = st_module.text_input("Request ID", value="unresolved-request")
     model_label = st_module.text_input("Model engineering label", value="indeterminate")
@@ -36,8 +55,9 @@ def render(st_module: Any, config: ReviewerUIConfig) -> None:
     notes = st_module.text_area("Optional review notes", max_chars=500)
     if st_module.button("Create review decision"):
         review = create_review_decision(
-            request_id=request_id,
+            request_id=str(summary.get("request_id", request_id)),
             evidence_type=evidence_type,
+            artifact=artifact,
             evidence_id=evidence_id,
             model_engineering_label=model_label,
             quality_status=quality_status,
@@ -49,15 +69,7 @@ def render(st_module: Any, config: ReviewerUIConfig) -> None:
     if config.allow_evidence_export and st_module.button("Export review decision"):
         stored = st_module.session_state.get("review_decision")
         if isinstance(stored, dict):
-            review = create_review_decision(
-                request_id=str(stored["request_id"]),
-                evidence_type=stored["evidence_type"],
-                evidence_id=str(stored["evidence_id"]),
-                model_engineering_label=str(stored["model_engineering_label"]),
-                quality_status=str(stored["quality_status"]),
-                reviewer_decision=stored["reviewer_decision"],
-                review_notes=str(stored.get("review_notes", "")),
-            )
+            review = ReviewerDecision.model_validate(stored)
             result = export_review_session(
                 decision=review,
                 evidence_summary=st_module.session_state.get("last_response") or {},

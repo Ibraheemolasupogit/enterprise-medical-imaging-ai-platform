@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 
 from medical_imaging_platform import __version__
+from medical_imaging_platform.evidence import ArtifactBinding
 from medical_imaging_platform.reviewer_ui.models import (
     EvidenceType,
     ReviewerDecision,
@@ -22,6 +23,7 @@ def create_review_decision(
     quality_status: str,
     reviewer_decision: ReviewerDecisionValue,
     review_notes: str = "",
+    artifact: ArtifactBinding | None = None,
 ) -> ReviewerDecision:
     seed = "|".join(
         [
@@ -33,9 +35,12 @@ def create_review_decision(
             reviewer_decision,
         ]
     )
+    if artifact is not None:
+        seed += "|" + artifact.model_dump_json()
     review_id = f"review-{hashlib.sha256(seed.encode('utf-8')).hexdigest()[:16]}"
     return ReviewerDecision(
         review_id=review_id,
+        artifact=artifact,
         request_id=request_id,
         evidence_type=evidence_type,
         evidence_id=evidence_id,

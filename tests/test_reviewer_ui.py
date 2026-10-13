@@ -285,6 +285,9 @@ class _FakeStreamlit:
             return "needs_secondary_review"
         return options[0]
 
+    def number_input(self, label: str, **kwargs: object) -> object:
+        return kwargs.get("value", 0)
+
     def radio(self, label: str, options: list[str]) -> str:
         return self.selected_radio or options[0]
 

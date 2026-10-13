@@ -353,3 +353,9 @@ quality: format-check lint type-check validate-config validate-docs test securit
 
 clean:
 	rm -rf .coverage coverage.xml .mypy_cache .pytest_cache .ruff_cache src/medical_imaging_platform/__pycache__ src/medical_imaging_platform/deidentification/__pycache__ src/medical_imaging_platform/ingestion/__pycache__ src/medical_imaging_platform/localisation/__pycache__ src/medical_imaging_platform/preprocessing/__pycache__ src/medical_imaging_platform/quality_control/__pycache__ src/medical_imaging_platform/registration/__pycache__ src/medical_imaging_platform/segmentation/__pycache__ src/medical_imaging_platform/synthetic/__pycache__ src/medical_imaging_platform/utils/__pycache__ tests/__pycache__
+
+# M23 canonical bounded CPU workflow; generated artifacts stay outside source control.
+PLATFORM_DEMO_DIR ?= reports/generated/platform-demo
+.PHONY: platform-demo
+platform-demo:
+	$(PYTHON) -m medical_imaging_platform platform-demo --output-dir $(PLATFORM_DEMO_DIR) --json

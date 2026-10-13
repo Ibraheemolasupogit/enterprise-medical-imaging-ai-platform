@@ -31,3 +31,7 @@ authentication, production DNS, real TLS certificates, automated retraining, aut
 automatic model promotion, production alert routing, live incident-management integration, or
 clinical decision support. Final project evidence documents what is implemented, locally
 executed, statically validated, simulated, or target-state only.
+
+23. Platform consolidation and demonstration hardening: shared CLI, reviewer overlays/retrieval,
+    exact review bindings, stored-index policy/validation, canonical CPU evidence and current architecture.
+    No new model family or external dataset.

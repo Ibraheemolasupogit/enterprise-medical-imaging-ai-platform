@@ -42,11 +42,15 @@ class APIConfig(BaseModel):
     allow_external_bind: bool = False
     allow_threshold_override: bool = False
     segmentation_checkpoint: Path | None = None
+    segmentation_config: Path = Path("config/segmentation.yaml")
     classification_checkpoint: Path | None = None
+    classification_config: Path = Path("config/classification.yaml")
     classification_calibration: Path | None = None
     classification_threshold_policy: Path | None = None
     detection_checkpoint: Path | None = None
     detection_config: Path = Path("config/detection.yaml")
+    embedding_indexes: list[Path] = Field(default_factory=list)
+    embedding_policy: Path | None = None
     longitudinal_config: Path = Path("config/longitudinal.yaml")
     output_directory: Path = Path("ml/experiments/api")
 
@@ -110,6 +114,7 @@ class SegmentationPredictRequest(BaseModel):
     threshold: float | None = Field(default=None, ge=0, le=1)
     persist_output: bool = False
     source_provenance: dict[str, str] = Field(default_factory=dict)
+    preview_slice_index: int | None = Field(default=None, ge=0)
 
     @field_validator("spacing_mm")
     @classmethod

@@ -16,6 +16,7 @@ from medical_imaging_platform.api.security import (
     resolve_allowed_path,
     safe_output_child,
 )
+from medical_imaging_platform.evidence import ArtifactBinding, array_checksum
 from medical_imaging_platform.segmentation.inference import predict_probability
 from medical_imaging_platform.segmentation.postprocessing import postprocess_probability_map
 from medical_imaging_platform.synthetic.manifest import sha256_file
@@ -25,7 +26,7 @@ from medical_imaging_platform.utils.config import load_segmentation_config
 def predict_segmentation(
     request: SegmentationPredictRequest, config: APIConfig, request_id: str
 ) -> dict[str, object]:
-    if config.segmentation_checkpoint is None:
+    if config.segmentation_checkpoint is None or not config.segmentation_checkpoint.is_file():
         raise APIError(
             "API-NOTREADY-503", "Segmentation checkpoint is not configured.", status_code=503
         )
@@ -34,7 +35,20 @@ def predict_segmentation(
         if request.input_path is not None
         else array_from_payload(request.array, config)  # type: ignore[arg-type]
     )
-    segmentation_config = load_segmentation_config(Path("config/segmentation.yaml"))
+    segmentation_config = load_segmentation_config(config.segmentation_config)
+    if image.shape != segmentation_config.input_shape:
+        raise APIError(
+            "API-VALID-422",
+            "Volume shape does not match segmentation configuration.",
+            status_code=422,
+        )
+    slice_index = (
+        image.shape[0] // 2 if request.preview_slice_index is None else request.preview_slice_index
+    )
+    if slice_index >= image.shape[0]:
+        raise APIError(
+            "API-VALID-422", "Preview slice is outside the source volume.", status_code=422
+        )
     threshold = request.threshold
     if threshold is not None and not config.allow_threshold_override:
         raise APIError("API-AUTH-403", "Threshold override is disabled by policy.", status_code=403)
@@ -65,6 +79,18 @@ def predict_segmentation(
         _write_numpy(output_dir / "predicted_mask.npy", mask.astype(np.uint8))
         output_paths["predicted_mask"] = public_path(output_dir / "predicted_mask.npy")
     spacing = np.asarray(request.spacing_mm, dtype=float)
+    checkpoint_checksum = sha256_file(config.segmentation_checkpoint)
+    source_checksum = array_checksum(image)
+    binding = ArtifactBinding(
+        artifact_type="segmentation_mask",
+        artifact_reference=f"prediction:{request_id}:predicted_mask",
+        artifact_checksum=array_checksum(mask.astype(np.uint8)),
+        checksum_kind="sha256-array",
+        run_id=request_id,
+        source_checksum=source_checksum,
+        model_family="monai_3d_unet",
+        checkpoint_checksum=checkpoint_checksum,
+    )
     return {
         "request_id": request_id,
         "status": "completed",
@@ -77,7 +103,16 @@ def predict_segmentation(
         "predicted_volume_mm3": float(np.count_nonzero(mask) * np.prod(spacing)),
         "quality_status": "PASS" if not warnings else "PASS_WITH_WARNINGS",
         "quality_findings": warnings,
-        "checkpoint_checksum": sha256_file(config.segmentation_checkpoint),
+        "checkpoint_checksum": checkpoint_checksum,
+        "source_checksum": source_checksum,
+        "source_provenance": request.source_provenance,
+        "artifact": binding.model_dump(mode="json"),
+        "evidence_reference": binding.artifact_reference,
+        "mask_preview": {
+            "slice_index": slice_index,
+            "shape": list(mask[slice_index].shape),
+            "values": mask[slice_index].astype(np.uint8).ravel().tolist(),
+        },
         "output_paths": output_paths,
         "duration_ms": float((time.perf_counter() - start) * 1000),
         "disclaimer": DISCLAIMER,

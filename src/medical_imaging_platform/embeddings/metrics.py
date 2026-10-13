@@ -54,16 +54,46 @@ def retrieval_metrics(
     return out
 
 
-def evaluate_query(index: Any, query_record: dict[str, Any], top_k: int = 5) -> dict[str, Any]:
-    index.records[index.record_index[query_record["embedding_id"]]]
-    result = index.search(
-        index.matrix[index.record_index[query_record["embedding_id"]]],
-        top_k=top_k,
-        exclude_embedding_id=query_record["embedding_id"],
-    )
-    relevant = {
-        "sample_ids": set(query_record.get("relevant_sample_ids", [])),
-        "scenarios": {str(query_record.get("scenario"))},
-        "labels": {str(query_record.get("label"))},
+def evaluate_index(index: Any, policy: Any) -> dict[str, Any]:
+    """One relevance and candidate policy shared by evaluation and benchmarking."""
+    from medical_imaging_platform.embeddings.core import query_index
+
+    queries = [r for r in index.records if r.get("split") in policy.query_splits]
+    metrics = []
+    for query in queries:
+        hits = query_index(index, query["source_sample_id"], max(policy.top_k), policy)
+        candidates = [
+            r
+            for r in index.records
+            if r.get("split") in policy.gallery_splits
+            and (not policy.exclude_self or r["embedding_id"] != query["embedding_id"])
+            and (
+                not policy.exclude_same_source or r["source_sample_id"] != query["source_sample_id"]
+            )
+        ]
+        relevant = {
+            r["source_sample_id"]
+            for r in candidates
+            if r.get(policy.relevance) == query.get(policy.relevance)
+        }
+        metrics.append(
+            retrieval_metrics(
+                hits,
+                {
+                    "sample_ids": relevant,
+                    "scenarios": {str(query.get("scenario"))},
+                    "labels": {str(query.get("label"))},
+                },
+                policy.top_k,
+            )
+        )
+    return {
+        "query_count": len(queries),
+        "top_k": list(policy.top_k),
+        "policy": policy.model_dump(mode="json"),
+        **(
+            {key: sum(float(row[key]) for row in metrics) / len(metrics) for key in metrics[0]}
+            if metrics
+            else {}
+        ),
     }
-    return retrieval_metrics(result, relevant, ks=(1, top_k))

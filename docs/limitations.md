@@ -10,13 +10,13 @@ Current limitations:
 - Registration is limited to SimpleITK centre-of-mass, rigid, and affine engineering baselines for preprocessed volumes.
 - Localisation is limited to deterministic atlas-style left/right adrenal-region placeholders for synthetic engineering validation.
 - Segmentation is limited to a small PyTorch/MONAI 3D U-Net trained on synthetic engineering lesion masks.
-- Classification is limited to a small PyTorch 3D CNN trained on synthetic ROI-like crops for binary synthetic lesion presence only.
+- Classification uses a small PyTorch 3D CNN or Tiny 3D ViT trained on synthetic ROI-like crops for binary synthetic lesion presence only.
 - Longitudinal analysis is limited to synthetic mask measurements, deterministic matching, and engineering change labels.
 - No NIfTI export, general preprocessing resampling, full anatomical reorientation, deformable registration, learned localisation beyond the baseline, advanced segmentation, benign-versus-malignant classification, RECIST, treatment-response assessment, or clinical diagnosis exists.
 - A local governed FastAPI research API, Streamlit reviewer UI, local container release evidence,
   local synthetic registry/monitoring/audit evidence, and secure Helm/Kubernetes chart evidence
-  exist, but no authentication, production audit store, MLflow, Terraform, AWS, EKS, service mesh, or
-  production cloud implementation exists.
+  exist, but no authentication, production audit store, MLflow, live AWS/EKS, service mesh or
+  production cloud implementation exists. Terraform provides a static AWS target-state design.
 - No clinical validation has been performed.
 - Synthetic volumes are not clinically realistic CT scans.
 - Synthetic lesion shapes do not represent the diversity of real pathology.
@@ -86,3 +86,13 @@ generation only. Prometheus metrics are opt-in and local, CloudWatch resources r
 Terraform definitions only, and incident simulations are scripted engineering scenarios rather than
 live operational incidents. All rollback and recovery decisions remain manual change-control
 activities.
+
+## M23 consolidated status
+
+The current platform includes M19 classical preprocessing/QC, M20 CNN/ViT classification
+comparison, M21 Faster R-CNN/Tiny DETR detection, M22 embeddings/exact retrieval, and M23
+interface/evidence consolidation. Historical milestone descriptions above describe their original
+scope. The authoritative current flow is [the consolidated architecture](architecture/final_end_to_end_architecture.md)
+and [the canonical demo](platform_demo.md). Model datasets retain reference-derived labels;
+the canonical longitudinal demonstration consumes predictions and preserves quality failures.
+Capability status distinguishes implemented, executed/validated, simulated, static design and target state.

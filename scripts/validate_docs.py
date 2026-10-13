@@ -6,6 +6,10 @@ from pathlib import Path
 
 REQUIRED_MARKDOWN_FILES = (
     Path("README.md"),
+    Path("docs/platform_demo.md"),
+    Path("docs/local_startup.md"),
+    Path("docs/evidence_contracts.md"),
+    Path("docs/engineering_comparison.md"),
     Path("NOTICE.md"),
     Path("CONTRIBUTING.md"),
     Path("SECURITY.md"),

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import time
-from pathlib import Path
 
 from medical_imaging_platform.api.errors import APIError
 from medical_imaging_platform.api.models import DISCLAIMER, APIConfig, ClassificationPredictRequest
@@ -18,7 +17,7 @@ def predict_classification(
     request: ClassificationPredictRequest, config: APIConfig, request_id: str
 ) -> dict[str, object]:
     if (
-        config.classification_checkpoint is None
+        (config.classification_checkpoint is None or not config.classification_checkpoint.is_file())
         or config.classification_calibration is None
         or config.classification_threshold_policy is None
     ):
@@ -30,7 +29,7 @@ def predict_classification(
         if request.input_path is not None
         else array_from_payload(request.array, config)  # type: ignore[arg-type]
     )
-    classification_config = load_classification_config(Path("config/classification.yaml"))
+    classification_config = load_classification_config(config.classification_config)
     calibration = json.loads(config.classification_calibration.read_text(encoding="utf-8"))
     threshold_policy = json.loads(
         config.classification_threshold_policy.read_text(encoding="utf-8")

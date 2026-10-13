@@ -39,13 +39,18 @@ DEMO_FAST_PATH = PORTFOLIO_EVIDENCE_DIR / "demo_fast_result.json"
 CLEANUP_PATH = PORTFOLIO_EVIDENCE_DIR / "cleanup_result.json"
 
 GENERATED_TIMESTAMP = "2026-01-01T04:00:00Z"
-DETERMINISTIC_SEED = "portfolio-m18-seed-v1"
+CURRENT_MILESTONE = 23
+DETERMINISTIC_SEED = "platform-m23-seed-v1"
 
 MANDATORY_PORTFOLIO_DOCS = [
     Path("docs/portfolio/project_summary.md"),
     Path("docs/portfolio/demonstration_script.md"),
     Path("docs/portfolio/technical_deep_dive.md"),
     Path("docs/architecture/final_end_to_end_architecture.md"),
+    Path("docs/platform_demo.md"),
+    Path("docs/local_startup.md"),
+    Path("docs/evidence_contracts.md"),
+    Path("docs/engineering_comparison.md"),
 ]
 
 README_REQUIRED_SECTIONS = [
@@ -126,7 +131,7 @@ def build_portfolio_evidence() -> PortfolioEvidenceManifest:
     checksums = checksum_paths(checksum_inputs)
     overall_status = _aggregate_status(validation_summary)
     manifest = PortfolioEvidenceManifest(
-        evidence_id="m18-final-portfolio-evidence-v1",
+        evidence_id="m23-platform-readiness-v1",
         generated_timestamp=GENERATED_TIMESTAMP,
         overall_status=overall_status,
         repository_reference=repository_reference(),
@@ -195,8 +200,10 @@ def validate_portfolio_evidence() -> list[PortfolioCheck]:
         checks.append(
             PortfolioCheck(
                 check_id="PORTFOLIO-MILESTONE-COUNT",
-                status="PASS" if len(manifest.milestone_completion_matrix) == 18 else "FAIL",
-                message="All 18 milestones are represented in the final matrix.",
+                status="PASS"
+                if _milestones_current(manifest.milestone_completion_matrix)
+                else "FAIL",
+                message="Current milestones are represented exactly once in the technical matrix.",
                 details={"milestone_count": len(manifest.milestone_completion_matrix)},
             )
         )
@@ -286,7 +293,7 @@ def clean_demo() -> dict[str, Any]:
 
 
 def milestone_completion_matrix() -> list[MilestoneEntry]:
-    """Return the final matrix for Milestones 1-18."""
+    """Return the technical matrix through the current consolidation milestone."""
     rows: list[tuple[int, str, str, str, str, str, list[str]]] = [
         (
             1,
@@ -451,6 +458,55 @@ def milestone_completion_matrix() -> list[MilestoneEntry]:
             ["Project evidence only, not clinical approval."],
         ),
     ]
+    rows.extend(
+        [
+            (
+                19,
+                "Preprocessing and image-content QC",
+                "Classical transforms and before/after evidence",
+                "docs/preprocessing_baseline.md",
+                "python3 -m medical_imaging_platform run-preprocessing-baseline --help",
+                "implemented",
+                ["Image-content metrics are engineering signals."],
+            ),
+            (
+                20,
+                "CNN/ViT classification benchmark",
+                "Shared subject-isolated classification benchmark",
+                "docs/classification_design.md",
+                "python3 -m medical_imaging_platform run-classification-benchmark --help",
+                "implemented",
+                ["Synthetic binary lesion-presence only."],
+            ),
+            (
+                21,
+                "Axial lesion detection",
+                "Faster R-CNN and Tiny DETR",
+                "docs/detection_design.md",
+                "python3 -m medical_imaging_platform run-detection-benchmark --help",
+                "implemented",
+                ["2D axial boxes only."],
+            ),
+            (
+                22,
+                "Embeddings and exact retrieval",
+                "CNN/ViT embeddings and exact similar-study search",
+                "docs/embeddings.md",
+                "python3 -m medical_imaging_platform run-embedding-benchmark --help",
+                "implemented",
+                ["Embedding similarity is not diagnostic similarity."],
+            ),
+            (
+                23,
+                "Platform consolidation",
+                "Shared CLI, review binding, evidence and canonical CPU demo",
+                "docs/platform_demo.md",
+                "make platform-demo",
+                "implemented",
+                ["No new model family; no live cloud deployment."],
+            ),
+        ]
+    )
     return [
         MilestoneEntry(
             milestone=number,
@@ -487,11 +543,23 @@ def build_capability_inventory() -> list[dict[str, Any]]:
         ("aws_target_state_iac", "target-state only"),
         ("observability_resilience_incidents", "simulated"),
         ("clinical_ai_governance_boundaries", "implemented"),
+        ("classical_preprocessing_benchmark", "implemented"),
+        ("cnn_vit_classification_benchmark", "implemented"),
+        ("axial_detection_benchmark", "implemented"),
+        ("image_embeddings_exact_retrieval", "implemented"),
+        ("platform_demonstration_review_binding", "implemented"),
     ]
     return [
         {
             "capability": name,
             "claim_classification": classification,
+            "capability_status": {
+                "implemented": "implemented",
+                "locally executed": "executed/validated",
+                "statically validated": "static design",
+                "simulated": "simulated",
+                "target-state only": "target state",
+            }[classification],
             "clinical_claim": False,
             "uses_synthetic_or_deidentified_data_only": True,
         }
@@ -501,16 +569,21 @@ def build_capability_inventory() -> list[dict[str, Any]]:
 
 def build_architecture_manifest() -> dict[str, Any]:
     return {
-        "architecture_id": "m18-final-architecture-v1",
+        "architecture_id": "m23-platform-architecture-v1",
         "implemented_locally": [
             "synthetic_data",
             "dicom_governance",
             "quality_control",
             "preprocessing",
+            "preprocessing_baseline",
             "registration",
             "localisation",
             "segmentation",
             "classification",
+            "cnn_vit_classification_benchmark",
+            "axial_detection",
+            "image_embeddings_exact_retrieval",
+            "platform_demonstration_review_binding",
             "longitudinal_analysis",
             "api",
             "reviewer_ui",
@@ -527,7 +600,7 @@ def build_technology_inventory() -> list[dict[str, str]]:
     return [
         {"area": "language", "technology": "Python 3.12"},
         {"area": "medical_imaging", "technology": "pydicom, SimpleITK, NumPy"},
-        {"area": "modelling", "technology": "PyTorch, MONAI"},
+        {"area": "modelling", "technology": "PyTorch, MONAI, torchvision"},
         {"area": "api", "technology": "FastAPI, Uvicorn"},
         {"area": "reviewer_ui", "technology": "Streamlit, httpx"},
         {"area": "containers", "technology": "Docker, Docker Compose, CPU-only PyTorch wheels"},
@@ -547,8 +620,8 @@ def build_validation_summary() -> list[PortfolioCheck]:
     checks = [
         (
             "PORTFOLIO-MATRIX",
-            len(milestone_completion_matrix()) == 18,
-            "Milestone matrix has 18 rows.",
+            _milestones_current(milestone_completion_matrix()),
+            "Milestone matrix represents the current platform scope.",
         ),
         (
             "PORTFOLIO-DOCS",
@@ -584,11 +657,14 @@ def build_validation_summary() -> list[PortfolioCheck]:
 def build_test_and_coverage_summary() -> dict[str, Any]:
     return {
         "canonical_command": "make quality",
-        "latest_observed_result": "278 passed, coverage 90.60%",
+        "latest_observed_result": (
+            "Read the current make quality output and coverage.xml; "
+            "no historical result is asserted."
+        ),
         "coverage_threshold": ">=90%",
         "coverage_xml_path": "coverage.xml",
-        "focused_portfolio_tests": "tests/test_portfolio.py",
-        "status": "PASS",
+        "focused_portfolio_tests": "tests/test_portfolio.py and tests/test_consolidation.py",
+        "status": "EVIDENCE_REQUIRED",
     }
 
 
@@ -627,6 +703,22 @@ def build_model_performance_summary() -> list[dict[str, Any]]:
             "model": "synthetic_classification_baseline",
             "framework": "PyTorch",
             "claim": "Binary synthetic lesion-presence with calibration and abstention.",
+            "clinical_performance_claim": False,
+        },
+        {
+            "model": "small_3d_cnn / tiny_3d_vit",
+            "framework": "PyTorch",
+            "claim": "Subject-isolated synthetic classification and exact embedding retrieval.",
+            "evidence_workflow": "make platform-demo",
+            "evidence_reference": "docs/engineering_comparison.md",
+            "clinical_performance_claim": False,
+        },
+        {
+            "model": "faster_rcnn / tiny_detr",
+            "framework": "PyTorch/torchvision",
+            "claim": "Synthetic 2D axial detection; reference-mask-derived box targets.",
+            "evidence_workflow": "make platform-demo",
+            "evidence_reference": "docs/engineering_comparison.md",
             "clinical_performance_claim": False,
         },
     ]
@@ -920,3 +1012,8 @@ def _claim_is_negated(content: str, claim: str) -> bool:
         or "do not claim" in prefix[-160:]
         or "prohibited claims" in prefix[-160:]
     )
+
+
+def _milestones_current(entries: list[MilestoneEntry]) -> bool:
+    ids = [entry.milestone for entry in entries]
+    return len(ids) == len(set(ids)) and set(ids) == set(range(1, CURRENT_MILESTONE + 1))

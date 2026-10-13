@@ -1,145 +1,97 @@
-# Final End-To-End Architecture
+# Consolidated platform architecture through M23
 
 This platform is a research and engineering demonstrator. Outputs are intended for technical
 evaluation and human review only and must not be used for clinical diagnosis or patient-management
 decisions.
 
-Milestone 18 consolidates the architecture view across Milestones 1-17. The system demonstrates an
-end-to-end medical-imaging AI engineering workflow using synthetic or publicly available
-de-identified data only. It does not deploy AWS resources, claim NHS approval, claim medical-device
-approval, automate model promotion, automate retraining, or automate rollback.
+M1–M22 supply the task families; M23 consolidates interfaces, evidence and demonstration. The
+architecture separates actual data dependencies from optional integration and target-state designs.
 
 ## Status Legend
 
-- Implemented locally: source code and tests exist in this repository.
-- Locally executed: deterministic local command paths produce ignored artefacts.
-- Statically validated: manifests or infrastructure definitions are validated without live
-  deployment.
-- Simulated: deterministic local evidence models an operational process.
-- Target-state only: infrastructure design exists but is not deployed.
+| Label | Meaning |
+|---|---|
+| Implemented | Source and tests exist |
+| Executed/validated | A named run/check supplies evidence and context |
+| Simulated | Local engineering scenario, not a live operational incident |
+| Static design | Configuration or infrastructure validated without a deployed workload |
+| Target state | Designed operational architecture, not deployed |
+
+Legacy portfolio `claim_classification` values remain readable. Its added `capability_status` maps
+locally executed to executed/validated, statically validated to static design, and target-state only
+to target state. PASS/WARN/FAIL are check outcomes, not maturity labels.
 
 ## End-To-End Flow
 
 ```mermaid
 flowchart LR
-    A["Synthetic CT generation<br/>(locally executed)"] --> B["DICOM fixtures, ingestion<br/>and de-identification<br/>(locally executed)"]
-    B --> C["Technical image QC<br/>(locally executed)"]
-    C --> D["CT preprocessing<br/>(locally executed)"]
-    D --> E["Longitudinal registration<br/>(locally executed)"]
-    E --> F["Adrenal-region localisation<br/>(locally executed)"]
-    F --> G["Synthetic segmentation<br/>(locally executed)"]
-    F --> H["Calibrated classification<br/>(locally executed)"]
-    G --> I["Longitudinal lesion analysis<br/>(locally executed)"]
-    H --> I
-    I --> J["Governed FastAPI<br/>(implemented locally)"]
-    J --> K["Reviewer UI<br/>(implemented locally)"]
-    G --> L["Model registry<br/>(simulated governance evidence)"]
-    H --> L
-    J --> M["Monitoring, drift, audit<br/>(simulated synthetic evidence)"]
-    K --> M
-    J --> N["Containers<br/>(locally executed release assurance)"]
-    K --> N
-    N --> O["Helm/Kubernetes<br/>(static validation plus optional local runtime)"]
-    O --> P["AWS target-state IaC<br/>(target-state only, not deployed)"]
-    M --> Q["Observability and incident evidence<br/>(simulated operations evidence)"]
-    Q --> R["Portfolio evidence pack<br/>(implemented locally)"]
+  D[Synthetic DICOM fixture] --> QC[Technical QC]
+  QC --> PRE[CT preprocessing]
+  PRE --> LOC[Atlas localisation]
+  PRE --> PB[Classical image-content baseline]
+  PRE --> REG[Optional rigid / affine registration]
+  SYN[Synthetic labelled volumes] --> SD[Segmentation dataset]
+  SYN --> CD[Classification dataset]
+  SYN --> DD[Axial detection dataset]
+  SD --> SEG[MONAI 3D U-Net]
+  SEG --> MASK[Predicted masks]
+  MASK --> LONG[Longitudinal measurements / quality propagation]
+  CD --> CLS[Small CNN / Tiny ViT]
+  CLS --> EMB[Pre-head embeddings]
+  EMB --> RET[Exact retrieval / comparison]
+  DD --> DET[Faster R-CNN / Tiny DETR]
+  MASK --> API[Governed API]
+  LONG --> API
+  RET --> API
+  DET --> API
+  API --> UI[Reviewer summaries / overlays]
+  UI --> REVIEW[Separate artifact-bound decisions]
 ```
+
+The canonical demonstration does not train from DICOM/localisation ROIs. Model datasets use the
+existing synthetic reference annotations. Classification may repair splits to retain both labels;
+its own manifest is authoritative. Detection boxes are reference-derived. Longitudinal demonstration
+uses actual predicted masks and preserves missing-registration quality failures. Earlier verification
+commands using reference masks remain labelled separately. No upstream status is invented to make
+quality green.
 
 ## Component Architecture
 
-```mermaid
-flowchart TB
-    subgraph "Data And Imaging"
-      SYN["Synthetic fixtures"]
-      DICOM["DICOM governance"]
-      QC["Quality control"]
-      PRE["Preprocessing"]
-      REG["Registration"]
-      LOC["Localisation"]
-    end
-    subgraph "Model Workflows"
-      SEG["MONAI segmentation"]
-      CLS["PyTorch classification"]
-      LONG["Longitudinal analysis"]
-    end
-    subgraph "Governed Interfaces"
-      API["FastAPI research API"]
-      UI["Streamlit reviewer UI"]
-      AUDIT["Audit evidence"]
-    end
-    subgraph "Assurance"
-      REL["Container release evidence"]
-      K8S["Helm/Kubernetes evidence"]
-      AWS["AWS target-state evidence"]
-      OPS["Operations evidence"]
-      PORT["Portfolio evidence"]
-    end
-    SYN --> DICOM --> QC --> PRE --> REG --> LOC
-    LOC --> SEG --> LONG
-    LOC --> CLS --> LONG
-    LONG --> API --> UI --> AUDIT
-    API --> REL --> K8S --> AWS
-    API --> OPS --> PORT
-    AUDIT --> PORT
-    AWS --> PORT
-```
+The common CLI registers arguments once. Module, installed executable and legacy embeddings wrapper
+call the same entry point. Domain modules retain their validators; common evidence sidecars add
+cross-module identity and hashes without replacing existing contracts.
+
+The API bounds local inputs and exposes readiness, prediction summaries, segmentation slice previews
+and configured embedding-index choices. Reviewer UI performs no inference: it submits requests,
+checks source/preview compatibility, displays provenance and records separate human-review decisions.
+
+M20 classification and M21 detection compare both supported families under their own shared policies.
+M22 retrieval uses one relevance/gallery/query/exclusion policy across evaluation and benchmarks,
+with stored-matrix validation before search. Exact search is deterministic for equal scores.
 
 ## Model Lifecycle
 
-```mermaid
-stateDiagram-v2
-    [*] --> Candidate: register-model
-    Candidate --> Approved: approve-model with human metadata
-    Candidate --> Rejected: governance rejection
-    Approved --> Retired: human change control
-    Rejected --> [*]
-    Retired --> [*]
-```
-
-Only explicit human approval can move a model to `approved`. Monitoring, SLOs, clean tests, release
-evidence, or successful demos do not automatically promote, retrain, deploy, or roll back models.
+Training produces candidates and evidence, never deployment approval. Manual registry approval is
+separate from model accuracy, service readiness and review acceptance. Original prediction artifacts
+remain unchanged when review decisions are exported. Foundation models and prompt editing are outside
+M23 scope.
 
 ## Deployment Architecture
 
-```mermaid
-flowchart LR
-    IMG["Local CPU-only images<br/>(release assurance)"] --> HELM["Helm chart<br/>(static validation)"]
-    HELM --> KIND["Optional kind smoke<br/>(local runtime only)"]
-    HELM --> EKS["EKS target state<br/>(Terraform, not applied)"]
-    EKS --> CW["CloudWatch/CloudTrail target mapping<br/>(not deployed)"]
-```
-
-Containers and Kubernetes artefacts are engineering deployment evidence. AWS Terraform is
-target-state infrastructure-as-code and must not be represented as a live cloud deployment unless an
-operator separately deploys it outside this repository's normal validation path.
+Containers supply non-root/local runtime assurance. Helm/Kubernetes support static checks and optional
+local execution. Terraform describes AWS ECR/EKS/S3/KMS/monitoring target state; it does not apply
+resources. The CPU demo does not prove a live Kubernetes or AWS deployment.
 
 ## Monitoring And Audit Flow
 
-```mermaid
-flowchart LR
-    API["API events"] --> LOG["Structured redacted logs"]
-    API --> MET["Opt-in metrics endpoint"]
-    UI["Reviewer UI events"] --> LOG
-    LOG --> OPS["Operations evidence"]
-    MET --> OPS
-    OPS --> INC["Incident simulations"]
-    OPS --> SLO["SLO and error-budget evaluation"]
-    API --> AUD["Append-only audit JSONL"]
-    UI --> AUD
-    AUD --> PORT["Portfolio evidence"]
-    INC --> PORT
-    SLO --> PORT
-```
-
-Logs and metrics must not include raw arrays, DICOM pixels, model weights, credentials, direct
-identifiers, sensitive payloads, reviewer notes, or unredacted local secret paths.
+Model/data/evidence provenance → quality findings → reviewer interpretation → separate decision.
+Operations incidents, drift and rollback scenarios remain simulated. No automatic promotion,
+retraining or rollback occurs. [Evidence contract](../evidence_contracts.md),
+[canonical demo](../platform_demo.md), [local startup](../local_startup.md).
 
 ## Security Boundaries
 
-- Only synthetic or public de-identified data is allowed.
-- Generated artefacts, model checkpoints and local evidence stay outside Git.
-- API paths are allowlisted and protected against traversal and symlinks.
-- Containers and Kubernetes pods run as non-root with read-only root filesystems.
-- Metrics are disabled by default and protected when a token is configured.
-- AWS target-state design uses private-by-default EKS, governed S3, KMS and CloudTrail boundaries,
-  but no AWS resources are deployed by repository validation.
+Synthetic/public de-identified research scope only; no PACS or patient-management integration.
+Explicit input/evidence roots, size limits, no NumPy pickle, checksummed artifacts, visible unavailable
+capabilities and research-only warnings. Authenticated audit storage and clinical validation remain
+outside this local demonstrator.

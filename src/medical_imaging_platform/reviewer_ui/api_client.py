@@ -59,6 +59,12 @@ class ReviewerAPIClient:
     ) -> dict[str, Any]:
         return self._request("POST", "/v1/detection/predict", json=payload, request_id=request_id)
 
+    def embedding_indexes(self) -> dict[str, Any]:
+        return self._request("GET", "/v1/embeddings/indexes")
+
+    def search_embeddings(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return self._request("POST", "/v1/embeddings/search", json=payload)
+
     def analyse_longitudinal(
         self, payload: dict[str, Any], request_id: str | None = None
     ) -> dict[str, Any]:

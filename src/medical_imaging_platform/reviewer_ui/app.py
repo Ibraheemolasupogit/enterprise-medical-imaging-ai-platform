@@ -44,6 +44,8 @@ def run_reviewer_app(config_path: Path | None = None) -> None:
         pages.append("Detection")
     if config.enable_longitudinal_page:
         pages.append("Longitudinal")
+    if config.enable_embeddings_page:
+        pages.append("Embeddings / Similarity Retrieval")
     if config.enable_evidence_page:
         pages.append("Evidence")
     if config.enable_governance_page:
@@ -59,8 +61,8 @@ def run_reviewer_app(config_path: Path | None = None) -> None:
         detection.render(st, config, client)
     elif selected == "Longitudinal":
         longitudinal.render(st, config, client)
-    elif selected == "Embeddings":
-        embeddings.render(st, None)
+    elif selected == "Embeddings / Similarity Retrieval":
+        embeddings.render_search(st, config, client)
     elif selected == "Evidence":
         evidence.render(st, config, client)
     else:
@@ -68,4 +70,8 @@ def run_reviewer_app(config_path: Path | None = None) -> None:
 
 
 if __name__ == "__main__":
-    run_reviewer_app()
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Local governed reviewer")
+    parser.add_argument("--config", type=Path, default=Path("config/reviewer_ui.yaml"))
+    run_reviewer_app(parser.parse_args().config)

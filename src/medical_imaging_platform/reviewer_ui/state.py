@@ -12,6 +12,8 @@ DEFAULT_STATE: dict[str, Any] = {
     "review_decision": "insufficient_information",
     "review_notes": "",
     "export_status": None,
+    "segmentation_response": None,
+    "embedding_response": None,
 }
 
 

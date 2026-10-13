@@ -1,6 +1,6 @@
 # Model Change Control
 
-No models are implemented in Milestone 1.
+The current platform implements synthetic supervised models and governed experiment evidence.
 
 Future model changes must record:
 
@@ -68,3 +68,12 @@ Rollback remains a manual change-control action. The repository records the cand
 target, approval reference, evidence checksums and recovery verification status, but it does not
 automatically redeploy workloads, alter registry state, retrain models, promote replacement models
 or run Terraform apply.
+
+## M19–M23 consolidation
+
+Classical preprocessing, CNN/ViT classification, axial detection and embedding/retrieval changes
+require the same dataset/config/checkpoint provenance and human review. M23 adds shared evidence
+sidecars and exact artifact bindings. UI overlays and retrieval display must preserve geometry,
+checksums, quality failures and research limitations. Stored embedding policy changes require
+re-evaluation and new evidence; normalized storage is verified without altering persisted vectors.
+A canonical demo PASS establishes execution/integrity, not model quality or deployment approval.

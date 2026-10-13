@@ -15,13 +15,18 @@ def format_health_status(
     return {
         "health": health_status,
         "readiness": readiness,
-        "operational": "yes" if health_status == "healthy" and readiness == "ready" else "no",
+        "operational": "yes"
+        if health_status in {"healthy", "alive"} and readiness == "ready"
+        else "no",
     }
 
 
 def format_segmentation_response(payload: dict[str, Any]) -> dict[str, object]:
     return {
         "status": payload.get("status", "unknown"),
+        "source_checksum": payload.get("source_checksum"),
+        "evidence_reference": payload.get("evidence_reference"),
+        "artifact": payload.get("artifact"),
         "predicted_voxel_count": int(payload.get("predicted_voxel_count", 0)),
         "predicted_volume_mm3": float(payload.get("predicted_volume_mm3", 0.0)),
         "probability_summary": payload.get("probability_summary", {}),

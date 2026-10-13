@@ -787,12 +787,30 @@ def build_parser() -> argparse.ArgumentParser:
     validate_longitudinal_parser.add_argument("analysis_dir")
     validate_longitudinal_parser.add_argument("--json", action="store_true")
 
+    from medical_imaging_platform.embeddings.cli import register_commands
+
+    register_commands(subparsers)
+    demo_parser = subparsers.add_parser("platform-demo", help="Run the bounded M23 CPU demo.")
+    demo_parser.add_argument(
+        "--output-dir", type=Path, default=Path("reports/generated/platform-demo")
+    )
+    demo_parser.add_argument("--json", action="store_true")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    from medical_imaging_platform.embeddings.cli import COMMANDS, handle
+
+    if args.command in COMMANDS:
+        return handle(args, parser)
+    if args.command == "platform-demo":
+        from medical_imaging_platform.demonstration import run_platform_demo
+
+        demo_result = run_platform_demo(args.output_dir)
+        print(json.dumps(demo_result, indent=2, sort_keys=True))
+        return 0
 
     if args.command == "version":
         print(__version__)
@@ -1812,10 +1830,11 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         import uvicorn
 
+        from medical_imaging_platform.api.app import create_app
+
         print(f"Starting API {api_config.policy_version} on {host}:{port}.")
         uvicorn.run(
-            "medical_imaging_platform.api.app:create_app",
-            factory=True,
+            create_app(Path(args.config)),
             host=host,
             port=port,
             reload=False,
@@ -1918,6 +1937,9 @@ def main(argv: list[str] | None = None) -> int:
             "true",
             "--browser.gatherUsageStats",
             "false",
+            "--",
+            "--config",
+            str(Path(args.config).resolve()),
         ]
         streamlit_cli.main()
         return 0

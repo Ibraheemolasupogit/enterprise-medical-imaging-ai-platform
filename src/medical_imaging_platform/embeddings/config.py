@@ -44,6 +44,8 @@ class EmbeddingConfig(BaseModel):
     def valid_splits(cls, value: list[str]) -> list[str]:
         if any(not split for split in value):
             raise ValueError("split names must be non-empty")
+        if len(value) != len(set(value)) or not set(value) <= {"train", "validation", "test"}:
+            raise ValueError("split names must be unique train/validation/test values")
         return value
 
 

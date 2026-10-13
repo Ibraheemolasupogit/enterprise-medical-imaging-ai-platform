@@ -9,6 +9,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from medical_imaging_platform.api.models import DISCLAIMER
+from medical_imaging_platform.evidence import ArtifactBinding
 
 ReviewerDecisionValue = Literal[
     "accepted_for_engineering_review",
@@ -16,7 +17,7 @@ ReviewerDecisionValue = Literal[
     "rejected_due_to_quality",
     "insufficient_information",
 ]
-EvidenceType = Literal["segmentation", "classification", "detection", "longitudinal"]
+EvidenceType = Literal["segmentation", "classification", "detection", "longitudinal", "embeddings"]
 
 
 class ReviewerUIConfig(BaseModel):
@@ -37,6 +38,7 @@ class ReviewerUIConfig(BaseModel):
     enable_classification_page: bool = True
     enable_detection_page: bool = True
     enable_longitudinal_page: bool = True
+    enable_embeddings_page: bool = True
     enable_evidence_page: bool = True
     enable_governance_page: bool = True
     allow_local_array_upload: bool = True
@@ -116,6 +118,7 @@ class ReviewerDecision(BaseModel):
     reviewer_decision: ReviewerDecisionValue
     review_notes: str = Field(default="", max_length=500)
     review_timestamp: str
+    artifact: ArtifactBinding | None = None
     application_version: str
 
     @field_validator("review_notes")

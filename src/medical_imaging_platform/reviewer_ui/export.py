@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from medical_imaging_platform.evidence import ArtifactBinding
 from medical_imaging_platform.reviewer_ui.models import ReviewerDecision, ReviewExportResult
 from medical_imaging_platform.reviewer_ui.security import safe_review_output_dir
 from medical_imaging_platform.synthetic.manifest import sha256_file
@@ -18,6 +19,10 @@ def export_review_session(
     output_root: Path,
     overwrite: bool = False,
 ) -> ReviewExportResult:
+    if decision.artifact is not None:
+        reviewed = ArtifactBinding.model_validate(evidence_summary.get("artifact", {}))
+        if reviewed != decision.artifact:
+            raise ValueError("Review decision artifact checksum/provenance mismatch")
     output_dir = safe_review_output_dir(output_root, decision.review_id)
     if output_dir.exists() and any(output_dir.iterdir()) and not overwrite:
         raise FileExistsError(f"Review export already exists: {output_dir.name}")
@@ -45,7 +50,7 @@ def export_review_session(
 
 
 def _bounded_evidence_summary(payload: dict[str, Any]) -> dict[str, Any]:
-    blocked = {"raw_arrays", "model_weights", "checkpoint_binary", "values"}
+    blocked = {"raw_arrays", "model_weights", "checkpoint_binary", "values", "mask_preview"}
     return {key: value for key, value in payload.items() if key not in blocked}
 
 

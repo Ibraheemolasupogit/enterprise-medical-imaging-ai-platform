@@ -53,14 +53,24 @@ def _index(directory, *, family="small_3d_cnn", query=True):
     manifest = {
         "embedding_dimension": 2,
         "encoder_family": family,
-        "encoder_checkpoint_checksum": f"{family}-checkpoint",
+        "encoder_checkpoint_checksum": sha256_file(matrix_path),
         "matrix_checksum": sha256_file(matrix_path),
+        "normalization": "l2",
+        "config_checksum": sha256_file(matrix_path),
+        "source_dataset_manifest_checksum": sha256_file(matrix_path),
         "records": records,
     }
     (directory / "embedding_manifest.json").write_text(json.dumps(manifest))
     (directory / "evidence").mkdir()
     (directory / "evidence" / "checksum_manifest.json").write_text(
-        json.dumps({"files": {"embedding_matrix.npy": sha256_file(matrix_path)}})
+        json.dumps(
+            {
+                "files": {
+                    name: sha256_file(directory / name)
+                    for name in ("embedding_matrix.npy", "embedding_manifest.json")
+                }
+            }
+        )
     )
     return directory
 
@@ -128,7 +138,7 @@ def test_generation_checkpoint_roundtrip_and_cli(
     evidence = json.loads((output / "evidence" / "checksum_manifest.json").read_text())
     assert evidence["files"] == {
         name: sha256_file(output / name)
-        for name in ("embedding_matrix.npy", "embedding_manifest.json")
+        for name in ("embedding_matrix.npy", "embedding_manifest.json", "evidence_envelope.json")
     }
     original_matrix = index.matrix.copy()
     original_manifest = (output / "embedding_manifest.json").read_bytes()
@@ -202,7 +212,7 @@ def test_benchmark_artifacts_membership_and_overwrite(tmp_path):
     changed = json.loads(vit_manifest.read_text())
     changed["records"].reverse()
     vit_manifest.write_text(json.dumps(changed))
-    with pytest.raises(ValueError, match="identical ordered samples"):
+    with pytest.raises(ValueError, match="row ordering"):
         run_benchmark(cnn, vit, tmp_path / "mismatched")
     assert not (tmp_path / "mismatched" / "embedding_benchmark_comparison.json").exists()
 
@@ -239,7 +249,9 @@ def test_query_and_evaluation_cli(tmp_path, monkeypatch, capsys):
     assert invalid.value.code == 2
     no_queries = _index(tmp_path / "no-queries", query=False)
     _module_cli(monkeypatch, ["evaluate-retrieval", no_queries, "--json"])
-    assert json.loads(capsys.readouterr().out) == {"query_count": 0, "top_k": [1, 5]}
+    empty = json.loads(capsys.readouterr().out)
+    assert empty["query_count"] == 0
+    assert empty["top_k"] == [1, 5]
 
 
 def test_benchmark_cli_real_backend_and_overwrite_failure(tmp_path, monkeypatch, capsys):
@@ -326,7 +338,7 @@ def test_api_embedding_search_returns_ranking_and_provenance(tmp_path):
     assert payload["query"]["source_sample_id"] == "q"
     assert [r["source_sample_id"] for r in payload["results"]] == ["a", "b"]
     assert payload["encoder_family"] == "small_3d_cnn"
-    assert payload["encoder_checkpoint_checksum"] == "small_3d_cnn-checkpoint"
+    assert payload["encoder_checkpoint_checksum"] == sha256_file(directory / "embedding_matrix.npy")
     assert payload["index_checksum"] == sha256_file(directory / "embedding_matrix.npy")
     assert payload["latency_ms"] >= 0
     assert "not diagnostic similarity" in payload["warnings"][0]
@@ -519,5 +531,9 @@ def test_benchmark_rejects_different_gallery_membership(tmp_path):
     manifest = json.loads(path.read_text())
     manifest["records"][0]["split"] = "test"
     path.write_text(json.dumps(manifest))
+    evidence_path = vit / "evidence" / "checksum_manifest.json"
+    evidence = json.loads(evidence_path.read_text())
+    evidence["files"]["embedding_manifest.json"] = sha256_file(path)
+    evidence_path.write_text(json.dumps(evidence))
     with pytest.raises(ValueError, match="source dataset and membership"):
         run_benchmark(cnn, vit, tmp_path / "benchmark")

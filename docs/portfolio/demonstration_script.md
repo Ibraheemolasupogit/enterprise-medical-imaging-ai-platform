@@ -11,6 +11,16 @@ decisions.
 - No AWS credentials are required for checkout-safe evidence.
 - Do not run `terraform apply`.
 
+## Canonical model/evidence workflow
+
+```bash
+make platform-demo
+```
+
+See [the bounded CPU workflow](../platform_demo.md) and [API/UI startup](../local_startup.md).
+This workflow includes existing M19–M22 models/benchmarks, actual prediction masks and a final evidence
+index. It preserves individual quality failures; successful orchestration is not model approval.
+
 ## Fast Version
 
 ```bash

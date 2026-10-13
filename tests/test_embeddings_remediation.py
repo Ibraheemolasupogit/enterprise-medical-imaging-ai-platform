@@ -28,10 +28,23 @@ def w(d, rs):
                 "records": rs,
                 "encoder_family": "small_3d_cnn",
                 "matrix_checksum": sha256_file(p),
+                "normalization": "l2",
+                "encoder_checkpoint_checksum": sha256_file(p),
+                "source_dataset_manifest_checksum": sha256_file(p),
+                "config_checksum": sha256_file(p),
             }
         )
     )
-    (d / "evidence" / "checksum_manifest.json").write_text("{}")
+    (d / "evidence" / "checksum_manifest.json").write_text(
+        json.dumps(
+            {
+                "files": {
+                    name: sha256_file(d / name)
+                    for name in ("embedding_matrix.npy", "embedding_manifest.json")
+                }
+            }
+        )
+    )
 
 
 def test_norm():

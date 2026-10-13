@@ -6,11 +6,9 @@ import time
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-
-from medical_imaging_platform.embeddings.config import validate_top_k
-from medical_imaging_platform.embeddings.core import EmbeddingIndex, sha256_file
-from medical_imaging_platform.embeddings.metrics import retrieval_metrics
+from medical_imaging_platform.embeddings.config import EmbeddingConfig, validate_top_k
+from medical_imaging_platform.embeddings.core import EmbeddingIndex, index_policy, sha256_file
+from medical_imaging_platform.embeddings.metrics import evaluate_index
 
 
 def run_benchmark(
@@ -18,10 +16,12 @@ def run_benchmark(
     vit_index: str | Path,
     output_dir: str | Path,
     *,
-    top_k: tuple[int, ...] = (1, 5),
+    top_k: tuple[int, ...] | None = None,
+    policy: EmbeddingConfig | None = None,
     overwrite: bool = False,
 ) -> dict[str, Any]:
-    validate_top_k(top_k)
+    if top_k is not None:
+        validate_top_k(top_k)
     output_dir = Path(output_dir)
     if output_dir.exists() and any(output_dir.iterdir()) and not overwrite:
         raise FileExistsError(f"Output directory is non-empty: {output_dir}")
@@ -39,41 +39,28 @@ def run_benchmark(
         "source_dataset_manifest_checksum"
     ):
         raise ValueError("CNN and ViT indexes do not have identical source dataset and membership")
-    query_ids = [r["source_sample_id"] for r in cnn.records if r.get("split") == "test"]
+    if policy is None and index_policy(cnn) != index_policy(vit):
+        raise ValueError("CNN and ViT relevance/retrieval policies are incompatible")
+    policy = policy or index_policy(cnn)
+    if top_k is not None:
+        policy = policy.model_copy(update={"top_k": top_k})
+    top_k = policy.top_k
+    query_ids = [
+        r["source_sample_id"] for r in cnn.records if r.get("split") in policy.query_splits
+    ]
     gallery_ids = {
-        r["source_sample_id"] for r in cnn.records if r.get("split") in {"train", "validation"}
+        r["source_sample_id"] for r in cnn.records if r.get("split") in policy.gallery_splits
     }
     results: dict[str, Any] = {}
     for name, index in (("small_3d_cnn", cnn), ("tiny_3d_vit", vit)):
-        rows = []
         started = time.perf_counter()
-        for sample_id in query_ids:
-            row = index.sample_index[sample_id]
-            query = index.matrix[row]
-            hits = index.search(
-                query,
-                max(top_k),
-                exclude_source_sample_id=sample_id,
-                gallery_splits=("train", "validation"),
-            )
-            record = index.records[row]
-            relevance = {
-                "sample_ids": {
-                    r["source_sample_id"]
-                    for r in index.records
-                    if r["source_sample_id"] in gallery_ids
-                    and r.get("scenario") == record.get("scenario")
-                },
-                "scenarios": {str(record.get("scenario"))},
-                "labels": {str(record.get("label"))},
-            }
-            rows.append(retrieval_metrics(hits, relevance, top_k))
+        evaluation = evaluate_index(index, policy)
         elapsed = time.perf_counter() - started
-        numeric = {}
-        if rows:
-            for key in rows[0]:
-                if isinstance(rows[0][key], (int, float)):
-                    numeric[key] = float(np.mean([row[key] for row in rows]))
+        numeric = {
+            key: value
+            for key, value in evaluation.items()
+            if isinstance(value, (int, float)) and key != "query_count"
+        }
         results[name] = {
             "metrics": numeric,
             "embedding_dimension": index.dimension,
@@ -84,6 +71,7 @@ def run_benchmark(
         }
     comparison = {
         "models": results,
+        "retrieval_policy": policy.model_dump(mode="json"),
         "fairness_attestation": {
             "identical_ordered_samples": True,
             "gallery_sample_count": len(gallery_ids),
@@ -93,6 +81,7 @@ def run_benchmark(
         },
     }
     manifest = {
+        "retrieval_policy": policy.model_dump(mode="json"),
         "cnn_index_checksum": sha256_file(Path(cnn_index) / "embedding_manifest.json"),
         "vit_index_checksum": sha256_file(Path(vit_index) / "embedding_manifest.json"),
         "gallery_sample_ids": sorted(gallery_ids),

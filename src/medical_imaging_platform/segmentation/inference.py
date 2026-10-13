@@ -10,6 +10,7 @@ from typing import Any
 import numpy as np
 import torch
 
+from medical_imaging_platform.evidence import EvidenceEnvelope, sha256_file, write_envelope
 from medical_imaging_platform.segmentation.checkpoint import load_state_dict
 from medical_imaging_platform.segmentation.dataset import SegmentationTorchDataset
 from medical_imaging_platform.segmentation.metrics import (
@@ -21,7 +22,11 @@ from medical_imaging_platform.segmentation.models import (
     SegmentationConfig,
     SegmentationDatasetManifest,
 )
-from medical_imaging_platform.segmentation.pipeline import resolve_device, set_reproducibility
+from medical_imaging_platform.segmentation.pipeline import (
+    configuration_checksum,
+    resolve_device,
+    set_reproducibility,
+)
 from medical_imaging_platform.segmentation.postprocessing import postprocess_probability_map
 from medical_imaging_platform.segmentation.transforms import build_transforms
 
@@ -59,6 +64,23 @@ def segment_volume(
     (output_dir / "inference_metadata.json").write_text(
         json.dumps(metadata, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
+    )
+    write_envelope(
+        output_dir / "evidence_envelope.json",
+        EvidenceEnvelope(
+            artifact_type="segmentation_mask",
+            run_id=output_dir.name,
+            artifact_reference="predicted_mask.npy",
+            artifact_checksum=sha256_file(output_dir / "predicted_mask.npy"),
+            source_id=str(input_volume),
+            source_checksum=sha256_file(input_volume),
+            model_family="monai_3d_unet",
+            checkpoint_checksum=sha256_file(checkpoint_path),
+            config_checksum=configuration_checksum(config),
+            quality_status="PASS_WITH_WARNINGS" if warnings else "PASS",
+            data_role="predicted",
+            warnings=warnings,
+        ),
     )
     return metadata
 
