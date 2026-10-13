@@ -321,7 +321,7 @@ def run_platform_demo(output_root: Path) -> dict[str, Any]:
             cls["benchmark_id"],
             cls_bench / "classification_benchmark_comparison.json",
             source=cls_dir / "classification_manifest.json",
-            role="reference",
+            role="derived",
         )
         policy = load_embedding_config(Path("config/embeddings.yaml"))
         indexes = []
@@ -384,7 +384,7 @@ def run_platform_demo(output_root: Path) -> dict[str, Any]:
             detection["benchmark_id"],
             det_bench / "detection_benchmark_comparison.json",
             source=det_dir / "detection_dataset_manifest.json",
-            role="reference",
+            role="derived",
             config=det_path,
         )
 

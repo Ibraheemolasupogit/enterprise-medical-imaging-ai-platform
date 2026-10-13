@@ -176,6 +176,7 @@ class ReleaseManifest(BaseModel):
     images: dict[str, dict[str, Any]]
     dockerfile_checksums: dict[str, str]
     configuration_checksums: dict[str, str]
+    source_checksums: dict[str, str] = Field(default_factory=dict)
     test_results: list[ReleaseCheckResult]
     scan_results: list[ToolResult]
     smoke_test_results: SmokeTestResult

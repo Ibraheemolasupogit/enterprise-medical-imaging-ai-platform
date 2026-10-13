@@ -32,7 +32,7 @@ flowchart LR
 ```
 
 The branches are explicit: model datasets use synthetic reference annotations; localisation ROIs
-are not their training inputs. [Architecture](docs/architecture/final_end_to_end_architecture.md).
+are not their training inputs. [Architecture](docs/architecture/final_end_to_end_architecture.md), [documentation index](docs/README.md).
 
 ## Implemented Capabilities
 

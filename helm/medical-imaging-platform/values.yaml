@@ -38,10 +38,9 @@ api:
     type: ClusterIP
     port: 8000
   config:
-    path: "/app/config/container/api.yaml"
+    path: "/app/config/api.yaml"
     environment: "local-kubernetes"
     logLevel: "INFO"
-    syntheticOnly: "true"
   secretRefs: []
   resources:
     requests:
@@ -97,10 +96,8 @@ reviewerUi:
     type: ClusterIP
     port: 8501
   config:
-    apiBaseUrl: "http://medical-imaging-platform-api:8000"
-    environment: "local-kubernetes"
-    logLevel: "INFO"
-    syntheticOnly: "true"
+    # Empty selects the chart's actual API Service name; an explicit URL overrides it.
+    apiBaseUrl: ""
   secretRefs: []
   resources:
     requests:

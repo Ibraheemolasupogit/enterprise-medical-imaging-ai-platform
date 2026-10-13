@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 
 from medical_imaging_platform import __version__
@@ -533,7 +534,7 @@ def build_parser() -> argparse.ArgumentParser:
         "serve-api",
         help="Serve the local governed research API with Uvicorn.",
     )
-    serve_api_parser.add_argument("--config", default="config/api.yaml")
+    serve_api_parser.add_argument("--config", default=None)
     serve_api_parser.add_argument("--host", default=None)
     serve_api_parser.add_argument("--port", type=int, default=None)
 
@@ -744,6 +745,12 @@ def build_parser() -> argparse.ArgumentParser:
     for command_name, help_text in portfolio_commands.items():
         command_parser = subparsers.add_parser(command_name, help=help_text)
         command_parser.add_argument("--json", action="store_true")
+        if command_name == "run-demo-fast":
+            command_parser.add_argument(
+                "--execute",
+                action="store_true",
+                help="Run stages; otherwise record an unexecuted plan.",
+            )
 
     longitudinal_parser = subparsers.add_parser(
         "analyse-longitudinal-pair",
@@ -1819,7 +1826,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "serve-api":
         try:
-            api_config = load_api_config(Path(args.config))
+            api_path = Path(
+                args.config or os.environ.get("MEDICAL_IMAGING_API_CONFIG", "config/api.yaml")
+            )
+            api_config = load_api_config(api_path)
             host = args.host or api_config.host
             port = args.port or api_config.port
             if host == "0.0.0.0" and not api_config.allow_external_bind:  # nosec B104
@@ -1834,10 +1844,12 @@ def main(argv: list[str] | None = None) -> int:
 
         print(f"Starting API {api_config.policy_version} on {host}:{port}.")
         uvicorn.run(
-            create_app(Path(args.config)),
+            create_app(api_path),
             host=host,
             port=port,
             reload=False,
+            log_level=api_config.log_level.lower(),
+            access_log=False,
         )
         return 0
 
@@ -2782,13 +2794,13 @@ def main(argv: list[str] | None = None) -> int:
         )
 
         if args.command == "run-demo-fast":
-            demo_payload = run_demo_fast()
+            demo_payload = run_demo_fast(execute=args.execute)
             print(
                 json.dumps(demo_payload, indent=2, sort_keys=True)
                 if args.json
                 else f"Demo-fast evidence status={demo_payload['overall_status']}."
             )
-            return 0 if demo_payload["overall_status"] == "PASS" else 2
+            return 0 if demo_payload["overall_status"] in {"PASS", "UNAVAILABLE"} else 2
         if args.command == "build-portfolio-evidence":
             portfolio_manifest = build_portfolio_evidence()
             print(

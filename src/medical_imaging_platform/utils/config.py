@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -249,7 +250,14 @@ def load_api_config(path: Path) -> APIConfig:
     if not isinstance(settings, dict) or "api" not in settings:
         raise ConfigError(f"Missing settings.api in {path}")
     try:
-        return APIConfig.model_validate(settings["api"])
+        values = dict(settings["api"])
+        for field, variable in {
+            "environment": "PLATFORM_ENVIRONMENT",
+            "log_level": "PLATFORM_LOG_LEVEL",
+        }.items():
+            if variable in os.environ:
+                values[field] = os.environ[variable]
+        return APIConfig.model_validate(values)
     except ValidationError as exc:
         raise ConfigError(f"Invalid API configuration in {path}: {exc}") from exc
 
@@ -261,7 +269,10 @@ def load_reviewer_ui_config(path: Path) -> ReviewerUIConfig:
     if not isinstance(settings, dict) or "reviewer_ui" not in settings:
         raise ConfigError(f"Missing settings.reviewer_ui in {path}")
     try:
-        return ReviewerUIConfig.model_validate(settings["reviewer_ui"])
+        values = dict(settings["reviewer_ui"])
+        if "REVIEWER_API_BASE_URL" in os.environ:
+            values["api_base_url"] = os.environ["REVIEWER_API_BASE_URL"]
+        return ReviewerUIConfig.model_validate(values)
     except ValidationError as exc:
         raise ConfigError(f"Invalid reviewer UI configuration in {path}: {exc}") from exc
 

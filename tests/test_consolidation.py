@@ -396,6 +396,11 @@ def test_real_demo_records_runs_checksums_roles_and_model_context(canonical_demo
         "retrieval_benchmark",
         "longitudinal",
     }
+    assert all(
+        r["data_role"] == "derived"
+        for r in records
+        if r["artifact_type"] in {"classification_benchmark", "detection_benchmark"}
+    )
     masks = [r for r in records if r["artifact_type"] == "segmentation_prediction"]
     assert all(r["data_role"] == "predicted" for r in masks)
     pair_path = next(

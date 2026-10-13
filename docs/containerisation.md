@@ -13,7 +13,7 @@ Two images are defined:
 
 Both Dockerfiles are multi-stage Python 3.12 builds. Dependencies are resolved into wheels in the builder stage and installed into a slim runtime stage. Runtime stages use non-root UID/GID `10001:10001`, fixed `/app` working directories, exec-form commands, OCI labels, deterministic Python environment variables, and no copied generated model checkpoints.
 
-Container builds intentionally do not install from the developer `pyproject.toml` dependency resolver directly. They first build a runtime wheelhouse from `requirements/container-runtime.txt`, which pins `torch==2.13.0+cpu` for Linux and uses the official PyTorch CPU wheel index at `https://download.pytorch.org/whl/cpu`. The project wheel is then installed with `--no-deps` so Linux builds do not resolve CUDA, NVIDIA, cuDNN, NCCL, Triton, or related GPU packages. The macOS/local developer workflow remains unchanged.
+Container builds intentionally do not install from the developer `pyproject.toml` dependency resolver directly. They first build a runtime wheelhouse from `requirements/container-runtime.txt`, which pins `torch==2.13.0+cpu` for Linux and uses the official PyTorch CPU wheel index at `https://download.pytorch.org/whl/cpu`. The project wheel is installed with dependency resolution enabled against that offline wheelhouse, followed by `pip check`. Missing or contradictory requirements fail the build. Torchvision uses a compatible CPU wheel; httpx and Matplotlib are normal runtime dependencies. The macOS/local developer workflow remains unchanged.
 
 The Dockerfiles copy the container requirements file before source code so the heavy dependency layer can be reused when application source changes. Development and test extras are not installed in runtime images.
 
@@ -39,3 +39,13 @@ The reviewer UI depends on API health and reaches the API at `http://api:8000` i
 ## Health And Readiness
 
 The API container health check calls `/health`. Release smoke verification also checks `/ready`, `/version`, service UID/GID, read-only root filesystem behaviour, writable output mounts, reviewer UI health, and reviewer-to-API reachability. The reviewer UI health check uses Streamlit's local health endpoint. If readiness is degraded because model artefacts are expected to be mounted externally, the smoke evidence records that degraded state explicitly instead of reporting full readiness.
+
+## Runtime configuration wiring
+
+`MEDICAL_IMAGING_API_CONFIG` selects the API YAML file (default image path `/app/config/api.yaml`).
+`PLATFORM_ENVIRONMENT` and `PLATFORM_LOG_LEVEL` are validated YAML overrides.
+`REVIEWER_API_BASE_URL` overrides the reviewer URL; network scope validation still applies.
+Compose supplies explicit segmentation/classification/detection config mounts under `/app/config/`.
+Checkpoints/calibration/indexes must be configured explicitly under mounted artifact roots; absent
+capabilities remain unavailable. Helm selects its actual API Service URL unless explicitly overridden.
+No model approval, checksum enforcement or server inference timeout is implied by removed settings.

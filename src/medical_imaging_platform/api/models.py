@@ -30,14 +30,10 @@ class APIConfig(BaseModel):
     allowed_evidence_roots: list[Path] = Field(min_length=1)
     maximum_request_bytes: int = Field(gt=0)
     maximum_array_bytes: int = Field(gt=0)
-    maximum_batch_size: int = Field(gt=0)
-    request_timeout_seconds: int = Field(gt=0)
     enable_metrics_endpoint: bool = False
     metrics_access_token: str | None = None
     enable_docs: bool = True
     enable_openapi: bool = True
-    require_model_checksums: bool = True
-    require_quality_pass: bool = True
     allow_degraded_review: bool = True
     allow_external_bind: bool = False
     allow_threshold_override: bool = False

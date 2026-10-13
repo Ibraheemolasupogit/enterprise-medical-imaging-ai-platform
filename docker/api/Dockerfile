@@ -38,11 +38,13 @@ RUN groupadd --gid 10001 appuser \
 COPY --from=builder /wheels /wheels
 COPY requirements/container-runtime.txt /app/requirements/container-runtime.txt
 RUN python -m pip install --no-cache-dir --no-index --find-links /wheels -r /app/requirements/container-runtime.txt \
-    && python -m pip install --no-cache-dir --no-index --find-links /wheels --no-deps enterprise-medical-imaging-ai-platform \
+    && python -m pip install --no-cache-dir --no-index --find-links /wheels enterprise-medical-imaging-ai-platform \
+    && python -m pip check \
     && rm -rf /wheels
 COPY --chown=10001:10001 config/container/api.yaml /app/config/api.yaml
 COPY --chown=10001:10001 config/longitudinal.yaml /app/config/longitudinal.yaml
+COPY --chown=10001:10001 config/segmentation.yaml config/classification.yaml config/detection.yaml /app/config/
 USER 10001:10001
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).read()"]
-CMD ["python", "-m", "uvicorn", "medical_imaging_platform.api.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
+CMD ["medical-imaging-platform", "serve-api"]

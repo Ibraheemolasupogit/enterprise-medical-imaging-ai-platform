@@ -57,12 +57,8 @@ def _write_api_config(
                 "allowed_evidence_roots": [str(evidence), str(output)],
                 "maximum_request_bytes": maximum_request_bytes,
                 "maximum_array_bytes": maximum_array_bytes,
-                "maximum_batch_size": 1,
-                "request_timeout_seconds": 30,
                 "enable_docs": False,
                 "enable_openapi": False,
-                "require_model_checksums": True,
-                "require_quality_pass": True,
                 "allow_degraded_review": True,
                 "allow_external_bind": False,
                 "allow_threshold_override": False,
@@ -493,8 +489,6 @@ def test_api_edge_controls_and_sanitized_unhandled_errors(
             "allowed_evidence_roots": [str(tmp_path / "evidence")],
             "maximum_request_bytes": 1,
             "maximum_array_bytes": 1,
-            "maximum_batch_size": 1,
-            "request_timeout_seconds": 1,
         }
     )
     with pytest.raises(Exception, match="escapes configured root"):

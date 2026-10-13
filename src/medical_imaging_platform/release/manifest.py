@@ -87,6 +87,8 @@ def build_release_manifest(
                 Path("docker/api/Dockerfile"),
                 Path("docker/reviewer-ui/Dockerfile"),
                 config.container_runtime_requirements,
+                Path("pyproject.toml"),
+                Path("docker-compose.yml"),
             ]
         ),
         configuration_checksums=checksum_paths(
@@ -94,8 +96,13 @@ def build_release_manifest(
                 Path("config/container.yaml"),
                 Path("config/container/api.yaml"),
                 Path("config/container/reviewer_ui.yaml"),
+                Path("config/segmentation.yaml"),
+                Path("config/classification.yaml"),
+                Path("config/detection.yaml"),
+                Path("config/longitudinal.yaml"),
             ]
         ),
+        source_checksums=checksum_paths(list(Path("src/medical_imaging_platform").rglob("*.py"))),
         test_results=test_results,
         scan_results=scan_results,
         smoke_test_results=smoke_results,

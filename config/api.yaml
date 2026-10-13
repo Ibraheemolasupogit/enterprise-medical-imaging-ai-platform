@@ -20,14 +20,10 @@ settings:
       - ml/experiments
     maximum_request_bytes: 1048576
     maximum_array_bytes: 1048576
-    maximum_batch_size: 1
-    request_timeout_seconds: 30
     enable_metrics_endpoint: false
     metrics_access_token: null
     enable_docs: true
     enable_openapi: true
-    require_model_checksums: true
-    require_quality_pass: true
     allow_degraded_review: true
     allow_external_bind: false
     allow_threshold_override: false

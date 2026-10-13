@@ -2,10 +2,19 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 REQUIRED_MARKDOWN_FILES = (
     Path("README.md"),
+    Path("docs/README.md"),
+    Path("api/README.md"),
+    Path("dashboard/README.md"),
+    Path("ml/README.md"),
+    Path("infrastructure/README.md"),
+    Path("monitoring/README.md"),
+    Path("docs/detection_design.md"),
+    Path("docs/embeddings.md"),
     Path("docs/platform_demo.md"),
     Path("docs/local_startup.md"),
     Path("docs/evidence_contracts.md"),
@@ -116,6 +125,43 @@ def validate_markdown_file(path: Path) -> list[str]:
     return errors
 
 
+def validate_claims(path: Path, content: str) -> list[str]:
+    """Check each occurrence in its own sentence/contrast clause, not the whole document."""
+    errors = []
+    for claim in PROHIBITED_UNQUALIFIED_CLAIMS:
+        for match in re.finditer(re.escape(claim), content, flags=re.IGNORECASE):
+            preceding = content[max(0, match.start() - 200) : match.start()].lower()
+            prefix = re.split(r"[.!?;]|\bbut\b|\bhowever\b", preceding)[-1]
+            prefix = prefix.rsplit(claim.lower(), maxsplit=1)[-1]
+            if not re.search(
+                r"\b(no|not|without|prohibited|must not|do not|does not)\b[^.!?;]*$", prefix
+            ):
+                errors.append(f"{path} contains unsupported claim wording: {claim}")
+    return errors
+
+
+def validate_current_state(path: Path, content: str) -> list[str]:
+    errors = []
+    if path.as_posix() in {
+        "api/README.md",
+        "dashboard/README.md",
+        "ml/README.md",
+        "infrastructure/README.md",
+        "monitoring/README.md",
+        "SECURITY.md",
+    } and re.search(
+        r"planned\s*[-–—]\s*not yet implemented|repository foundation code only",
+        content,
+        flags=re.IGNORECASE,
+    ):
+        errors.append(f"{path} contains stale implemented-capability scaffold wording.")
+    if path.as_posix() == "docs/roadmap.md":
+        milestones = {int(value) for value in re.findall(r"^(\d+)\.", content, re.MULTILINE)}
+        if not set(range(19, 24)) <= milestones or "review dashboard remains planned" in content:
+            errors.append("docs/roadmap.md does not represent current M19–M23 capabilities.")
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
     for path in REQUIRED_MARKDOWN_FILES:
@@ -134,23 +180,8 @@ def main() -> int:
 
     for path in REQUIRED_MARKDOWN_FILES:
         content = path.read_text(encoding="utf-8")
-        lowered = content.lower()
-        for claim in PROHIBITED_UNQUALIFIED_CLAIMS:
-            claim_lower = claim.lower()
-            index = lowered.find(claim_lower)
-            prefix = lowered[max(0, index - 120) : index] if index != -1 else ""
-            negated = (
-                f"no {claim_lower}" in lowered
-                or f"not {claim_lower}" in lowered
-                or f"not a {claim_lower}" in lowered
-                or f"not an {claim_lower}" in lowered
-                or f"not intended for {claim_lower}" in lowered
-                or f"without {claim_lower}" in lowered
-                or "not intended for" in prefix
-                or "must not be used as" in prefix
-            )
-            if claim_lower in lowered and not negated:
-                errors.append(f"{path} contains unsupported claim wording: {claim}")
+        errors.extend(validate_claims(path, content))
+        errors.extend(validate_current_state(path, content))
 
     if errors:
         for error in errors:

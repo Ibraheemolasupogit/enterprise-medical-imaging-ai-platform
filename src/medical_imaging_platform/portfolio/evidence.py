@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
+import subprocess  # nosec B404
 import sys
 from pathlib import Path
 from typing import Any, cast
@@ -18,6 +20,7 @@ from medical_imaging_platform.portfolio.models import (
 )
 
 PORTFOLIO_EVIDENCE_DIR = Path("reports/generated/portfolio")
+CONTAINER_EVIDENCE_DIR = Path("reports/generated/releases")
 MATRIX_PATH = PORTFOLIO_EVIDENCE_DIR / "milestone_completion_matrix.json"
 MATRIX_MD_PATH = PORTFOLIO_EVIDENCE_DIR / "milestone_completion_matrix.md"
 CAPABILITY_PATH = PORTFOLIO_EVIDENCE_DIR / "capability_inventory.json"
@@ -236,33 +239,58 @@ def validate_portfolio_evidence() -> list[PortfolioCheck]:
     return checks
 
 
-def run_demo_fast() -> dict[str, Any]:
-    """Write a deterministic fast-demo status record."""
+def run_demo_fast(*, execute: bool = False) -> dict[str, Any]:
+    """Record a plan unless execution is explicitly requested; never invent stage results."""
     PORTFOLIO_EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
     stages = [
-        ("environment_validation", "make validate-config", "PASS"),
-        ("documentation_validation", "make validate-docs", "PASS"),
-        ("synthetic_data", "make verify-synthetic-data", "PASS"),
-        ("monitoring_and_audit", "make verify-monitoring", "PASS"),
-        ("kubernetes_static_assurance", "make validate-kubernetes-policy", "PASS"),
-        ("aws_static_assurance", "make validate-aws-policy", "PASS"),
-        ("operations_evidence", "make build-operations-evidence", "PASS"),
-        ("portfolio_evidence", "make build-portfolio-evidence", "PASS"),
+        ("environment_validation", "make validate-config"),
+        ("documentation_validation", "make validate-docs"),
+        ("synthetic_data", "make verify-synthetic-data"),
+        ("monitoring_and_audit", "make verify-monitoring"),
+        ("kubernetes_static_assurance", "make validate-kubernetes-policy"),
+        ("aws_static_assurance", "make validate-aws-policy"),
+        ("operations_evidence", "make build-operations-evidence"),
+        ("portfolio_evidence", "make build-portfolio-evidence"),
     ]
+    results = []
+    failed = False
+    for stage, command in stages:
+        result: dict[str, Any] = {"stage": stage, "command": command, "status": "UNAVAILABLE"}
+        if execute and not failed:
+            try:
+                make_executable = shutil.which("make")
+                if make_executable is None:
+                    raise OSError("make is not available")
+                observed = subprocess.run(  # nosec B603
+                    [make_executable, command.split()[1]],
+                    capture_output=True,
+                    text=True,
+                    timeout=300,
+                    check=False,
+                )
+                result.update(
+                    executed=True,
+                    exit_code=observed.returncode,
+                    status="PASS" if observed.returncode == 0 else "FAIL",
+                )
+                failed = observed.returncode != 0
+            except (OSError, subprocess.TimeoutExpired):
+                result.update(executed=False, status="ERROR")
+                failed = True
+        else:
+            result["executed"] = False
+        results.append(result)
     payload = {
         "demo_id": "m18-demo-fast-v1",
         "generated_timestamp": GENERATED_TIMESTAMP,
-        "executed": True,
+        "executed": any(result["executed"] for result in results),
         "mode": "fast-demo",
         "duration_guidance": "5-10 minutes after dependencies are installed.",
         "mandatory_runtime_tools": ["python3"],
         "optional_runtime_tools": ["docker", "helm", "kubectl", "kind", "terraform"],
         "cleanup_command": "make clean-demo",
-        "stages": [
-            {"stage": stage, "command": command, "status": status}
-            for stage, command, status in stages
-        ],
-        "overall_status": "PASS",
+        "stages": results,
+        "overall_status": "FAIL" if failed else "PASS" if execute else "UNAVAILABLE",
         "disclaimer": PORTFOLIO_DISCLAIMER,
     }
     _write_json(DEMO_FAST_PATH, payload)
@@ -310,7 +338,7 @@ def milestone_completion_matrix() -> list[MilestoneEntry]:
             "Deterministic synthetic CT fixtures",
             "data/synthetic/README.md",
             "make verify-synthetic-data",
-            "locally executed",
+            "implemented",
             ["Synthetic volumes are not clinically realistic."],
         ),
         (
@@ -319,7 +347,7 @@ def milestone_completion_matrix() -> list[MilestoneEntry]:
             "Local DICOM discovery and de-identification",
             "docs/dicom_ingestion_design.md",
             "make verify-dicom-ingestion",
-            "locally executed",
+            "implemented",
             ["No PACS, DICOMweb, or pixel PHI redaction."],
         ),
         (
@@ -328,7 +356,7 @@ def milestone_completion_matrix() -> list[MilestoneEntry]:
             "Technical DICOM QC reports",
             "docs/imaging_quality_control.md",
             "make verify-dicom-quality",
-            "locally executed",
+            "implemented",
             ["QC scores do not establish diagnostic adequacy."],
         ),
         (
@@ -337,7 +365,7 @@ def milestone_completion_matrix() -> list[MilestoneEntry]:
             "CT-like volume assembly and transforms",
             "docs/data_flow.md",
             "make verify-preprocessing",
-            "locally executed",
+            "implemented",
             ["No full NIfTI/resampling pipeline."],
         ),
         (
@@ -346,7 +374,7 @@ def milestone_completion_matrix() -> list[MilestoneEntry]:
             "SimpleITK longitudinal alignment baselines",
             "docs/registration_design.md",
             "make verify-registration",
-            "locally executed",
+            "implemented",
             ["No deformable or anatomical correctness guarantee."],
         ),
         (
@@ -355,7 +383,7 @@ def milestone_completion_matrix() -> list[MilestoneEntry]:
             "Atlas-style adrenal ROI placeholders",
             "docs/localisation_design.md",
             "make verify-localisation",
-            "locally executed",
+            "implemented",
             ["Placeholder localisation only."],
         ),
         (
@@ -364,7 +392,7 @@ def milestone_completion_matrix() -> list[MilestoneEntry]:
             "MONAI 3D U-Net baseline",
             "ml/model_cards/segmentation_baseline.md",
             "make verify-segmentation",
-            "locally executed",
+            "implemented",
             ["Synthetic segmentation metrics only."],
         ),
         (
@@ -373,7 +401,7 @@ def milestone_completion_matrix() -> list[MilestoneEntry]:
             "PyTorch classifier, calibration, abstention",
             "ml/model_cards/classification_baseline.md",
             "make verify-classification",
-            "locally executed",
+            "implemented",
             ["Binary synthetic lesion-presence only."],
         ),
         (
@@ -382,7 +410,7 @@ def milestone_completion_matrix() -> list[MilestoneEntry]:
             "Synthetic lesion-change analysis",
             "docs/longitudinal_analysis_design.md",
             "make verify-longitudinal",
-            "locally executed",
+            "implemented",
             ["Not RECIST or treatment response."],
         ),
         (
@@ -409,7 +437,7 @@ def milestone_completion_matrix() -> list[MilestoneEntry]:
             "Secure local images and release evidence",
             "docs/local_release_assurance.md",
             "make validate-release-evidence",
-            "locally executed",
+            "implemented",
             ["Local release assurance only."],
         ),
         (
@@ -526,18 +554,18 @@ def milestone_completion_matrix() -> list[MilestoneEntry]:
 
 def build_capability_inventory() -> list[dict[str, Any]]:
     capabilities = [
-        ("synthetic_ct_generation", "locally executed"),
-        ("dicom_ingestion_deidentification", "locally executed"),
-        ("image_quality_control", "locally executed"),
-        ("ct_preprocessing", "locally executed"),
-        ("longitudinal_registration", "locally executed"),
-        ("adrenal_region_localisation", "locally executed"),
-        ("lesion_segmentation", "locally executed"),
-        ("calibrated_classification", "locally executed"),
-        ("longitudinal_lesion_analysis", "locally executed"),
+        ("synthetic_ct_generation", "implemented"),
+        ("dicom_ingestion_deidentification", "implemented"),
+        ("image_quality_control", "implemented"),
+        ("ct_preprocessing", "implemented"),
+        ("longitudinal_registration", "implemented"),
+        ("adrenal_region_localisation", "implemented"),
+        ("lesion_segmentation", "implemented"),
+        ("calibrated_classification", "implemented"),
+        ("longitudinal_lesion_analysis", "implemented"),
         ("governed_api", "implemented"),
         ("reviewer_ui", "implemented"),
-        ("secure_containers", "locally executed"),
+        ("secure_containers", "implemented"),
         ("model_registry_monitoring_audit", "simulated"),
         ("kubernetes_helm_deployment", "statically validated"),
         ("aws_target_state_iac", "target-state only"),
@@ -670,24 +698,24 @@ def build_test_and_coverage_summary() -> dict[str, Any]:
 
 def build_security_control_summary() -> list[dict[str, str]]:
     return [
-        {"control": "No real patient data", "status": "PASS"},
-        {"control": "DICOM metadata de-identification", "status": "PASS"},
-        {"control": "API path containment and symlink rejection", "status": "PASS"},
-        {"control": "CPU-only container dependency policy", "status": "PASS"},
-        {"control": "Non-root read-only containers and Kubernetes pods", "status": "PASS"},
-        {"control": "Secrets scanning hooks", "status": "PASS"},
-        {"control": "Metrics endpoint disabled by default", "status": "PASS"},
+        {"control": "No real patient data", "status": "implemented"},
+        {"control": "DICOM metadata de-identification", "status": "implemented"},
+        {"control": "API path containment and symlink rejection", "status": "implemented"},
+        {"control": "CPU-only container dependency policy", "status": "implemented"},
+        {"control": "Non-root read-only containers and Kubernetes pods", "status": "implemented"},
+        {"control": "Secrets scanning hooks", "status": "implemented"},
+        {"control": "Metrics endpoint disabled by default", "status": "implemented"},
     ]
 
 
 def build_governance_control_summary() -> list[dict[str, str]]:
     return [
-        {"control": "Research-only intended use", "status": "PASS"},
-        {"control": "Human approval for model lifecycle", "status": "PASS"},
-        {"control": "No automated model promotion", "status": "PASS"},
-        {"control": "No automated retraining", "status": "PASS"},
-        {"control": "No automated rollback", "status": "PASS"},
-        {"control": "Hazard log and limitations maintained", "status": "PASS"},
+        {"control": "Research-only intended use", "status": "implemented"},
+        {"control": "Human approval for model lifecycle", "status": "implemented"},
+        {"control": "No automated model promotion", "status": "implemented"},
+        {"control": "No automated retraining", "status": "implemented"},
+        {"control": "No automated rollback", "status": "implemented"},
+        {"control": "Hazard log and limitations maintained", "status": "implemented"},
     ]
 
 
@@ -726,22 +754,93 @@ def build_model_performance_summary() -> list[dict[str, Any]]:
 
 def build_deployment_assurance_summary() -> list[dict[str, Any]]:
     return [
-        {"area": "containers", "status": "PASS", "claim_classification": "locally executed"},
+        container_observation(),
         {
             "area": "kubernetes_helm",
-            "status": "PASS",
+            "status": "NOT_EXECUTED",
             "claim_classification": "statically validated",
         },
-        {"area": "aws_iac", "status": "PASS", "claim_classification": "target-state only"},
+        {"area": "aws_iac", "status": "NOT_EXECUTED", "claim_classification": "target-state only"},
     ]
+
+
+def container_observation() -> dict[str, Any]:
+    """Inspect the newest release record, its integrity and current input fingerprints."""
+    from medical_imaging_platform.release.models import ReleaseManifest
+
+    result: dict[str, Any] = {
+        "area": "containers",
+        "status": "UNAVAILABLE",
+        "executed": False,
+        "claim_classification": "implemented",
+    }
+    paths = list(CONTAINER_EVIDENCE_DIR.glob("*/release_manifest.json"))
+    if not paths:
+        return result
+    path = max(paths, key=lambda p: (p.stat().st_mtime_ns, str(p)))
+    result["evidence_path"] = str(path)
+    try:
+        manifest = ReleaseManifest.model_validate_json(path.read_text(encoding="utf-8"))
+        result["historical_release_status"] = manifest.release_status
+        hashes = json.loads((path.parent / "checksum_manifest.json").read_text())
+        if str(path) not in hashes or not hashes:
+            raise ValueError("Missing release integrity evidence")
+        for reference, digest in hashes.items():
+            artifact = Path(reference)
+            if not artifact.resolve().is_relative_to(path.parent.resolve()):
+                raise ValueError("Release reference escapes evidence directory")
+            if sha256_file(artifact) != digest:
+                raise ValueError("Release evidence checksum mismatch")
+        inputs = (
+            manifest.dockerfile_checksums
+            | manifest.configuration_checksums
+            | manifest.source_checksums
+        )
+        required = {
+            "docker/api/Dockerfile",
+            "docker/reviewer-ui/Dockerfile",
+            "requirements/container-runtime.txt",
+            "pyproject.toml",
+            "docker-compose.yml",
+        } | {str(p) for p in Path("src/medical_imaging_platform").rglob("*.py")}
+        if not required <= inputs.keys() or any(
+            not Path(name).is_file() or sha256_file(Path(name)) != digest
+            for name, digest in inputs.items()
+        ):
+            result["reason"] = "Historical evidence does not describe current release inputs."
+            return result
+        smoke = manifest.smoke_test_results
+        if manifest.release_status == "PASS" and (
+            not smoke.executed
+            or any(
+                not manifest.images.get(role, {}).get("digest") for role in ("api", "reviewer_ui")
+            )
+            or smoke.status != "PASS"
+            or not {"SMOKE-COMPOSE-BUILD", "SMOKE-API-HEALTH", "SMOKE-REVIEWER-HEALTH"}
+            <= {step.check_id for step in smoke.steps if step.status == "PASS"}
+            or any(step.status != "PASS" for step in smoke.steps)
+        ):
+            raise ValueError("Release PASS lacks successful runtime evidence")
+        result.update(
+            status=manifest.release_status,
+            executed=smoke.executed,
+            claim_classification="locally executed" if smoke.executed else "implemented",
+        )
+    except (OSError, ValueError, TypeError, AttributeError):
+        result.update(status="ERROR", reason="Release evidence is invalid.")
+    return result
 
 
 def build_operations_summary() -> list[dict[str, Any]]:
     return [
-        {"area": "metrics_and_logging", "status": "PASS", "clinical_monitoring_claim": False},
-        {"area": "slo_error_budget", "status": "PASS", "clinical_monitoring_claim": False},
-        {"area": "incident_simulation", "status": "PASS", "clinical_monitoring_claim": False},
-        {"area": "rollback_recovery_simulation", "status": "PASS", "automated_rollback": False},
+        {"area": "metrics_and_logging", "status": "simulated", "clinical_monitoring_claim": False},
+        {"area": "slo_error_budget", "status": "simulated", "clinical_monitoring_claim": False},
+        {"area": "incident_simulation", "status": "simulated", "clinical_monitoring_claim": False},
+        {
+            "area": "rollback_recovery_simulation",
+            "status": "simulated",
+            "automated_rollback": False,
+        },
     ]
 
 

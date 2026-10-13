@@ -10,6 +10,8 @@ services:
         VERSION: "0.1.0"
     ports:
       - "127.0.0.1:8000:8000"
+    environment:
+      MEDICAL_IMAGING_API_CONFIG: /app/config/api.yaml
     networks:
       - medical-imaging-local
     read_only: true
@@ -31,6 +33,18 @@ services:
       - type: bind
         source: ./config/longitudinal.yaml
         target: /app/config/longitudinal.yaml
+        read_only: true
+      - type: bind
+        source: ./config/segmentation.yaml
+        target: /app/config/segmentation.yaml
+        read_only: true
+      - type: bind
+        source: ./config/classification.yaml
+        target: /app/config/classification.yaml
+        read_only: true
+      - type: bind
+        source: ./config/detection.yaml
+        target: /app/config/detection.yaml
         read_only: true
       - type: bind
         source: ./ml/experiments

@@ -27,8 +27,9 @@ index. It preserves individual quality failures; successful orchestration is not
 make demo-fast
 ```
 
-Expected result: stage-level Make output ending with portfolio evidence validation `PASS` and
-demo-fast evidence `PASS`.
+Expected result: demo-fast evidence `PASS` after real stage execution; the JSON record contains
+command exit codes for each stage, including portfolio evidence validation. Direct `run-demo-fast` without `--execute`
+records an unexecuted plan with `UNAVAILABLE`, never a successful execution.
 
 Explain:
 

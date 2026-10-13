@@ -335,11 +335,11 @@ build-portfolio-evidence:
 validate-portfolio-evidence:
 	$(PYTHON) -m medical_imaging_platform validate-portfolio-evidence
 
-demo-fast: validate-config validate-docs verify-synthetic-data verify-monitoring validate-helm validate-kubernetes-policy validate-aws-policy build-operations-evidence build-portfolio-evidence validate-portfolio-evidence
-	$(PYTHON) -m medical_imaging_platform run-demo-fast
+demo-fast:
+	$(PYTHON) -m medical_imaging_platform run-demo-fast --execute
 
 demo: verify-synthetic-data verify-dicom-quality verify-preprocessing verify-registration verify-localisation verify-segmentation verify-classification verify-longitudinal approve-model verify-monitoring validate-api verify-reviewer-ui validate-containers lint-dockerfiles scan-secrets scan-dependencies validate-helm validate-kubernetes-policy build-kubernetes-evidence validate-kubernetes-evidence terraform-fmt-check validate-aws-policy build-operations-evidence build-portfolio-evidence validate-portfolio-evidence
-	$(PYTHON) -m medical_imaging_platform run-demo-fast
+	$(PYTHON) -m medical_imaging_platform run-demo-fast --execute
 
 clean-demo: clean-local-kubernetes
 	$(PYTHON) -m medical_imaging_platform clean-demo

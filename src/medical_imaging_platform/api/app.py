@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -31,7 +32,9 @@ from medical_imaging_platform.utils.config import load_api_config
 
 def create_app(config_path: Path | None = None) -> FastAPI:
     """Create the local research-only API app."""
-    config = load_api_config(config_path or Path("config/api.yaml"))
+    config = load_api_config(
+        config_path or Path(os.environ.get("MEDICAL_IMAGING_API_CONFIG", "config/api.yaml"))
+    )
     app = FastAPI(
         title=config.service_name,
         version=config.service_version,

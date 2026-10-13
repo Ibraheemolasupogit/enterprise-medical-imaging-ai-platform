@@ -23,7 +23,6 @@ def test_milestone_matrix_represents_current_platform_and_claims_are_bounded() -
     assert [entry.milestone for entry in matrix] == list(range(1, portfolio.CURRENT_MILESTONE + 1))
     assert {entry.claim_classification for entry in matrix} >= {
         "implemented",
-        "locally executed",
         "statically validated",
         "simulated",
         "target-state only",
@@ -96,8 +95,8 @@ def test_demo_fast_and_cleanup_behaviour(tmp_path: Path, monkeypatch) -> None:  
     _redirect_portfolio_evidence(monkeypatch, tmp_path)
 
     demo = portfolio.run_demo_fast()
-    assert demo["executed"] is True
-    assert demo["overall_status"] == "PASS"
+    assert demo["executed"] is False
+    assert demo["overall_status"] == "UNAVAILABLE"
     assert portfolio.DEMO_FAST_PATH.exists()
 
     cleanup = portfolio.clean_demo()

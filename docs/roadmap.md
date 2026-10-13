@@ -10,7 +10,7 @@
 8. Synthetic segmentation baseline. Complete for small MONAI 3D U-Net on synthetic masks only.
 9. Classification and calibration. Complete for binary synthetic lesion-presence classification only.
 10. Longitudinal analysis. Complete for governed synthetic engineering labels only.
-11. API foundation. Complete for governed local FastAPI service only; review dashboard remains planned.
+11. API foundation. Complete for governed local FastAPI service only.
 12. Reviewer UI foundation. Complete for local Streamlit API-consuming review interface only.
 13. Local containerisation and release assurance. Complete for local API/UI containers only.
 14. Governed model registry, monitoring and audit foundation. Complete for local synthetic evidence only.
@@ -22,7 +22,7 @@
 18. Project evidence, demonstration workflow and evidence readiness. Complete for final
     consolidation evidence only; no new clinical or deployment claims.
 
-Milestones 1-18 are implemented in the current repository state. Milestone 18 does not implement
+The repository implements M1–M23 within their stated research boundaries. It does not implement
 deformable registration, NIfTI export, general preprocessing resampling, learned localisation beyond
 the baseline, advanced segmentation, benign-versus-malignant classification, clinical lesion
 detection, RECIST, treatment-response assessment, authentication, persistent dashboard workflows, cloud
@@ -32,6 +32,10 @@ automatic model promotion, production alert routing, live incident-management in
 clinical decision support. Final project evidence documents what is implemented, locally
 executed, statically validated, simulated, or target-state only.
 
+19. Classical preprocessing and QC baseline. Complete for deterministic image-content engineering checks.
+20. CNN versus Tiny ViT classification benchmark. Complete for subject-isolated synthetic comparison.
+21. Faster R-CNN and Tiny DETR detection. Complete for synthetic 2D axial box benchmarks.
+22. CNN/ViT embeddings and exact retrieval. Complete for checksummed indexes and research similarity.
 23. Platform consolidation and demonstration hardening: shared CLI, reviewer overlays/retrieval,
     exact review bindings, stored-index policy/validation, canonical CPU evidence and current architecture.
     No new model family or external dataset.

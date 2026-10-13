@@ -7,7 +7,11 @@ torch==2.13.0+cpu; platform_system == "Linux"
 torch==2.13.0; platform_system != "Linux"
 monai==1.6.0
 fastapi>=0.115,<1
-numpy>=1.26,<2
+numpy==2.4.6
+torchvision==0.28.0+cpu; platform_system == "Linux"
+torchvision==0.28.0; platform_system != "Linux"
+httpx==0.28.1
+matplotlib==3.10.9
 pydicom>=3.0,<4
 pydantic>=2.8,<3
 PyYAML>=6.0.2,<7

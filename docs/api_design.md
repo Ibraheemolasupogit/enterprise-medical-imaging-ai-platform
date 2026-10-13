@@ -1,46 +1,24 @@
-# API Design
+# API design
 
-Milestone 11 implements a local governed FastAPI research interface over existing synthetic
-segmentation, classification, longitudinal analysis, and evidence-review capabilities.
+The M1–M23 FastAPI research service is created with `create_app(config_path=None)`. It exposes
+segmentation, classification, axial detection, longitudinal analysis, exact embeddings search,
+configured index selection and read-only evidence review. [Contracts](api_contracts.md).
 
-The API is intentionally narrow:
+Explicit configuration arguments take precedence over `MEDICAL_IMAGING_API_CONFIG`; otherwise the
+factory reads that environment variable or `config/api.yaml`. `PLATFORM_ENVIRONMENT` and
+`PLATFORM_LOG_LEVEL` override the corresponding YAML values through typed validation.
 
-- It is created through `medical_imaging_platform.api.app.create_app(config_path=None)`.
-- It loads typed settings from `config/api.yaml`.
-- It runs locally by default on `127.0.0.1`.
-- It accepts `.npy` paths only from configured local roots or compact JSON array payloads.
-- It returns summaries, checksums, quality findings, and research disclaimers rather than full image
-  volumes or model weights.
-- It exposes read-only review endpoints for validated evidence directories.
+The execution boundary enforces input/evidence root containment, symlink rejection, bounded array
+and body sizes, no NumPy pickle, request IDs, sanitized unexpected errors and security headers.
+Readiness checks configured paths/index integrity and reports unavailable capabilities separately
+from liveness. Model-file hashes are provenance; no trusted expected-model checksum or training
+quality approval is enforced at readiness. Shape/checkpoint compatibility is checked at inference.
 
-Implemented controls:
+The unused API fields `require_model_checksums`, `require_quality_pass`, `request_timeout_seconds`
+and `maximum_batch_size` have been removed. Legacy configurations containing them fail explicitly;
+there is no server-side inference timeout or batching control implied. Reviewer HTTP timeouts remain
+real client controls. Evidence review retains its explicit degraded-review policy.
 
-- Request ID propagation through `X-Request-ID`.
-- Maximum request-body and array-size limits.
-- Configured input and evidence root allowlists.
-- Path traversal and symlink blocking.
-- NumPy loading with `allow_pickle=False`.
-- Deterministic API error codes.
-- Sanitized internal error messages.
-- `nosniff`, frame-denial, no-store cache, and restrictive content-security headers.
-- Readiness checks for configured model and governance artefacts.
-
-Not implemented in Milestone 11:
-
-- Authentication or authorization.
-- Internet-facing serving.
-- Dashboard or human-review UI.
-- DICOMweb, PACS, databases, queues, object storage, or audit-event persistence.
-- Docker, Kubernetes, AWS, MLflow, or model registry integration.
-- Clinical diagnosis, RECIST, treatment-response assessment, or approved medical-device behavior.
-
-The service is an engineering demonstrator for local research workflows only.
-
-Milestone 12 adds a local Streamlit reviewer UI as an API consumer. The API remains the execution
-boundary for segmentation, classification, longitudinal analysis, and evidence review. The reviewer
-UI must not bypass API filesystem controls or model-quality gates.
-## Container Runtime
-
-Milestone 13 adds `config/container/api.yaml` for local Compose execution. The API binds to
-`0.0.0.0` only inside the container, preserves `/health`, `/ready`, `/version`, and OpenAPI routes,
-and keeps path allowlists, model-checksum readiness, request limits, and quality gates enabled.
+Streamlit is an API consumer and performs no inference. Authentication, PACS/DICOMweb, databases,
+persistent audit storage, clinical approval and internet-facing serving remain outside scope.
+[Local startup](local_startup.md), [security](security.md), [container design](containerisation.md).

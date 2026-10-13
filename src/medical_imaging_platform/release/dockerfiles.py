@@ -75,9 +75,9 @@ def inspect_dockerfile(
             "Container-only runtime requirements are copied before project source.",
         ),
         _check(
-            "DOCKERFILE-PROJECT-NO-DEPS",
-            "--no-deps" in text,
-            "Project wheel installs without re-resolving runtime dependencies.",
+            "DOCKERFILE-PROJECT-DEPENDENCIES",
+            not re.search(r"pip install[^\n]*--no-deps", text) and "python -m pip check" in text,
+            "Offline project installation resolves dependencies and checks consistency.",
         ),
         _check(
             "DOCKERFILE-NO-DEV-DEPS",

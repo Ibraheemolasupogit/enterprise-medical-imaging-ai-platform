@@ -1,6 +1,6 @@
 # Security
 
-Milestone 1 security controls focus on repository hygiene:
+Current M1–M23 controls include repository hygiene:
 
 - No real patient data.
 - No credentials.
@@ -14,7 +14,8 @@ Milestone 1 security controls focus on repository hygiene:
 - Direct identifier values excluded from normal metadata output and audits.
 - In-place source overwrite refused by default.
 
-Future milestones will add controls for de-identification audit, object storage, access control, container scanning, infrastructure validation, and operational monitoring.
+De-identification audit, container/infrastructure checks and local monitoring evidence are implemented.
+AWS storage/access-control definitions remain target state; live deployment is not claimed.
 
 Metadata de-identification cannot guarantee removal of burned-in pixel identifiers. Pixel review, OCR, and pixel redaction are not implemented.
 

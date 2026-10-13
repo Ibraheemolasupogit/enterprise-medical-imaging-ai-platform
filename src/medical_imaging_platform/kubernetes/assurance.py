@@ -1348,13 +1348,11 @@ def _render_objects(values: dict[str, Any]) -> list[dict[str, Any]]:
             "kind": "ConfigMap",
             "metadata": {"name": f"{fullname}-config", "labels": labels},
             "data": {
-                "API_CONFIG_PATH": values["api"]["config"]["path"],
+                "MEDICAL_IMAGING_API_CONFIG": values["api"]["config"]["path"],
                 "PLATFORM_ENVIRONMENT": values["api"]["config"]["environment"],
                 "PLATFORM_LOG_LEVEL": values["api"]["config"]["logLevel"],
-                "PLATFORM_SYNTHETIC_ONLY": str(values["global"]["syntheticOnly"]).lower(),
-                "REVIEWER_API_BASE_URL": values["reviewerUi"]["config"]["apiBaseUrl"],
-                "REVIEWER_ENVIRONMENT": values["reviewerUi"]["config"]["environment"],
-                "REVIEWER_LOG_LEVEL": values["reviewerUi"]["config"]["logLevel"],
+                "REVIEWER_API_BASE_URL": values["reviewerUi"]["config"]["apiBaseUrl"]
+                or f"http://{fullname}-api:{values['api']['service']['port']}",
             },
         },
     ]

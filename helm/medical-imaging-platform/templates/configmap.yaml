@@ -5,10 +5,7 @@ metadata:
   labels:
     {{- include "medical-imaging-platform.labels" . | nindent 4 }}
 data:
-  API_CONFIG_PATH: {{ .Values.api.config.path | quote }}
+  MEDICAL_IMAGING_API_CONFIG: {{ .Values.api.config.path | quote }}
   PLATFORM_ENVIRONMENT: {{ .Values.api.config.environment | quote }}
   PLATFORM_LOG_LEVEL: {{ .Values.api.config.logLevel | quote }}
-  PLATFORM_SYNTHETIC_ONLY: {{ .Values.global.syntheticOnly | quote }}
-  REVIEWER_API_BASE_URL: {{ .Values.reviewerUi.config.apiBaseUrl | quote }}
-  REVIEWER_ENVIRONMENT: {{ .Values.reviewerUi.config.environment | quote }}
-  REVIEWER_LOG_LEVEL: {{ .Values.reviewerUi.config.logLevel | quote }}
+  REVIEWER_API_BASE_URL: {{ default (printf "http://%s-api:%v" (include "medical-imaging-platform.fullname" .) .Values.api.service.port) .Values.reviewerUi.config.apiBaseUrl | quote }}
